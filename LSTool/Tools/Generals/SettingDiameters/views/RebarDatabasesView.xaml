@@ -1,0 +1,104 @@
+﻿<Window x:Class="LSTool.Tools.Generals.SettingDiameters.views.RebarDatabasesView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:LSTool.Tools.Generals.SettingDiameters.views"
+        mc:Ignorable="d"
+        Title="RebarDatabasesView" 
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        MinHeight="350" 
+        MaxWidth="600"
+        SizeToContent="WidthAndHeight">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Height" Value="25"/>
+            <Setter Property="Width" Value="70"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="25"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+    </Window.Resources>
+    <StackPanel Margin="15">
+        <DataGrid 
+            ItemsSource="{Binding RebarBarTypes}"
+            CanUserAddRows="False"
+            Height="350"
+            AutoGenerateColumns="False"
+            ColumnWidth="*">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Name">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox IsEnabled="False" Text="{Binding NameStyle, UpdateSourceTrigger=PropertyChanged, Delay=100}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="BarDiameterReal">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding BarDiameterReal, UpdateSourceTrigger=PropertyChanged, Delay=100}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="BarDiameter">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding BarDiameter, UpdateSourceTrigger=PropertyChanged, Delay=100}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="ModelBarDiameter">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding ModelBarDiameter, UpdateSourceTrigger=PropertyChanged, Delay=100}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="StandardBendDiameter">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding StandardBendDiameter, UpdateSourceTrigger=PropertyChanged, Delay=100}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="StandardHookBendDiameter">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding StandardHookBendDiameter, UpdateSourceTrigger=PropertyChanged, Delay=100}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="StirrupOrTieBendDiameter">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding StirrupOrTieBendDiameter, UpdateSourceTrigger=PropertyChanged, Delay=100}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="MaximumBendRadius">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding MaximumBendRadius, UpdateSourceTrigger=PropertyChanged, Delay=100}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+        <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
+            <Button Command="{Binding OkCommand}" Margin="5,0,0,0" Content="OK"/>
+            <Button Command="{Binding ResetCommand}" Margin="5,0,0,0" Content="Cancel"/>
+            <Button Command="{Binding CancelCommand}" Margin="5,0,0,0" Content="Cancel"/>
+        </StackPanel>
+    </StackPanel>
+</Window>
