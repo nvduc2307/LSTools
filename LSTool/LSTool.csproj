@@ -68,9 +68,4 @@
         <Resource Include="Resources\Icons\RibbonIcon16.png" />
         <Resource Include="Resources\Icons\RibbonIcon32.png" />
     </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="MVVM\Models\" />
-        <Folder Include="Tools\Columns\" />
-    </ItemGroup>
 </Project>
