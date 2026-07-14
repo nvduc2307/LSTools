@@ -2,12 +2,11 @@
 using Autodesk.Revit.UI;
 using LSTool.Tools.Generals.SettingDiameters.models;
 using LSTool.Tools.Generals.SettingDiameters.viewModels;
+using LSTool.Tools.Generals.SettingDiameters.views;
+using LSTool.Utils;
 using Newtonsoft.Json;
 using System.Collections.ObjectModel;
 using System.IO;
-using TPTool.Tools.SettingDiameters.RebarDatabases.models;
-using TPTool.Tools.SettingDiameters.RebarDatabases.views;
-using TPTool.Utils;
 
 namespace LSTool.Tools.Generals.SettingDiameters.action
 {
@@ -72,7 +71,7 @@ namespace LSTool.Tools.Generals.SettingDiameters.action
             {
                 try
                 {
-                    var typeTarget = rebarBarTypes.FirstOrDefault(x=>x.Name == type.NameStyle);
+                    var typeTarget = rebarBarTypes.FirstOrDefault(x => x.Name == type.NameStyle);
                     if (typeTarget != null)
                     {
                         RebarBarTypeHelper.SetRebarDiameter(typeTarget, type.BarDiameterReal.FromMillimeters());

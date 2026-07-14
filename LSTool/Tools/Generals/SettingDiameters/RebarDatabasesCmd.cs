@@ -1,9 +1,7 @@
 ﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.UI;
-using Nice3point.Revit.Toolkit.External;
-using TPTool.Tools.SettingDiameters.RebarDatabases.action;
-using TPTool.Tools.SettingDiameters.RebarDatabases.views;
-using TPTool.Utils.Messages;
+using LSTool.Tools.Generals.SettingDiameters.action;
+using LSTool.Utils;
 
 namespace LSTool.Tools.Generals.SettingDiameters
 {
