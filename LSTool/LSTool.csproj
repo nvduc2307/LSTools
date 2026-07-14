@@ -37,11 +37,15 @@
     <!-- https://github.com/Nice3point/Revit.Build.Tasks -->
     <PropertyGroup>
         <IsRepackable>false</IsRepackable>
-        <DeployRevitAddin>true</DeployRevitAddin>
+        <DeployRevitAddin>false</DeployRevitAddin>
     </PropertyGroup>
+    <ItemGroup>
+      <None Remove="Tools\Beams\BeamRebar\imgs\Setting_Develop.png" />
+    </ItemGroup>
 
     <ItemGroup>
         <!-- Revit References -->
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
         <PackageReference Include="Nice3point.Revit.Api.AdWindows" Version="$(RevitVersion).*" />
         <PackageReference Include="Nice3point.Revit.Build.Tasks" Version="3.0.1" />
         <PackageReference Include="Nice3point.Revit.Toolkit" Version="$(RevitVersion).*" />
@@ -67,5 +71,10 @@
     <ItemGroup>
         <Resource Include="Resources\Icons\RibbonIcon16.png" />
         <Resource Include="Resources\Icons\RibbonIcon32.png" />
+        <Resource Include="Tools\Beams\BeamRebar\imgs\Setting_Develop.png" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Folder Include="Resources\imgs\" />
     </ItemGroup>
 </Project>

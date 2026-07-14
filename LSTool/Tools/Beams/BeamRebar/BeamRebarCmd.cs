@@ -1,8 +1,11 @@
-﻿using Autodesk.Revit.UI;
+﻿using Autodesk.Revit.Attributes;
+using Autodesk.Revit.UI;
+using LSTool.Tools.Beams.BeamRebar.action;
 using LSTool.Utils;
 
 namespace LSTool.Tools.Beams.BeamRebar
 {
+    [Transaction(TransactionMode.Manual)]
     public class BeamRebarCmd : IExternalCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
@@ -15,6 +18,8 @@ namespace LSTool.Tools.Beams.BeamRebar
                 tsg.Start();
                 try
                 {
+                    var action = new BeamRebarAction(uiDocument);
+                    action.Execute();
                     tsg.Assimilate();
                 }
                 catch (Autodesk.Revit.Exceptions.OperationCanceledException) { }
