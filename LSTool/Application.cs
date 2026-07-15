@@ -1,4 +1,6 @@
 ﻿using LSTool.Tools.Columns.ColumnRebar;
+using LSTool.Tools.Generals.SettingDiameters;
+using LSTool.Tools.Generals.SettingRebarStandard;
 using Nice3point.Revit.Extensions.UI;
 using Nice3point.Revit.Toolkit.External;
 
@@ -19,9 +21,13 @@ namespace LSTool
         {
             var panel = Application.CreatePanel("General", "LSTool");
 
-            //panel.AddPushButton<StartupCommand>("Execute")
-            //    .SetImage("/LSTool;component/Resources/Icons/RibbonIcon16.png")
-            //    .SetLargeImage("/LSTool;component/Resources/Icons/RibbonIcon32.png");
+            panel.AddPushButton<SettingRebarStandardCmd>("Standard")
+                .SetImage("/LSTool;component/Resources/Icons/RibbonIcon16.png")
+                .SetLargeImage("/LSTool;component/Resources/Icons/RibbonIcon32.png");
+
+            panel.AddPushButton<RebarDatabasesCmd>("Diameter")
+                .SetImage("/LSTool;component/Resources/Icons/RibbonIcon16.png")
+                .SetLargeImage("/LSTool;component/Resources/Icons/RibbonIcon32.png");
         }
         private void CreateRibbon_Beams()
         {

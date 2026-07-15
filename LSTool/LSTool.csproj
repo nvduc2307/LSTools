@@ -45,6 +45,8 @@
       <None Remove="Resources\Templates\ShareParameterConcreteColumn.txt" />
       <None Remove="Tools\Beams\BeamRebar\imgs\Setting_Develop.png" />
       <None Remove="Tools\Columns\ColumnRebar\imgs\Foundation_Anchol.png" />
+      <None Remove="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Anchol.png" />
+      <None Remove="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Lap.png" />
     </ItemGroup>
     <ItemGroup>
       <Content Include="Resources\Datas\RebarbarTypeData.json">
@@ -88,6 +90,8 @@
         <Resource Include="Resources\Icons\RibbonIcon32.png" />
         <Resource Include="Tools\Beams\BeamRebar\imgs\Setting_Develop.png" />
         <Resource Include="Tools\Columns\ColumnRebar\imgs\Foundation_Anchol.png" />
+        <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Anchol.png" />
+        <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Lap.png" />
     </ItemGroup>
     
     <ItemGroup>
