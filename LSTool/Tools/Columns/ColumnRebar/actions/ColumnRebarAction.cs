@@ -2,6 +2,7 @@
 using LSTool.Tools.Columns.ColumnRebar.viewModels;
 using LSTool.Tools.Columns.ColumnRebar.views;
 using LSTool.Tools.Generals.SettingDiameters.action;
+using LSTool.Utils.ExternalEvent;
 
 namespace LSTool.Tools.Columns.ColumnRebar.actions
 {
@@ -12,11 +13,22 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private ColumnRebarView _view;
         private ColumnRebarVM _viewModel;
         private ColumnConcreteAction _columnConcreteAction;
+
+        private ColumnRebarStirrupAction _columnRebarStirrupAction;
+
+        private CustomExternalCommand _externalColumnRebarCmd;
+        private ExternalEvent _externalColumnRebarCmdEvent;
         public ColumnRebarAction(UIDocument uidocument)
         {
             _uidocument = uidocument;
             _document = _uidocument.Document;
             _columnConcreteAction = new ColumnConcreteAction(_uidocument);
+            _columnRebarStirrupAction = new ColumnRebarStirrupAction(_uidocument);
+            _externalColumnRebarCmd = new CustomExternalCommand("columnRebarCmd")
+            {
+                Action = _externalColumnRebarCmdInvoke
+            };
+            _externalColumnRebarCmdEvent = ExternalEvent.Create(_externalColumnRebarCmd);
             ValidateRebarDiameter();
             _columnConcreteAction.ValidateShareParameter();
             _viewModel = new ColumnRebarVM()
@@ -26,6 +38,12 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 CancelCommand = new RelayCommand(_CancelCommand)
             };
             _view = new ColumnRebarView() { DataContext = _viewModel };
+        }
+
+        private void _externalColumnRebarCmdInvoke()
+        {
+            _columnConcreteAction.SetRebarSetting(_document, _viewModel.ColumnConcreteModels);
+            _columnRebarStirrupAction.CreateStirrupMain(_viewModel.ColumnConcreteModels);
         }
 
         private void _ColumnConcreteModelAction()
@@ -43,7 +61,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private void _OkCommand()
         {
             _view.Close();
-            _columnConcreteAction.SetRebarSetting(_document, _viewModel.ColumnConcreteModels);
+            _externalColumnRebarCmdEvent?.Raise();
         }
         // create rebar stirrup
         // create rebar face right

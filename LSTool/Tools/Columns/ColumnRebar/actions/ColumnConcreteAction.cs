@@ -8,6 +8,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
 {
     public class ColumnConcreteAction
     {
+        private const double _cover = 50;
         private UIDocument _uidocument;
         private Document _document;
         public ColumnConcreteAction(UIDocument uidocument)
@@ -49,6 +50,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     {
                         Name = $"Item{index}",
                         Id = cl.UniqueId,
+                        Cover = _cover,
                         VTX = vtx,
                         VTY = vty,
                         VTZ = vtz
@@ -132,43 +134,43 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             Document document,
             List<ColumnConcreteModel> cls)
         {
-            using (var ts = new Transaction(document, "new transaction"))
+            using (var ts = new SubTransaction(document))
             {
                 ts.Start();
                 foreach (var item in cls)
-            {
-                try
                 {
-                    var cl = document.GetElement(item.Id);
-                    var par_dx_diameter = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DX_Diameter);
-                    var par_dx_spacing = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DX_Spacing);
+                    try
+                    {
+                        var cl = document.GetElement(item.Id);
+                        var par_dx_diameter = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DX_Diameter);
+                        var par_dx_spacing = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DX_Spacing);
 
-                    var par_dy_diameter = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DY_Diameter);
-                    var par_dy_spacing = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DY_Spacing);
+                        var par_dy_diameter = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DY_Diameter);
+                        var par_dy_spacing = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DY_Spacing);
 
-                    var par_ts_diameter = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Diameter);
-                    var par_ts_spacing = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Spacing);
+                        var par_ts_diameter = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Diameter);
+                        var par_ts_spacing = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Spacing);
 
-                    if (par_dx_diameter == null) throw new Exception();
-                    if (par_dx_spacing == null) throw new Exception();
-                    if (par_dy_diameter == null) throw new Exception();
-                    if (par_dy_spacing == null) throw new Exception();
-                    if (par_ts_diameter == null) throw new Exception();
-                    if (par_ts_spacing == null) throw new Exception();
-                    par_dx_diameter.Set(item.DiameterDX);
-                    par_dx_spacing.Set(item.SpacingDX.FromMillimeters());
+                        if (par_dx_diameter == null) throw new Exception();
+                        if (par_dx_spacing == null) throw new Exception();
+                        if (par_dy_diameter == null) throw new Exception();
+                        if (par_dy_spacing == null) throw new Exception();
+                        if (par_ts_diameter == null) throw new Exception();
+                        if (par_ts_spacing == null) throw new Exception();
+                        par_dx_diameter.Set(item.DiameterDX);
+                        par_dx_spacing.Set(item.SpacingDX.FromMillimeters());
 
-                    par_dy_diameter.Set(item.DiameterDY);
-                    par_dy_spacing.Set(item.SpacingDY.FromMillimeters());
+                        par_dy_diameter.Set(item.DiameterDY);
+                        par_dy_spacing.Set(item.SpacingDY.FromMillimeters());
 
-                    par_ts_diameter.Set(item.DiameterST);
-                    par_ts_spacing.Set(item.SpacingST.FromMillimeters());
+                        par_ts_diameter.Set(item.DiameterST);
+                        par_ts_spacing.Set(item.SpacingST.FromMillimeters());
+                    }
+                    catch (Exception ex)
+                    {
+                        IO.ShowWarning(ex.Message);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    IO.ShowWarning(ex.Message);
-                }
-            }
                 ts.Commit();
             }
         }
