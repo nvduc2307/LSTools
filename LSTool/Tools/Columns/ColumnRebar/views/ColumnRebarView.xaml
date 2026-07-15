@@ -1,0 +1,187 @@
+﻿<Window x:Class="LSTool.Tools.Columns.ColumnRebar.views.ColumnRebarView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:LSTool.Tools.Columns.ColumnRebar.views"
+        mc:Ignorable="d"
+        Title="ColumnRebarView" 
+        WindowStartupLocation="CenterScreen"
+        MinHeight="550" 
+        Height="600"
+        Width="800">
+    <Window.Resources>
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="25"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="25"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="35"/>
+        </Grid.RowDefinitions>
+        <TabControl>
+            <TabItem Header="Rebar Info">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <StackPanel HorizontalAlignment="Left">
+                        <TextBlock Text="Item"/>
+                        <ComboBox 
+                            ItemsSource="{Binding ColumnConcreteModels}"
+                            SelectedItem="{Binding ColumnConcreteModel, UpdateSourceTrigger=PropertyChanged}"
+                            DisplayMemberPath="Name"
+                            Width="100"/>
+                    </StackPanel>
+                    <Grid 
+                        Margin="0,10,0,0"
+                        Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="0.4*"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <GroupBox 
+                            Padding="10"
+                            Grid.Column="0"
+                            Header="Rebar Info">
+                            <StackPanel>
+                                <GroupBox Header="Dir X">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition/>
+                                            <ColumnDefinition/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,5,0">
+                                            <TextBlock Text="Diameter"/>
+                                            <ComboBox
+                                                DataContext="{Binding ColumnConcreteModel}"
+                                                ItemsSource="{Binding DiameterDXs}"
+                                                SelectedItem="{Binding DiameterDX}"
+                                                Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                        <StackPanel 
+                                        Margin="5,0,0,0" 
+                                        Grid.Column="1">
+                                            <TextBlock Text="Quantity"/>
+                                            <TextBox
+                                                DataContext="{Binding ColumnConcreteModel}"
+                                                Text="{Binding SpacingDX}"
+                                                Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </GroupBox>
+                                <GroupBox Margin="0,10,0,0" Header="Dir Y">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition/>
+                                            <ColumnDefinition/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,5,0">
+                                            <TextBlock Text="Diameter"/>
+                                            <ComboBox
+                                                DataContext="{Binding ColumnConcreteModel}"
+                                                ItemsSource="{Binding DiameterDYs}"
+                                                SelectedItem="{Binding DiameterDY}"
+                                                Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                        <StackPanel 
+                                        Margin="5,0,0,0" 
+                                        Grid.Column="1">
+                                            <TextBlock Text="Quantity"/>
+                                            <TextBox
+                                                DataContext="{Binding ColumnConcreteModel}"
+                                                Text="{Binding SpacingDY}"
+                                                Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </GroupBox>
+                                <GroupBox Margin="0,10,0,0" Header="Stirrup">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition/>
+                                            <ColumnDefinition/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,5,0">
+                                            <TextBlock Text="Diameter"/>
+                                            <ComboBox
+                                                DataContext="{Binding ColumnConcreteModel}"
+                                                ItemsSource="{Binding DiameterSTs}"
+                                                SelectedItem="{Binding DiameterST}"
+                                                Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                        <StackPanel 
+                                            Margin="5,0,0,0" 
+                                            Grid.Column="1">
+                                            <TextBlock Text="Spacing"/>
+                                            <TextBox
+                                                DataContext="{Binding ColumnConcreteModel}"
+                                                Text="{Binding SpacingST}"
+                                                Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </GroupBox>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox 
+                            Header="Preview"
+                            Margin="10,0,0,0"
+                            Grid.Column="1">
+                            
+                        </GroupBox>
+                    </Grid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Anchol Info">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="300"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel 
+                    Margin="0,0,10,0">
+                        <StackPanel>
+                            <TextBlock
+                            Text="AC"/>
+                            <TextBox
+                            Text="{Binding AC}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,10,0,0">
+                            <TextBlock
+                            Text="HO"/>
+                            <TextBox
+                            Text="{Binding HO}"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <Image 
+                    Grid.Column="1"
+                    Source="/LSTool;component/Tools/Columns/ColumnRebar/imgs/Foundation_Anchol.png"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
+        <StackPanel 
+            VerticalAlignment="Bottom"
+            HorizontalAlignment="Right"
+            Grid.Row="1">
+            <StackPanel Orientation="Horizontal">
+                <Button
+                Command="{Binding OkCommand}"
+                Margin="0,0,10,0"
+                Width="70"
+                Height="25"
+                Content="Ok"/>
+                <Button
+                Command="{Binding CancelCommand}"
+                Width="70"
+                Height="25"
+                Content="Cancel"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

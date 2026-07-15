@@ -1,8 +1,9 @@
 ﻿namespace LSTool.MVVM.Models
 {
-    public class ConcreteModel
+    public class ConcreteModel : ObservableObject
     {
         public string Name { get; set; }
+        public string Id { get; set; }
         public double Cover {  get; set; }
         public XYZ Center { get; set; }
         public XYZ VTX { get; set; }

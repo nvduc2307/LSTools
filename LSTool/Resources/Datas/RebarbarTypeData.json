@@ -1,0 +1,119 @@
+[
+  {
+    "NameStyle": "D10",
+    "ModelBarDiameter": 11,
+    "BarDiameter": 10,
+    "BarDiameterReal": 10,
+    "StandardBendDiameter": 40,
+    "StandardHookBendDiameter": 40,
+    "StirrupOrTieBendDiameter": 40
+  },
+  {
+    "NameStyle": "D13",
+    "ModelBarDiameter": 14,
+    "BarDiameter": 13,
+    "BarDiameterReal": 13,
+    "StandardBendDiameter": 60,
+    "StandardHookBendDiameter": 60,
+    "StirrupOrTieBendDiameter": 60
+  },
+  {
+    "NameStyle": "D16",
+    "ModelBarDiameter": 16,
+    "BarDiameter": 16,
+    "BarDiameterReal": 16,
+    "StandardBendDiameter": 70,
+    "StandardHookBendDiameter": 70,
+    "StirrupOrTieBendDiameter": 70
+  },
+  {
+    "NameStyle": "D18",
+    "ModelBarDiameter": 18,
+    "BarDiameter": 18,
+    "BarDiameterReal": 18,
+    "StandardBendDiameter": 80,
+    "StandardHookBendDiameter": 80,
+    "StirrupOrTieBendDiameter": 80
+  },
+  {
+    "NameStyle": "D20",
+    "ModelBarDiameter": 20,
+    "BarDiameter": 20,
+    "BarDiameterReal": 20,
+    "StandardBendDiameter": 80,
+    "StandardHookBendDiameter": 80,
+    "StirrupOrTieBendDiameter": 80
+  },
+  {
+    "NameStyle": "D22",
+    "ModelBarDiameter": 22,
+    "BarDiameter": 22,
+    "BarDiameterReal": 22,
+    "StandardBendDiameter": 90,
+    "StandardHookBendDiameter": 90,
+    "StirrupOrTieBendDiameter": 90
+  },
+  {
+    "NameStyle": "D25",
+    "ModelBarDiameter": 25,
+    "BarDiameter": 25,
+    "BarDiameterReal": 25,
+    "StandardBendDiameter": 100,
+    "StandardHookBendDiameter": 100,
+    "StirrupOrTieBendDiameter": 100
+  },
+  {
+    "NameStyle": "D29",
+    "ModelBarDiameter": 33,
+    "BarDiameter": 29,
+    "BarDiameterReal": 29,
+    "StandardBendDiameter": 120,
+    "StandardHookBendDiameter": 120,
+    "StirrupOrTieBendDiameter": 120
+  },
+  {
+    "NameStyle": "D32",
+    "ModelBarDiameter": 36,
+    "BarDiameter": 32,
+    "BarDiameterReal": 32,
+    "StandardBendDiameter": 130,
+    "StandardHookBendDiameter": 130,
+    "StirrupOrTieBendDiameter": 130
+  },
+  {
+    "NameStyle": "D35",
+    "ModelBarDiameter": 40,
+    "BarDiameter": 35,
+    "BarDiameterReal": 35,
+    "StandardBendDiameter": 140,
+    "StandardHookBendDiameter": 140,
+    "StirrupOrTieBendDiameter": 140
+  },
+  {
+    "NameStyle": "D38",
+    "ModelBarDiameter": 43,
+    "BarDiameter": 38,
+    "BarDiameterReal": 38,
+    "StandardBendDiameter": 160,
+    "StandardHookBendDiameter": 160,
+    "StirrupOrTieBendDiameter": 160
+  },
+  {
+    "NameStyle": "D41",
+    "ModelBarDiameter": 46,
+    "BarDiameter": 41,
+    "BarDiameterReal": 41,
+    "StandardBendDiameter": 170,
+    "StandardHookBendDiameter": 170,
+    "StirrupOrTieBendDiameter": 170
+  },
+  {
+    "NameStyle": "D51",
+    "ModelBarDiameter": 58,
+    "BarDiameter": 51,
+    "BarDiameterReal": 51,
+    "StandardBendDiameter": 210,
+    "StandardHookBendDiameter": 210,
+    "StirrupOrTieBendDiameter": 210
+  }
+]
