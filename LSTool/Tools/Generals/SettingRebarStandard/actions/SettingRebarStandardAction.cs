@@ -17,6 +17,9 @@ namespace LSTool.Tools.Generals.SettingRebarStandard.actions
         {
             _uidocument = uidocument;
             _document = _uidocument.Document;
+            _settingRebarSchema = new SettingRebarStandardSchema(
+                SettingRebarStandardSchema.GUID,
+                SettingRebarStandardSchema.NAME);
             _viewModel = new SettingRebarStandardVM()
             {
                 SettingRebarStandardModel = GetSetting(),
@@ -24,9 +27,6 @@ namespace LSTool.Tools.Generals.SettingRebarStandard.actions
                 CancelCommand = new RelayCommand(_CancelCommand)
             };
             _view = new SettingRebarStandardView() { DataContext = _viewModel };
-            _settingRebarSchema = new SettingRebarStandardSchema(
-                SettingRebarStandardSchema.GUID,
-                SettingRebarStandardSchema.NAME);
         }
 
         private void _CancelCommand()

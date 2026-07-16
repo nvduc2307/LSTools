@@ -138,25 +138,21 @@
                     </Grid>
                 </Grid>
             </TabItem>
-            <TabItem Header="Anchol Info">
+            <TabItem Header="Anchor Info">
                 <Grid Margin="10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="300"/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
                     <StackPanel 
-                    Margin="0,0,10,0">
+                        VerticalAlignment="Center"
+                        Margin="0,0,10,0">
                         <StackPanel>
                             <TextBlock
                             Text="AC"/>
                             <TextBox
-                            Text="{Binding AC}"/>
-                        </StackPanel>
-                        <StackPanel Margin="0,10,0,0">
-                            <TextBlock
-                            Text="HO"/>
-                            <TextBox
-                            Text="{Binding HO}"/>
+                                DataContext="{Binding ColumnRebarAnchorModelUI}"
+                                Text="{Binding AC}"/>
                         </StackPanel>
                     </StackPanel>
                     <Image 

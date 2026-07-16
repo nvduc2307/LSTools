@@ -30,7 +30,7 @@ namespace LSTool.Tools.Generals.SettingDiameters.action
                 ResetCommand = new RelayCommand(_ResetCommand),
                 CancelCommand = new RelayCommand(_CancelCommand),
             };
-            //_viewModel.RebarBarTypes = new ObservableCollection<RebarBarTypeModel>(GetRebarBarTypes());
+            _viewModel.RebarBarTypes = new ObservableCollection<RebarBarTypeModel>(GetRebarBarTypes());
             _view = new RebarDatabasesView() { DataContext = _viewModel };
         }
 

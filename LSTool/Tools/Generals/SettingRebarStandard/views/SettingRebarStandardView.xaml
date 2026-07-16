@@ -7,8 +7,10 @@
         mc:Ignorable="d"
         Title="SettingRebarStandardView" 
         WindowStartupLocation="CenterScreen"
-        Height="500" 
-        Width="500">
+        ResizeMode="NoResize"
+        MinHeight="550" 
+        SizeToContent="Height"
+        Width="600">
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition/>
@@ -30,6 +32,7 @@
                                     <ColumnDefinition Width="50"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox 
+                                    DataContext="{Binding SettingRebarStandardModel}"
                                     Text="{Binding L1}"
                                     Margin="0,5,0,0"
                                     VerticalContentAlignment="Center"
@@ -49,6 +52,7 @@
                                     <ColumnDefinition Width="50"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox 
+                                    DataContext="{Binding SettingRebarStandardModel}"
                                     Text="{Binding G}"
                                     Margin="0,5,0,0"
                                     VerticalContentAlignment="Center"
@@ -81,6 +85,7 @@
                                     <ColumnDefinition Width="50"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox 
+                                    DataContext="{Binding SettingRebarStandardModel}"
                                     Text="{Binding L2}"
                                     Margin="0,5,0,0"
                                     VerticalContentAlignment="Center"
@@ -100,6 +105,7 @@
                                     <ColumnDefinition Width="50"/>
                                 </Grid.ColumnDefinitions>
                             <TextBox 
+                                DataContext="{Binding SettingRebarStandardModel}"
                                 Text="{Binding HMin}"
                                 Margin="0,5,0,0"
                                 VerticalContentAlignment="Center"

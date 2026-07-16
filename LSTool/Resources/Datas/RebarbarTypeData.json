@@ -1,5 +1,23 @@
 [
   {
+    "NameStyle": "D6",
+    "ModelBarDiameter": 6,
+    "BarDiameter": 6,
+    "BarDiameterReal": 6,
+    "StandardBendDiameter": 24,
+    "StandardHookBendDiameter": 24,
+    "StirrupOrTieBendDiameter": 24
+  },
+  {
+    "NameStyle": "D8",
+    "ModelBarDiameter": 8,
+    "BarDiameter": 8,
+    "BarDiameterReal": 8,
+    "StandardBendDiameter": 32,
+    "StandardHookBendDiameter": 32,
+    "StirrupOrTieBendDiameter": 32
+  },
+  {
     "NameStyle": "D10",
     "ModelBarDiameter": 11,
     "BarDiameter": 10,

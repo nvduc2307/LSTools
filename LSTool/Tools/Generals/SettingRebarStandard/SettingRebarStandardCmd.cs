@@ -1,5 +1,6 @@
 ﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.UI;
+using LSTool.Tools.Generals.SettingRebarStandard.actions;
 using LSTool.Utils;
 
 namespace LSTool.Tools.Generals.SettingRebarStandard
@@ -17,6 +18,8 @@ namespace LSTool.Tools.Generals.SettingRebarStandard
                 tsg.Start();
                 try
                 {
+                    var action = new SettingRebarStandardAction(uiDocument);
+                    action.Execute();
                     tsg.Assimilate();
                 }
                 catch (Autodesk.Revit.Exceptions.OperationCanceledException) { }
