@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace LSTool.Tools.Columns.ColumnRebar.actions
 {
-    public class ColumnRebarAnchorAction
+    public partial class ColumnRebarAnchorAction
     {
         private UIDocument _uidocument;
         private Document _document;
