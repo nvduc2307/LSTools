@@ -18,17 +18,15 @@ namespace LSTool
         {
             var panel = Application.CreatePanel("General", "LSTool");
 
-            //panel.AddPushButton<StartupCommand>("Execute")
-            //    .SetImage("/LSTool;component/Resources/Icons/RibbonIcon16.png")
-            //    .SetLargeImage("/LSTool;component/Resources/Icons/RibbonIcon32.png");
+            // General tools are registered here.
         }
         private void CreateRibbon_Beams()
         {
             var panel = Application.CreatePanel("Beam", "LSTool");
 
-            //panel.AddPushButton<StartupCommand>("Execute")
-            //    .SetImage("/LSTool;component/Resources/Icons/RibbonIcon16.png")
-            //    .SetLargeImage("/LSTool;component/Resources/Icons/RibbonIcon32.png");
+            panel.AddPushButton<LSTool.Tools.Beams.InstallRebarBeamV2.InstallRebarBeamV2Cmd>("Install Rebar\nBeam V2")
+                .SetImage("/LSTool;component/Resources/Icons/RibbonIcon16.png")
+                .SetLargeImage("/LSTool;component/Resources/Icons/RibbonIcon32.png");
         }
         private void CreateRibbon_Columns()
         {

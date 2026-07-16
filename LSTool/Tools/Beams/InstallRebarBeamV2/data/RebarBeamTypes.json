@@ -1,0 +1,337 @@
+{
+  "BeamId": 485529,
+  "Name": "FB5",
+  "NameType": "FB5",
+  "BeamWidthMm": 600.0,
+  "BeamHeightMm": 1400.0,
+  "RebarBeamSectionStart": {
+    "RebarBeamSectionType": 0,
+    "RebarBeamTop": {
+      "RebarGroupTypeActive": 1,
+      "RebarBeamTopLevel1": {
+        "HostId": 485529,
+        "RebarGroupType": 1,
+        "RebarLevelType": 0,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarBeamTopLevel2": {
+        "HostId": 485529,
+        "RebarGroupType": 2,
+        "RebarLevelType": 0,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarBeamTopLevel3": {
+        "HostId": 485529,
+        "RebarGroupType": 2,
+        "RebarLevelType": 0,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarGroupTypeChange": null,
+      "RebarBeamTopLevelActive": {
+        "HostId": 485529,
+        "RebarGroupType": 1,
+        "RebarLevelType": 0,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      }
+    },
+    "RebarBeamBot": {
+      "RebarGroupTypeActive": 1,
+      "RebarBeamBotLevel1": {
+        "HostId": 485529,
+        "RebarGroupType": 1,
+        "RebarLevelType": 1,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarBeamBotLevel2": {
+        "HostId": 485529,
+        "RebarGroupType": 2,
+        "RebarLevelType": 1,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarBeamBotLevel3": {
+        "HostId": 485529,
+        "RebarGroupType": 2,
+        "RebarLevelType": 1,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarGroupTypeChange": null,
+      "RebarBeamBotLevelActive": {
+        "HostId": 485529,
+        "RebarGroupType": 1,
+        "RebarLevelType": 1,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      }
+    },
+    "RebarBeamSideBar": {
+      "HostId": 485529,
+      "QuantitySide": 1,
+      "QuantitySideChange": null,
+      "Quantity": 0,
+      "QuantityChange": null,
+      "RebarBeamType": 0,
+      "Shape": null,
+      "Diameter": "10M"
+    },
+    "RebarBeamStirrup": {
+      "HostId": 485529,
+      "Spacing": 100.0,
+      "Quantity": 0,
+      "QuantityChange": null,
+      "RebarBeamType": 2,
+      "Shape": null,
+      "Diameter": "10M"
+    }
+  },
+  "RebarBeamSectionMid": {
+    "RebarBeamSectionType": 0,
+    "RebarBeamTop": {
+      "RebarGroupTypeActive": 1,
+      "RebarBeamTopLevel1": {
+        "HostId": 485529,
+        "RebarGroupType": 1,
+        "RebarLevelType": 0,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarBeamTopLevel2": {
+        "HostId": 485529,
+        "RebarGroupType": 2,
+        "RebarLevelType": 0,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarBeamTopLevel3": {
+        "HostId": 485529,
+        "RebarGroupType": 2,
+        "RebarLevelType": 0,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarGroupTypeChange": null,
+      "RebarBeamTopLevelActive": {
+        "HostId": 485529,
+        "RebarGroupType": 1,
+        "RebarLevelType": 0,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      }
+    },
+    "RebarBeamBot": {
+      "RebarGroupTypeActive": 1,
+      "RebarBeamBotLevel1": {
+        "HostId": 485529,
+        "RebarGroupType": 1,
+        "RebarLevelType": 1,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarBeamBotLevel2": {
+        "HostId": 485529,
+        "RebarGroupType": 2,
+        "RebarLevelType": 1,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarBeamBotLevel3": {
+        "HostId": 485529,
+        "RebarGroupType": 2,
+        "RebarLevelType": 1,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarGroupTypeChange": null,
+      "RebarBeamBotLevelActive": {
+        "HostId": 485529,
+        "RebarGroupType": 1,
+        "RebarLevelType": 1,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      }
+    },
+    "RebarBeamSideBar": {
+      "HostId": 485529,
+      "QuantitySide": 1,
+      "QuantitySideChange": null,
+      "Quantity": 0,
+      "QuantityChange": null,
+      "RebarBeamType": 0,
+      "Shape": null,
+      "Diameter": "10M"
+    },
+    "RebarBeamStirrup": {
+      "HostId": 485529,
+      "Spacing": 100.0,
+      "Quantity": 0,
+      "QuantityChange": null,
+      "RebarBeamType": 2,
+      "Shape": null,
+      "Diameter": "10M"
+    }
+  },
+  "RebarBeamSectionEnd": {
+    "RebarBeamSectionType": 0,
+    "RebarBeamTop": {
+      "RebarGroupTypeActive": 1,
+      "RebarBeamTopLevel1": {
+        "HostId": 485529,
+        "RebarGroupType": 1,
+        "RebarLevelType": 0,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarBeamTopLevel2": {
+        "HostId": 485529,
+        "RebarGroupType": 2,
+        "RebarLevelType": 0,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarBeamTopLevel3": {
+        "HostId": 485529,
+        "RebarGroupType": 2,
+        "RebarLevelType": 0,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarGroupTypeChange": null,
+      "RebarBeamTopLevelActive": {
+        "HostId": 485529,
+        "RebarGroupType": 1,
+        "RebarLevelType": 0,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      }
+    },
+    "RebarBeamBot": {
+      "RebarGroupTypeActive": 1,
+      "RebarBeamBotLevel1": {
+        "HostId": 485529,
+        "RebarGroupType": 1,
+        "RebarLevelType": 1,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarBeamBotLevel2": {
+        "HostId": 485529,
+        "RebarGroupType": 2,
+        "RebarLevelType": 1,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarBeamBotLevel3": {
+        "HostId": 485529,
+        "RebarGroupType": 2,
+        "RebarLevelType": 1,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      },
+      "RebarGroupTypeChange": null,
+      "RebarBeamBotLevelActive": {
+        "HostId": 485529,
+        "RebarGroupType": 1,
+        "RebarLevelType": 1,
+        "Quantity": 3,
+        "QuantityChange": null,
+        "RebarBeamType": 0,
+        "Shape": null,
+        "Diameter": "10M"
+      }
+    },
+    "RebarBeamSideBar": {
+      "HostId": 485529,
+      "QuantitySide": 1,
+      "QuantitySideChange": null,
+      "Quantity": 0,
+      "QuantityChange": null,
+      "RebarBeamType": 0,
+      "Shape": null,
+      "Diameter": "10M"
+    },
+    "RebarBeamStirrup": {
+      "HostId": 485529,
+      "Spacing": 100.0,
+      "Quantity": 0,
+      "QuantityChange": null,
+      "RebarBeamType": 2,
+      "Shape": null,
+      "Diameter": "10M"
+    }
+  }
+}
