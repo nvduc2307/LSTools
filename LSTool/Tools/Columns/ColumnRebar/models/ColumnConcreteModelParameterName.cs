@@ -10,5 +10,6 @@
 
         public const string LS_ST_Diameter = "LS_ST_Diameter";
         public const string LS_ST_Spacing = "LS_ST_Spacing";
+        public const string LS_ST_Spacing_End = "LS_ST_Spacing_End";
     }
 }

@@ -102,7 +102,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                         out string dy_diameter,
                         out double dy_spacing,
                         out string ts_diameter,
-                        out double ts_spacing);
+                        out double ts_spacing,
+                        out double ts_spacing_end);
                     ccM.DiameterDXs = [.. diameters];
                     ccM.DiameterDX =
                         ccM.DiameterDXs.FirstOrDefault(x => x == dx_diameter)
@@ -120,6 +121,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                         ccM.DiameterSTs.FirstOrDefault(x => x == ts_diameter)
                         ?? ccM.DiameterSTs.FirstOrDefault();
                     ccM.SpacingST = ts_spacing;
+                    ccM.SpacingSTE = ts_spacing_end;
 
                     results.Add(ccM);
                 }
@@ -150,6 +152,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
 
                         var par_ts_diameter = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Diameter);
                         var par_ts_spacing = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Spacing);
+                        var par_ts_spacing_end = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Spacing_End);
 
                         if (par_dx_diameter == null) throw new Exception();
                         if (par_dx_spacing == null) throw new Exception();
@@ -157,6 +160,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                         if (par_dy_spacing == null) throw new Exception();
                         if (par_ts_diameter == null) throw new Exception();
                         if (par_ts_spacing == null) throw new Exception();
+                        if (par_ts_spacing_end == null) throw new Exception();
                         par_dx_diameter.Set(item.DiameterDX);
                         par_dx_spacing.Set(item.SpacingDX.FromMillimeters());
 
@@ -165,6 +169,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
 
                         par_ts_diameter.Set(item.DiameterST);
                         par_ts_spacing.Set(item.SpacingST.FromMillimeters());
+                        par_ts_spacing_end.Set(item.SpacingSTE.FromMillimeters());
                     }
                     catch (Exception ex)
                     {
@@ -198,7 +203,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             out string dy_diameter,
             out double dy_spacing,
             out string ts_diameter,
-            out double ts_spacing)
+            out double ts_spacing,
+            out double ts_spacing_end)
         {
             dx_diameter = "D10";
             dx_spacing = 100;
@@ -206,6 +212,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             dy_spacing = 100;
             ts_diameter = "D10";
             ts_spacing = 100;
+            ts_spacing_end = 100;
             try
             {
                 var par_dx_diameter = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DX_Diameter);
@@ -216,6 +223,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
 
                 var par_ts_diameter = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Diameter);
                 var par_ts_spacing = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Spacing);
+                var par_ts_spacing_end = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Spacing_End);
 
                 if (par_dx_diameter == null) throw new Exception();
                 if (par_dx_spacing == null) throw new Exception();
@@ -223,6 +231,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 if (par_dy_spacing == null) throw new Exception();
                 if (par_ts_diameter == null) throw new Exception();
                 if (par_ts_spacing == null) throw new Exception();
+                if (par_ts_spacing_end == null) throw new Exception();
 
                 dx_diameter = par_dx_diameter.AsString();
                 dx_spacing = Math.Round(par_dx_spacing.AsDouble().ToMillimeters(), 0);
@@ -232,6 +241,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
 
                 ts_diameter = par_ts_diameter.AsString();
                 ts_spacing = Math.Round(par_ts_spacing.AsDouble().ToMillimeters(), 0);
+                ts_spacing_end = Math.Round(par_ts_spacing_end.AsDouble().ToMillimeters(), 0);
 
                 if (string.IsNullOrEmpty(dx_diameter)) throw new Exception();
                 if (dx_spacing < 10) throw new Exception();
@@ -241,6 +251,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
 
                 if (string.IsNullOrEmpty(ts_diameter)) throw new Exception();
                 if (ts_spacing < 10) throw new Exception();
+                if (ts_spacing_end < 10) throw new Exception();
             }
             catch (Exception)
             {
@@ -250,6 +261,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 dy_spacing = 100;
                 ts_diameter = "D10";
                 ts_spacing = 100;
+                ts_spacing_end = 100;
             }
         }
         private void GetFaceColumn(
@@ -388,12 +400,12 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     .Select(p => p.RayIntersectPlane(fS.Normal, fS))
                     .ToList();
                 var psX = psSections
-                    .Select(p => p.RayIntersectPlane(fy.Normal, fy))
+                    .Select(p => p.RayIntersectPlane(fx.Normal, fx))
                     .Distinct(new ComparePoint())
                     .OrderBy(p => p.DotProduct(vtx))
                     .ToList();
                 var psY = psSections
-                    .Select(p => p.RayIntersectPlane(fx.Normal, fx))
+                    .Select(p => p.RayIntersectPlane(fy.Normal, fy))
                     .Distinct(new ComparePoint())
                     .OrderBy(p => p.DotProduct(vty))
                     .ToList();

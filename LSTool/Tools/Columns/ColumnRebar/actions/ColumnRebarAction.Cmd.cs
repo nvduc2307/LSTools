@@ -1,12 +1,4 @@
-﻿using Autodesk.Revit.UI;
-using LSTool.Tools.Columns.ColumnRebar.viewModels;
-using LSTool.Tools.Columns.ColumnRebar.views;
-using LSTool.Tools.Generals.SettingDiameters.action;
-using LSTool.Tools.Generals.SettingRebarStandard.models;
-using LSTool.Utils.ExternalEvent;
-using Newtonsoft.Json;
-
-namespace LSTool.Tools.Columns.ColumnRebar.actions
+﻿namespace LSTool.Tools.Columns.ColumnRebar.actions
 {
     public partial class ColumnRebarAction
     {
@@ -14,6 +6,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         {
             _columnConcreteAction.SetRebarSetting(_document, _viewModel.ColumnConcreteModels);
             _columnRebarStirrupAction.CreateStirrupMain(_viewModel.ColumnConcreteModels);
+            _columnRebarAnchorAction.SaveColumnRebarAnchor(_viewModel.ColumnRebarAnchorModelUI);
         }
         private void _ColumnConcreteModelAction()
         {

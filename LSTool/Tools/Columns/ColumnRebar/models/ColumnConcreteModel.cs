@@ -4,6 +4,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.models
 {
     public partial class ColumnConcreteModel : ConcreteModel
     {
+        public double HeightBeamZone { get; set; } = 0;
         public ColumnFaceModel FaceLeft { get; set; }
         public ColumnFaceModel FaceTop { get; set; }
         public ColumnFaceModel FaceRight { get; set; }
@@ -23,5 +24,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.models
         private double _spacingDY;
         [ObservableProperty]
         private double _spacingST;
+        [ObservableProperty]
+        private double _spacingSTE;
     }
 }

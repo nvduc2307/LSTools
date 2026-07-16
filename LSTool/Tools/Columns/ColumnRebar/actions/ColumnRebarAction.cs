@@ -22,6 +22,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
 
         private ColumnConcreteAction _columnConcreteAction;
         private ColumnRebarStirrupAction _columnRebarStirrupAction;
+        private ColumnRebarAnchorAction _columnRebarAnchorAction;
         public ColumnRebarAction(UIDocument uidocument)
         {
             _uidocument = uidocument;
@@ -31,6 +32,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             _settingRebarStandardSchema = new SettingRebarStandardSchema(
                 SettingRebarStandardSchema.GUID,
                 SettingRebarStandardSchema.NAME);
+            _columnRebarAnchorAction = new ColumnRebarAnchorAction(_uidocument);
             _externalColumnRebarCmd = new CustomExternalCommand("columnRebarCmd")
             {
                 Action = _externalColumnRebarCmdInvoke
@@ -39,6 +41,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             Validate();
             _viewModel = new ColumnRebarVM()
             {
+                ColumnRebarAnchorModelUI = _columnRebarAnchorAction.GetColumnRebarAnchor(),
                 ColumnConcreteModelAction = _ColumnConcreteModelAction,
                 OkCommand = new RelayCommand(_OkCommand),
                 CancelCommand = new RelayCommand(_CancelCommand)
