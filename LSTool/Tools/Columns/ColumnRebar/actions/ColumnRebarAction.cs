@@ -11,15 +11,17 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private UIDocument _uidocument;
         private Document _document;
         private ColumnRebarView _view;
-        private ColumnRebarVM _viewModel;
-        private ColumnConcreteAction _columnConcreteAction;
 
-        private ColumnRebarStirrupAction _columnRebarStirrupAction;
 
         private CustomExternalCommand _externalColumnRebarCmd;
         private ExternalEvent _externalColumnRebarCmdEvent;
         private SettingRebarStandardSchema _settingRebarStandardSchema;
+
+        private ColumnRebarVM _viewModel;
         private SettingRebarStandardModel _settingRebarStandardModel;
+
+        private ColumnConcreteAction _columnConcreteAction;
+        private ColumnRebarStirrupAction _columnRebarStirrupAction;
         public ColumnRebarAction(UIDocument uidocument)
         {
             _uidocument = uidocument;
