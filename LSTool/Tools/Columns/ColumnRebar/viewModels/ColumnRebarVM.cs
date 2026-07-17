@@ -1,4 +1,5 @@
 ﻿using LSTool.Tools.Columns.ColumnRebar.models;
+using LSTool.Tools.Generals.SettingRebarStandard.models;
 
 namespace LSTool.Tools.Columns.ColumnRebar.viewModels
 {
@@ -19,6 +20,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.viewModels
         }
         public Action ColumnConcreteModelAction { get; set; }
         public ColumnRebarAnchorModelUI ColumnRebarAnchorModelUI { get; set; }
+        public SettingRebarStandardModelUI SettingRebarStandardModel { get; set; }
         public RelayCommand OkCommand { get; set; }
         public RelayCommand CancelCommand { get; set; }
     }

@@ -55,7 +55,7 @@ namespace LSTool.Tools.Generals.SettingRebarStandard.actions
         {
             _view?.ShowDialog();
         }
-        private SettingRebarStandardModelUI GetSetting()
+        public SettingRebarStandardModelUI GetSetting()
         {
             var result = new SettingRebarStandardModelUI()
             {

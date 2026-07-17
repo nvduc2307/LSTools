@@ -4,7 +4,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.models
 {
     public partial class ColumnConcreteModel : ConcreteModel
     {
-        public double HeightBeamZone { get; set; } = 0;
+        public double HeightBeamZone { get; set; } = 400;
         public ColumnFaceModel FaceLeft { get; set; }
         public ColumnFaceModel FaceTop { get; set; }
         public ColumnFaceModel FaceRight { get; set; }

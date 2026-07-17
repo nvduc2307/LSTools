@@ -18,64 +18,76 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             using (var ts = new SubTransaction(_document))
             {
                 ts.Start();
+                var count = ccRInfos.Count;
                 foreach (var ccRInfo in ccRInfos)
                 {
-                    var diamterSt = ccRInfo.DiameterST.FindInterger();
-                    if (diamterSt == 0) continue;
-                    var cover = (ccRInfo.Cover + diamterSt).FromMillimeters();
-                    var start = ccRInfo.Center - ccRInfo.VTZ * ccRInfo.Length.FromMillimeters() / 2;
-                    var end = ccRInfo.Center 
-                        + ccRInfo.VTZ * ccRInfo.Length.FromMillimeters() / 2
-                        - ccRInfo.VTZ * ccRInfo.HeightBeamZone.FromMillimeters();
-                    var length = start.DistanceTo(end);
-                    var stressZone = 0.25;
+                    var index = ccRInfos.IndexOf(ccRInfo);
+                    InstallStirrupMain(ccRInfo, index == 0 || index == count - 1 ? false : true);
+                }
+                ts.Commit();
+            }
+        }
+        private void InstallStirrupMain(ColumnConcreteModel ccRInfo, bool hasBeamZone)
+        {
+            try
+            {
+                var diamterSt = ccRInfo.DiameterST.FindInterger();
+                if (diamterSt == 0) return;
+                var cover = (ccRInfo.Cover + diamterSt / 2).FromMillimeters();
+                var start = ccRInfo.Center - ccRInfo.VTZ * ccRInfo.Length.FromMillimeters() / 2;
+                var end = ccRInfo.Center
+                    + ccRInfo.VTZ * ccRInfo.Length.FromMillimeters() / 2
+                    - ccRInfo.VTZ * (hasBeamZone ? ccRInfo.HeightBeamZone.FromMillimeters() : 0);
+                var length = start.DistanceTo(end);
+                var stressZone = 0.25;
 
-                    var start_zone1 = start;
-                    var End_zone1 = start + ccRInfo.VTZ * length * stressZone;
+                var start_zone1 = start;
+                var End_zone1 = start + ccRInfo.VTZ * length * stressZone;
 
-                    var start_zone2 = start + ccRInfo.VTZ * length * stressZone;
-                    var End_zone2 = end - ccRInfo.VTZ * length * stressZone;
+                var start_zone2 = start + ccRInfo.VTZ * length * stressZone;
+                var End_zone2 = end - ccRInfo.VTZ * length * stressZone;
 
-                    var start_zone3 = end - ccRInfo.VTZ * length * stressZone;
-                    var End_zone3 = end;
+                var start_zone3 = end - ccRInfo.VTZ * length * stressZone;
+                var End_zone3 = end;
 
-                    var ps = new List<XYZ>()
+                var ps = new List<XYZ>()
                     {
                         ccRInfo.FaceLeft.Pb1,
                         ccRInfo.FaceTop.Pb1,
                         ccRInfo.FaceRight.Pb1,
                         ccRInfo.FaceBottom.Pb1,
                     };
-                    var baseShapes = CurveLoop.CreateViaOffset(ps
-                            .PointsToCurveLoop(), cover, -ccRInfo.VTZ)
-                            .Select(x => x.GetEndPoint(1))
-                            .ToList();
-                    var shapes_Start = _installStirrup(start_zone1, End_zone1, baseShapes, ccRInfo.SpacingSTE, 50, ccRInfo.SpacingSTE / 2);
-                    var shapes_Mid = _installStirrup(start_zone2, End_zone2, baseShapes, ccRInfo.SpacingST, ccRInfo.SpacingST / 2, ccRInfo.SpacingST / 2);
-                    var shapes_End = _installStirrup(start_zone3, End_zone3, baseShapes, ccRInfo.SpacingSTE, 50, ccRInfo.SpacingSTE / 2);
+                var baseShapes = CurveLoop.CreateViaOffset(ps
+                        .PointsToCurveLoop(), cover, -ccRInfo.VTZ)
+                        .Select(x => x.GetEndPoint(1))
+                        .ToList();
+                var shapes_Start = _installStirrup(start_zone1, End_zone1, baseShapes, ccRInfo.SpacingSTE, 50, ccRInfo.SpacingSTE / 2);
+                var shapes_Mid = _installStirrup(start_zone2, End_zone2, baseShapes, ccRInfo.SpacingST, ccRInfo.SpacingST / 2, ccRInfo.SpacingST / 2);
+                var shapes_End = _installStirrup(start_zone3, End_zone3, baseShapes, ccRInfo.SpacingSTE, 50, ccRInfo.SpacingSTE / 2);
 
-                    foreach (var item in shapes_Start)
-                    {
-                        _document.CreateCurves(item);
-                    }
-                    foreach (var item in shapes_Mid)
-                    {
-                        _document.CreateCurves(item);
-                    }
-                    foreach (var item in shapes_End)
-                    {
-                        _document.CreateCurves(item);
-                    }
+                foreach (var item in shapes_Start)
+                {
+                    _document.CreateCurves(item);
                 }
-                ts.Commit();
+                foreach (var item in shapes_Mid)
+                {
+                    _document.CreateCurves(item);
+                }
+                foreach (var item in shapes_End)
+                {
+                    _document.CreateCurves(item);
+                }
+            }
+            catch (Exception)
+            {
             }
         }
         private List<List<Curve>> _installStirrup(
-            XYZ start, 
-            XYZ end, 
-            List<XYZ> baseShapes, 
-            double spacingMm, 
-            double extendS, 
+            XYZ start,
+            XYZ end,
+            List<XYZ> baseShapes,
+            double spacingMm,
+            double extendS,
             double extendE)
         {
             var result = new List<List<Curve>>();
@@ -84,7 +96,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 var vt = (end - start).Normalize();
                 var distance = start.DistanceTo(end).ToMillimeters() - (extendS + extendE);
                 var duSpacing = distance % spacingMm;
-                var qty =1 + (distance - duSpacing) / spacingMm;
+                var qty = 1 + (distance - duSpacing) / spacingMm;
                 var baseS = start + vt * extendS.FromMillimeters();
                 var baseE = end - vt * extendE.FromMillimeters();
                 var f = Plane.CreateByNormalAndOrigin(vt, baseS);

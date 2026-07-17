@@ -33,7 +33,6 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             var obj = JsonConvert.DeserializeObject<SettingRebarStandardModel>(content);
             if (obj == null)
                 throw new Exception(error);
-            _settingRebarStandardModel = obj;
         }
         private void ValidateQtyRebar()
         {

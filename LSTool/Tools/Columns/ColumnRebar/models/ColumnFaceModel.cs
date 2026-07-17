@@ -11,5 +11,9 @@
         public Plane Plane { get; set; }
         public double RebarQty { get; set; }
         public double RebarQtyNext { get; set; }
+        public double Cover { get; set; }
+        public double CoverBase { get; set; }
+        public double Diameter { get; set; }
+        public double HeightBeamZone { get; set; } = 0;
     }
 }
