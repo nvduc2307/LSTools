@@ -9,5 +9,7 @@
         public XYZ Pt1 { get; set; }
         public XYZ Pt2 { get; set; }
         public Plane Plane { get; set; }
+        public double RebarQty { get; set; }
+        public double RebarQtyNext { get; set; }
     }
 }

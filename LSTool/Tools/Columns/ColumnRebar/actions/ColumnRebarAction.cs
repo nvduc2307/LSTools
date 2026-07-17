@@ -21,14 +21,16 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private SettingRebarStandardModel _settingRebarStandardModel;
 
         private ColumnConcreteAction _columnConcreteAction;
-        private ColumnRebarStirrupAction _columnRebarStirrupAction;
         private ColumnRebarAnchorAction _columnRebarAnchorAction;
+        private ColumnRebarStirrupAction _columnRebarStirrupAction;
+        private ColumnRebarMainAction _columnRebarMainAction;
         public ColumnRebarAction(UIDocument uidocument)
         {
             _uidocument = uidocument;
             _document = _uidocument.Document;
             _columnConcreteAction = new ColumnConcreteAction(_uidocument);
             _columnRebarStirrupAction = new ColumnRebarStirrupAction(_uidocument);
+            _columnRebarMainAction = new ColumnRebarMainAction(_uidocument);
             _settingRebarStandardSchema = new SettingRebarStandardSchema(
                 SettingRebarStandardSchema.GUID,
                 SettingRebarStandardSchema.NAME);
@@ -48,11 +50,6 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             };
             _view = new ColumnRebarView() { DataContext = _viewModel };
         }
-        // create rebar stirrup
-        // create rebar face right
-        // create rebar face top
-        // create rebar face left
-        // create rebar face bot
         public void Execute()
         {
             var cls = _columnConcreteAction.SelectColumns();

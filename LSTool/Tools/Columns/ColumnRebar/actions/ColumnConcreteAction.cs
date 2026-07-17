@@ -207,9 +207,9 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             out double ts_spacing_end)
         {
             dx_diameter = "D10";
-            dx_spacing = 100;
+            dx_spacing = 5;
             dy_diameter = "D10";
-            dy_spacing = 100;
+            dy_spacing = 5;
             ts_diameter = "D10";
             ts_spacing = 100;
             ts_spacing_end = 100;
@@ -256,9 +256,9 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             catch (Exception)
             {
                 dx_diameter = "D10";
-                dx_spacing = 100;
+                dx_spacing = 5;
                 dy_diameter = "D10";
-                dy_spacing = 100;
+                dy_spacing = 5;
                 ts_diameter = "D10";
                 ts_spacing = 100;
                 ts_spacing_end = 100;

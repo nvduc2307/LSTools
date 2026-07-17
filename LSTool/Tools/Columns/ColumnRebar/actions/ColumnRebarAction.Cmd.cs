@@ -4,8 +4,10 @@
     {
         private void _externalColumnRebarCmdInvoke()
         {
+            ValidateQtyRebar();
             _columnConcreteAction.SetRebarSetting(_document, _viewModel.ColumnConcreteModels);
             _columnRebarStirrupAction.CreateStirrupMain(_viewModel.ColumnConcreteModels);
+            _columnRebarMainAction.CreateRebarMain(_viewModel.ColumnConcreteModels);
             _columnRebarAnchorAction.SaveColumnRebarAnchor(_viewModel.ColumnRebarAnchorModelUI);
         }
         private void _ColumnConcreteModelAction()
