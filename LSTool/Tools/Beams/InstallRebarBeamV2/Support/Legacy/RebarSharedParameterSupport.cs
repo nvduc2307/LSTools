@@ -60,8 +60,22 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Support.Legacy
                     throw new InvalidOperationException(
                         $"Missing required rebar shared parameter definitions: {string.Join(", ", missingDefinitions)}");
 
+                var bindingsByName = GetBindingsByName(document);
+                var sharedParametersByName = new FilteredElementCollector(document)
+                    .OfClass(typeof(SharedParameterElement))
+                    .Cast<SharedParameterElement>()
+                    .GroupBy(parameter => parameter.Name, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+                var rebarCategory = Category.GetCategory(document, BuiltInCategory.OST_Rebar)
+                    ?? throw new InvalidOperationException("The Rebar category is unavailable in this document.");
+
                 foreach (var definition in definitions.Values)
-                    EnsureRebarBinding(document, definition);
+                    EnsureRebarBinding(
+                        document,
+                        definition,
+                        bindingsByName,
+                        sharedParametersByName,
+                        rebarCategory);
             }
             finally
             {
@@ -111,16 +125,15 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Support.Legacy
                     $"Revit rejected the value for required parameter '{parameterId}' on element {element.Id.Value}.");
         }
 
-        private static void EnsureRebarBinding(Document document, ExternalDefinition externalDefinition)
+        private static void EnsureRebarBinding(
+            Document document,
+            ExternalDefinition externalDefinition,
+            IReadOnlyDictionary<string, (Definition Definition, Autodesk.Revit.DB.Binding Binding)> bindingsByName,
+            IReadOnlyDictionary<string, SharedParameterElement> sharedParametersByName,
+            Category rebarCategory)
         {
-            var existing = FindBinding(document, externalDefinition);
-
-            var sameNameSharedParameter = new FilteredElementCollector(document)
-                .OfClass(typeof(SharedParameterElement))
-                .Cast<SharedParameterElement>()
-                .FirstOrDefault(parameter => parameter.Name.Equals(
-                    externalDefinition.Name,
-                    StringComparison.OrdinalIgnoreCase));
+            bindingsByName.TryGetValue(externalDefinition.Name, out var existing);
+            sharedParametersByName.TryGetValue(externalDefinition.Name, out var sameNameSharedParameter);
             if (sameNameSharedParameter != null
                 && sameNameSharedParameter.GuidValue != externalDefinition.GUID)
             {
@@ -140,8 +153,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Support.Legacy
                 throw new InvalidOperationException(
                     $"Shared parameter '{externalDefinition.Name}' is type-bound; an instance binding is required.");
 
-            var rebarCategory = Category.GetCategory(document, BuiltInCategory.OST_Rebar)
-                ?? throw new InvalidOperationException("The Rebar category is unavailable in this document.");
             var categories = document.Application.Create.NewCategorySet();
             if (existing.Binding is ElementBinding existingBinding)
             {
@@ -164,20 +175,22 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Support.Legacy
                     $"Unable to bind shared parameter '{externalDefinition.Name}' to Rebar.");
         }
 
-        private static (Definition Definition, Autodesk.Revit.DB.Binding Binding) FindBinding(
-            Document document,
-            ExternalDefinition target)
+        private static Dictionary<string, (Definition Definition, Autodesk.Revit.DB.Binding Binding)>
+            GetBindingsByName(Document document)
         {
+            var result = new Dictionary<string, (Definition, Autodesk.Revit.DB.Binding)>(
+                StringComparer.OrdinalIgnoreCase);
             var iterator = document.ParameterBindings.ForwardIterator();
             iterator.Reset();
             while (iterator.MoveNext())
             {
                 var definition = iterator.Key;
-                if (definition == null || !definition.Name.Equals(target.Name, StringComparison.OrdinalIgnoreCase))
-                    continue;
-                return (definition, iterator.Current as Autodesk.Revit.DB.Binding);
+                if (definition == null || string.IsNullOrWhiteSpace(definition.Name)) continue;
+                result[definition.Name] = (
+                    definition,
+                    iterator.Current as Autodesk.Revit.DB.Binding);
             }
-            return (null, null);
+            return result;
         }
 
         private static string GetParameterFilePath()

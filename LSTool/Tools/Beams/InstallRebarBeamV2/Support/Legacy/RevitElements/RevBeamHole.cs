@@ -6,6 +6,7 @@ using HcBimUtils.RebarUtils;
 using Newtonsoft.Json;
 using RIMT.BeamRebar.ViewModel;
 using RIMT.Utils.Compares;
+using RIMT.Utils.BoundingBoxs;
 using RIMT.Utils.Entities;
 using RIMT.Utils.Geometries;
 using RIMT.Utils.Revit;
@@ -57,9 +58,9 @@ namespace RIMT.Utils.RevitElements
         public static List<Rebar> DeleteMainStirrup(
             Document document,
             FamilyInstance beam,
+            BoxElement beamBox,
             List<Rebar> stirrups,
             double beamThicknessMm,
-            double beamHeightMm,
             double bottomElevationMm,
             double topElevationMm,
             int numberRebarAdd,
@@ -78,10 +79,42 @@ namespace RIMT.Utils.RevitElements
                 var xAxis = transform.OfVector(XYZ.BasisX);
                 var yAxis = transform.OfVector(XYZ.BasisY);
                 var zAxis = transform.OfVector(XYZ.BasisZ);
-                var beamBox = new RevElement(beam);
-                var midpoint = beamBox.BoxElement.LineBox.Midpoint();
+                if (beamBox?.LineBox == null)
+                    throw new InvalidOperationException(
+                        $"Cached beam geometry is unavailable for beam {beam.Id.Value}.");
+                var midpoint = beamBox.LineBox.Midpoint();
                 var elevationFace = new FaceCustom(yAxis, midpoint);
                 var planFace = new FaceCustom(zAxis, midpoint);
+                var validStirrups = stirrups
+                    .Where(rebar => rebar != null && rebar.IsValidObject)
+                    .ToList();
+                var targetCandidates = validStirrups
+                    .Where(rebar => !rebar.RebarNormal().IsPerpendicular(xAxis))
+                    .ToList();
+                var sourceGroups = validStirrups
+                    .GroupBy(rebar => rebar, new CompareRebarFoLowFace(elevationFace, planFace))
+                    .Select(group => group.ToList())
+                    .OrderByDescending(group => group.Count)
+                    .ToList();
+                var sourceGroup = sourceGroups.FirstOrDefault();
+                if (sourceGroup == null || sourceGroup.Count == 0)
+                    throw new InvalidOperationException(
+                        "A source stirrup group could not be resolved for opening reinforcement.");
+                var correctedLengths = sourceGroup.ToDictionary(
+                    rebar => rebar.Id.Value,
+                    rebar => rebar.GetRebaLengthRealFromData());
+                sourceGroup = sourceGroup
+                    .OrderBy(rebar => correctedLengths[rebar.Id.Value])
+                    .ToList();
+                var sourceRay = sourceGroup.Last().GetCurvesOrgin().FirstOrDefault()?.Midpoint()
+                    ?? throw new InvalidOperationException(
+                        "A source stirrup ray could not be resolved for opening reinforcement.");
+                var sourceMetadataById = sourceGroup.ToDictionary(
+                    rebar => rebar.Id.Value,
+                    rebar => SchemaInfo.ReadAll(schemaInfo.SchemaBase, schemaInfo.SchemaField, rebar)?.Value
+                        ?? throw new InvalidOperationException(
+                            $"Required metadata is missing on source stirrup {rebar.Id.Value}."));
+                var deleteIds = new HashSet<long>();
 
                 foreach (var hole in holes)
                 {
@@ -98,9 +131,7 @@ namespace RIMT.Utils.RevitElements
                         Max = installPoint + xAxis * radius + yAxis * beamThicknessMm.MmToFoot() + zAxis * upperHeight
                     };
                     var interferenceSolid = bounds.SolidFromBoundingbox();
-                    var targets = stirrups
-                        .Where(rebar => rebar != null && rebar.IsValidObject)
-                        .Where(rebar => !rebar.RebarNormal().IsPerpendicular(xAxis))
+                    var targets = targetCandidates
                         .Where(rebar =>
                         {
                             var centerlines = rebar.GetLinesOrigin();
@@ -114,18 +145,6 @@ namespace RIMT.Utils.RevitElements
                         })
                         .ToList();
                     if (!targets.Any()) continue;
-
-                    var groups = stirrups
-                        .Where(rebar => rebar != null && rebar.IsValidObject)
-                        .GroupBy(rebar => rebar, new CompareRebarFoLowFace(elevationFace, planFace))
-                        .Select(group => group.ToList())
-                        .OrderByDescending(group => group.Count)
-                        .ToList();
-                    var sourceGroup = groups.FirstOrDefault()?.OrderBy(rebar => rebar.GetRebaLengthRealFromData()).ToList();
-                    var sourceRay = sourceGroup?.LastOrDefault()?.GetCurvesOrgin().FirstOrDefault()?.Midpoint();
-                    if (sourceGroup == null || sourceGroup.Count == 0 || sourceRay == null)
-                        throw new InvalidOperationException(
-                            "A source stirrup group could not be resolved for opening reinforcement.");
 
                     var barType = document.GetElement(targets[0].GetTypeId()) as RebarBarType;
                     var diameter = barType.GetRebarDiameter();
@@ -144,10 +163,6 @@ namespace RIMT.Utils.RevitElements
                         var copyDirection = sourceRay.RayPointToFace(xAxis, targetFace) - sourceRay;
                         foreach (var sourceRebar in sourceGroup)
                         {
-                            var schemaValue = SchemaInfo.ReadAll(schemaInfo.SchemaBase, schemaInfo.SchemaField, sourceRebar);
-                            if (schemaValue == null)
-                                throw new InvalidOperationException(
-                                    $"Required metadata is missing on source stirrup {sourceRebar.Id.Value}.");
                             var copiedId = ElementTransformUtils.CopyElement(document, sourceRebar.Id, copyDirection).FirstOrDefault();
                             if (copiedId == null || document.GetElement(copiedId) is not Rebar copiedRebar)
                                 throw new InvalidOperationException(
@@ -156,18 +171,27 @@ namespace RIMT.Utils.RevitElements
                                 sourceRebar,
                                 copiedRebar,
                                 LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE);
-                            var copiedInfo = JsonConvert.DeserializeObject<BeamRebarInfo>(schemaValue.Value)
+                            var copiedInfo = JsonConvert.DeserializeObject<BeamRebarInfo>(
+                                    sourceMetadataById[sourceRebar.Id.Value])
                                 ?? throw new InvalidOperationException(
                                     $"Metadata on source stirrup {sourceRebar.Id.Value} is invalid.");
                             copiedInfo.Id = copiedRebar.Id.Value;
                             copiedInfo.UniqueId = copiedRebar.UniqueId;
                             copiedInfo.Name = copiedRebar.Name;
-                            schemaValue.Value = JsonConvert.SerializeObject(copiedInfo);
+                            var schemaValue = new SchemaField
+                            {
+                                Name = schemaInfo.SchemaField.Name,
+                                Value = JsonConvert.SerializeObject(copiedInfo)
+                            };
                             SchemaInfo.Write(schemaInfo.SchemaBase, copiedRebar, schemaValue);
                             results.Add(copiedRebar);
                         }
                     }
-                    rebarDeletes.AddRange(targets);
+                    foreach (var target in targets)
+                    {
+                        if (deleteIds.Add(target.Id.Value))
+                            rebarDeletes.Add(target);
+                    }
                 }
             }
             catch (Exception ex)

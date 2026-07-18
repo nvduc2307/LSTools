@@ -28,6 +28,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
         public double DistanceRebarToRebarMm { get; set; }
         public RevElement Beam { get; set; }
         public List<RebarBarTypeCustom> RebarBarTypeCustoms { get; set; }
+        public IReadOnlyDictionary<string, RebarBarTypeCustom> RebarBarTypesByName { get; private set; }
         public List<string> RebarDiameters { get; set; }
         public List<string> MainRebarDiameters { get; set; }
         public List<string> StirrupRebarDiameters { get; set; }
@@ -110,6 +111,18 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 .Select(x => new RebarBarTypeCustom(x))
                 .Where(x => x.NameStyle.Contains("D") && x.NameStyle.Contains("("))
                 .ToList();
+            var duplicateBarTypeNames = RebarBarTypeCustoms
+                .GroupBy(type => type.NameStyle, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > 1)
+                .Select(group => group.Key)
+                .OrderBy(name => name)
+                .ToList();
+            if (duplicateBarTypeNames.Count > 0)
+                throw new InvalidOperationException(
+                    $"Duplicate rebar type names are not supported: {string.Join(", ", duplicateBarTypeNames)}");
+            RebarBarTypesByName = RebarBarTypeCustoms.ToDictionary(
+                type => type.NameStyle,
+                StringComparer.OrdinalIgnoreCase);
             RebarDiameters = RebarBarTypeCustoms
                 .Select(x => x.NameStyle)
                 .Where(x => x.Contains("D"))
@@ -198,6 +211,16 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 Diameter = RebarDiameters.FirstOrDefault(),
                 Quantity = 2
             };
+        }
+
+        public RebarBarTypeCustom GetRebarBarType(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new InvalidOperationException("A rebar type name is required.");
+            if (!RebarBarTypesByName.TryGetValue(name, out var result))
+                throw new InvalidOperationException(
+                    $"Rebar type '{name}' was not found in the active document.");
+            return result;
         }
         public void InitDataRebarBeam()
         {
