@@ -55,8 +55,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.MainStirrup
                 }
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to create main stirrup shape 3.", ex);
             }
         }
     }

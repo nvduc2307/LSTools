@@ -66,8 +66,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                     };
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException(
+                    "Failed to synchronize the selected top-bar group across beam sections.", ex);
             }
             List<RebarBeamSection> GetRebarBeamTop(
                 RebarBeamSectionType rebarBeamSectionType, 
@@ -93,10 +95,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                     }
                     return results;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    throw new InvalidOperationException(
+                        "Failed to resolve the remaining beam sections for top-bar synchronization.", ex);
                 }
-                return new List<RebarBeamSection>();
             }
         }
     }
@@ -157,8 +160,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                     };
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException(
+                    "Failed to synchronize the selected bottom-bar group across beam sections.", ex);
             }
             List<RebarBeamSection> GetRebarBeamBot(
                 RebarBeamSectionType rebarBeamSectionType,
@@ -184,10 +189,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                     }
                     return results;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    throw new InvalidOperationException(
+                        "Failed to resolve the remaining beam sections for bottom-bar synchronization.", ex);
                 }
-                return new List<RebarBeamSection>();
             }
         }
     }

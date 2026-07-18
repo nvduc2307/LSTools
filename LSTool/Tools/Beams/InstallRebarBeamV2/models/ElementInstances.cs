@@ -98,6 +98,14 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             RebarBeamTypeSelected = RebarBeamTypes.FirstOrDefault();
 
             Beam = new RevElement(obj);
+            if (Beam.ElementSubs == null || Beam.ElementSubs.Count == 0)
+                throw new InvalidOperationException(
+                    "No structural framing members were found in the selected element.");
+            if (Beam.ElementSubs.Any(member =>
+                    member?.Element is not FamilyInstance
+                    || member.Element.Category?.Id.Value != (long)BuiltInCategory.OST_StructuralFraming))
+                throw new InvalidOperationException(
+                    "The selected assembly must contain only structural framing family instances.");
             RebarBarTypeCustoms = _document.GetElementsFromClass<RebarBarType>()
                 .Select(x => new RebarBarTypeCustom(x))
                 .Where(x => x.NameStyle.Contains("D") && x.NameStyle.Contains("("))
@@ -112,11 +120,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             RebarBeams = Beam.ElementSubs?.Select(x => new RebarBeam(x)).ToList();
             InitDataRebarBeam();
             RebarBeamActive = RebarBeams.FirstOrDefault();
-#if R24 || R25
-                var beamId = new ElementId(long.Parse(RebarBeamActive.BeamId.ToString()));
-#else
             var beamId = new ElementId(RebarBeamActive.BeamId);
-#endif
             _uiDocument.Selection.SetElementIds(new List<ElementId>() { beamId });
             RebarBeamActive.MainStirrupType3 = RebarBeamTypeSelected == null ? true : RebarBeamTypeSelected.MainStirrupType3;
             RebarBeamActive.MainStirrupType2 = RebarBeamTypeSelected == null ? true : RebarBeamTypeSelected.MainStirrupType2;
@@ -224,26 +228,45 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
         {
             var schema = new RebarBarTypeSchema(RebarBarTypeSchema.GUID, RebarBarTypeSchema.NAME);
             var content = schema.Read(_document.ProjectInformation);
-            var settings = string.IsNullOrWhiteSpace(content)
-                ? new List<RebarBarTypeModel>()
-                : JsonConvert.DeserializeObject<List<RebarBarTypeModel>>(content)
-                    ?? new List<RebarBarTypeModel>();
-
-            var stirrupLimit = settings
-                .Where(setting => setting.BarDiameterReal > 0)
-                .OrderBy(setting => setting.BarDiameterReal)
-                .Skip(2)
-                .Select(setting => setting.BarDiameterReal.MmToFoot())
-                .FirstOrDefault();
-            if (stirrupLimit <= 0)
+            double stirrupLimit;
+            if (string.IsNullOrWhiteSpace(content))
             {
-                stirrupLimit = RebarBarTypeCustoms
+                var documentDiameters = RebarBarTypeCustoms
                     .Where(type => type.ModelBarDiameter > 0)
-                    .OrderBy(type => type.ModelBarDiameter)
-                    .Skip(2)
                     .Select(type => type.ModelBarDiameter)
-                    .FirstOrDefault();
+                    .Distinct()
+                    .OrderBy(diameter => diameter)
+                    .ToList();
+                if (documentDiameters.Count < 3)
+                    throw new InvalidOperationException(
+                        "At least three distinct configured rebar diameters are required to classify stirrup and main-bar types.");
+                stirrupLimit = documentDiameters[2];
             }
+            else
+            {
+                List<RebarBarTypeModel> settings;
+                try
+                {
+                    settings = JsonConvert.DeserializeObject<List<RebarBarTypeModel>>(content)
+                        ?? throw new InvalidOperationException("Diameter settings are empty.");
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException("Diameter settings stored in the model are invalid.", ex);
+                }
+
+                var configuredDiameters = settings
+                    .Where(setting => setting.BarDiameterReal > 0)
+                    .Select(setting => setting.BarDiameterReal)
+                    .Distinct()
+                    .OrderBy(diameter => diameter)
+                    .ToList();
+                if (configuredDiameters.Count < 3)
+                    throw new InvalidOperationException(
+                        "Diameter settings must contain at least three distinct positive diameters.");
+                stirrupLimit = configuredDiameters[2].MmToFoot();
+            }
+
             if (stirrupLimit <= 0)
                 throw new Exception(InstallRebarBeamV2Exceptions.EXCEPTION_DIAMETER_NOT_FOUND);
 
@@ -259,6 +282,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 .Where(name => name.Contains("D"))
                 .OrderBy(name => name)
                 .ToList();
+            if (MainRebarDiameters.Count == 0 || StirrupRebarDiameters.Count == 0)
+                throw new InvalidOperationException(
+                    "Diameter classification produced an empty main-bar or stirrup list. Check the configured rebar types.");
         }
         private void ApplySection(RebarBeamSection rebarBeamSection)
         {
@@ -324,8 +350,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 rebarBeamSection.RebarBeamSideBar.Quantity =
                     sectionActive.RebarBeamSideBar.Quantity;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException(
+                    $"Failed to apply reinforcement preset to section {rebarBeamSection?.RebarBeamSectionType}.", ex);
             }
         }
         private void ReWriteSpacingStirrup(RebarBeamSection rebarBeamSection, RebarBeam rebarBeam)
@@ -617,8 +645,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                     beam.GenerateCoordinateAndPointControl(vtx, vty, vtz, BeamFukashi);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException(
+                    "Failed to generate the coordinate system for the selected beam assembly.", ex);
             }
         }
     }

@@ -48,7 +48,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models.MainStirrups
 
         public static RebarShape GetRebarShape1()
         {
-            if (_rebarShape1 == null || !_rebarShape1.IsValidObject)
+            if (_rebarShape1 == null || !_rebarShape1.IsValidObject || _rebarShape1.Document != AC.Document)
             {
                 FindOrCreateRebarShape1();
             }
@@ -85,7 +85,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models.MainStirrups
 
         public static RebarShape GetRebarShape2()
         {
-            if (_rebarShape2 == null || !_rebarShape2.IsValidObject)
+            if (_rebarShape2 == null || !_rebarShape2.IsValidObject || _rebarShape2.Document != AC.Document)
             {
                 FindOrCreateRebarShape2();
             }
@@ -122,7 +122,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models.MainStirrups
 
         public static RebarShape GetRebarShape3()
         {
-            if (_rebarShape3 == null || !_rebarShape3.IsValidObject)
+            if (_rebarShape3 == null || !_rebarShape3.IsValidObject || _rebarShape3.Document != AC.Document)
             {
                 FindOrCreateRebarShape3();
             }

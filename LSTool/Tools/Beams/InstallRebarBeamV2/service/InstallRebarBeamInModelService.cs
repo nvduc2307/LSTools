@@ -261,9 +261,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
             }
             catch (Exception ex)
             {
-                IO.ShowWarning(ex.Message);
+                throw new InvalidOperationException("Failed to create main stirrups.", ex);
             }
-            return new List<Rebar>();
         }
 
         public List<Rebar> InstallRebarSubVerticalStirrup(InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel)
@@ -556,10 +555,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 }
                 return result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to create vertical secondary stirrups.", ex);
             }
-            return new List<Rebar>();
         }
 
         public List<Rebar> InstallRebarSubHorizontalStirrupForMainRebar(InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel)
@@ -954,10 +953,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
 
                 return result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to create horizontal secondary stirrups for main bars.", ex);
             }
-            return new List<Rebar>();
         }
 
         public List<Rebar> InstallRebarSubHorizontalStirrupForSideRebar(InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel)
@@ -1226,10 +1225,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 }
                 return result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to create horizontal secondary stirrups for side bars.", ex);
             }
-            return new List<Rebar>();
         }
 
         public List<Rebar> InstallRebarTop1(InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel)
@@ -1255,7 +1254,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                     RebarBeamMainBarLevelType.RebarTop,
                     RebarBeamMainBarGroupType.GroupLevel1,
                     diameter.ModelBarDiameter / 4);
-                if (mainRebarReals == null) return null;
+                if (mainRebarReals == null)
+                    throw new InvalidOperationException("Top level 1 bar geometry could not be calculated.");
 
                 foreach (var mainBarBeamReal in mainRebarReals)
                 {
@@ -1274,16 +1274,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         RevRebarUtils.SetSolidRebar3DView(rebar, AC.Document.ActiveView);
                         result.Add(rebar);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        throw new InvalidOperationException("Failed to create a top level 1 bar.", ex);
                     }
                 }
                 return result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to create top level 1 bars.", ex);
             }
-            return null;
         }
 
         public List<Rebar> InstallRebarTop2(InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel)
@@ -1309,7 +1310,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                     RebarBeamMainBarLevelType.RebarTop,
                     RebarBeamMainBarGroupType.GroupLevel2,
                     diameter.ModelBarDiameter / 4);
-                if (mainRebarReals == null) return null;
+                if (mainRebarReals == null)
+                    throw new InvalidOperationException("Top level 2 bar geometry could not be calculated.");
 
                 foreach (var mainBarBeamReal in mainRebarReals)
                 {
@@ -1328,16 +1330,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         RevRebarUtils.SetSolidRebar3DView(rebar, AC.Document.ActiveView);
                         result.Add(rebar);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        throw new InvalidOperationException("Failed to create a top level 2 bar.", ex);
                     }
                 }
                 return result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to create top level 2 bars.", ex);
             }
-            return null;
         }
 
         public List<Rebar> InstallRebarTop3(InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel)
@@ -1363,7 +1366,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                     RebarBeamMainBarLevelType.RebarTop,
                     RebarBeamMainBarGroupType.GroupLevel3,
                     diameter.ModelBarDiameter / 4);
-                if (mainRebarReals == null) return null;
+                if (mainRebarReals == null)
+                    throw new InvalidOperationException("Top level 3 bar geometry could not be calculated.");
 
                 foreach (var mainBarBeamReal in mainRebarReals)
                 {
@@ -1382,16 +1386,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         RevRebarUtils.SetSolidRebar3DView(rebar, AC.Document.ActiveView);
                         result.Add(rebar);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        throw new InvalidOperationException("Failed to create a top level 3 bar.", ex);
                     }
                 }
                 return result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to create top level 3 bars.", ex);
             }
-            return null;
         }
 
         public List<Rebar> InstallRebarBot1(InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel)
@@ -1417,7 +1422,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                     RebarBeamMainBarLevelType.RebarBot,
                     RebarBeamMainBarGroupType.GroupLevel1,
                     diameter.ModelBarDiameter / 4);
-                if (mainRebarReals == null) return null;
+                if (mainRebarReals == null)
+                    throw new InvalidOperationException("Bottom level 1 bar geometry could not be calculated.");
 
                 foreach (var mainBarBeamReal in mainRebarReals)
                 {
@@ -1436,16 +1442,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         RevRebarUtils.SetSolidRebar3DView(rebar, AC.Document.ActiveView);
                         result.Add(rebar);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        throw new InvalidOperationException("Failed to create a bottom level 1 bar.", ex);
                     }
                 }
                 return result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to create bottom level 1 bars.", ex);
             }
-            return null;
         }
 
         public List<Rebar> InstallRebarBot2(InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel)
@@ -1471,7 +1478,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                     RebarBeamMainBarLevelType.RebarBot,
                     RebarBeamMainBarGroupType.GroupLevel2,
                     diameter.ModelBarDiameter / 4);
-                if (mainRebarReals == null) return null;
+                if (mainRebarReals == null)
+                    throw new InvalidOperationException("Bottom level 2 bar geometry could not be calculated.");
 
                 foreach (var mainBarBeamReal in mainRebarReals)
                 {
@@ -1490,16 +1498,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         RevRebarUtils.SetSolidRebar3DView(rebar, AC.Document.ActiveView);
                         result.Add(rebar);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        throw new InvalidOperationException("Failed to create a bottom level 2 bar.", ex);
                     }
                 }
                 return result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to create bottom level 2 bars.", ex);
             }
-            return null;
         }
 
         public List<Rebar> InstallRebarBot3(InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel)
@@ -1525,7 +1534,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                     RebarBeamMainBarLevelType.RebarBot,
                     RebarBeamMainBarGroupType.GroupLevel3,
                     diameter.ModelBarDiameter / 4);
-                if (mainRebarReals == null) return null;
+                if (mainRebarReals == null)
+                    throw new InvalidOperationException("Bottom level 3 bar geometry could not be calculated.");
 
                 foreach (var mainBarBeamReal in mainRebarReals)
                 {
@@ -1544,16 +1554,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         RevRebarUtils.SetSolidRebar3DView(rebar, AC.Document.ActiveView);
                         result.Add(rebar);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        throw new InvalidOperationException("Failed to create a bottom level 3 bar.", ex);
                     }
                 }
                 return result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to create bottom level 3 bars.", ex);
             }
-            return null;
         }
 
         public List<Rebar> InstallRebarSide(InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel)
@@ -1587,10 +1598,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 }
                 return results;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to create side bars.", ex);
             }
-            return null;
         }
 
         public List<Rebar> InstallRebarDantory(InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel)
@@ -1624,10 +1635,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 }
                 return results;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to create dantory bars.", ex);
             }
-            return null;
         }
     }
 }

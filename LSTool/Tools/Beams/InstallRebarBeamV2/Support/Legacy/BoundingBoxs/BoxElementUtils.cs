@@ -126,7 +126,7 @@ namespace RIMT.Utils.BoundingBoxs
     }
     public class BoxElement
     {
-        public int Id { get; }
+        public long Id { get; }
         public string UniqueId { get; }
         public XYZ VTX { get; set; }
         public XYZ VTY { get; set; }
@@ -143,7 +143,7 @@ namespace RIMT.Utils.BoundingBoxs
         public BoxElement(Element ele)
         {
             Element = ele;
-            Id = int.Parse(Element.Id.ToString());
+            Id = Element.Id.Value;
             UniqueId = ele.UniqueId;
             Solids = GetSolids();
             Curves = GetCurves();

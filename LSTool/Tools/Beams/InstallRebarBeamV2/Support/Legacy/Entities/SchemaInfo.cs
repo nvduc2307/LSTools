@@ -31,14 +31,20 @@ namespace RIMT.Utils.Entities
         {
             try
             {
-                if (element == null) return null;
+                if (schemaBase == null) throw new ArgumentNullException(nameof(schemaBase));
+                if (element == null) throw new ArgumentNullException(nameof(element));
+                if (schemaField == null) throw new ArgumentNullException(nameof(schemaField));
                 var entity = new Entity(schemaBase);
-                var field = schemaBase.GetField(schemaField.Name);
+                var field = schemaBase.GetField(schemaField.Name)
+                    ?? throw new InvalidOperationException(
+                        $"Schema field '{schemaField.Name}' was not found.");
                 entity.Set(field, schemaField.Value);
                 element.SetEntity(entity); // store the entity in the element
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException(
+                    $"Failed to write rebar metadata to element {element?.Id.Value}.", ex);
             }
             return schemaBase;
         }

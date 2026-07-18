@@ -99,7 +99,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models.SecondaryStirrups
 
         public static RebarShape GetRebarShape90_135()
         {
-            if (_rebarShape90_135 == null || !_rebarShape90_135.IsValidObject)
+            if (_rebarShape90_135 == null || !_rebarShape90_135.IsValidObject || _rebarShape90_135.Document != AC.Document)
             {
                 FindOrCreateRebarShape90_135();
             }
@@ -118,7 +118,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models.SecondaryStirrups
         }
         public static RebarShape GetRebarShape180_180()
         {
-            if (_rebarShape180_180 == null || !_rebarShape180_180.IsValidObject)
+            if (_rebarShape180_180 == null || !_rebarShape180_180.IsValidObject || _rebarShape180_180.Document != AC.Document)
             {
                 FindOrCreateRebarShape180_180();
             }

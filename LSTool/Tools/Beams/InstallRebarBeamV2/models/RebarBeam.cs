@@ -8,7 +8,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
 {
     public partial class RebarBeam : ObservableObject
     {
-        public int BeamId { get; set; }
+        public long BeamId { get; set; }
         public string Name { get; set; }
         public string NameType { get; set; }
         public double BeamWidthMm { get; set; }
@@ -73,7 +73,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
         private int _quantityStirrupSupportHole = 2;
         public RebarBeam(BoxElement revBoxBeam)
         {
-            BeamId = int.Parse(revBoxBeam.Id.ToString(), System.Globalization.NumberStyles.Number);
+            BeamId = revBoxBeam.Id;
             Name = revBoxBeam.Element.Name;
             NameType = "";
             BeamWidthMm = GetBeamWidthMm(revBoxBeam, out double beamHeightMm);
@@ -111,9 +111,14 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 result = Math.Round(p1OXY.Distance(p2OXY).FootToMm(), 0);
                 beamHeightMm = Math.Round(p1OXZ.Distance(p2OXZ).FootToMm(), 0);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException(
+                    $"Failed to calculate section dimensions for beam {revBoxBeam?.Id}.", ex);
             }
+            if (result <= 0 || beamHeightMm <= 0)
+                throw new InvalidOperationException(
+                    $"Beam {revBoxBeam?.Id} has invalid section dimensions ({result} x {beamHeightMm} mm).");
             return result;
         }
         public static void ResetActionChange(RebarBeam rebarBeam)

@@ -10,10 +10,10 @@
         /// RebarBeamLevel [none, top, bot]
         /// RebarBeamType [mainbar, stirrup]
         /// </summary>
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string UniqueId { get; set; }
         public string Name { get; set; }
-        public int HostId { get; set; }
+        public long HostId { get; set; }
         public int RebarBeamType { get; set; }
         public int RebarBeamLevel { get; set; }
         public int RebarBeamGroup { get; set; }

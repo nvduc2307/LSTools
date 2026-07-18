@@ -3,6 +3,8 @@ using Autodesk.Revit.DB.Structure;
 using HcBimUtils;
 using HcBimUtils.DocumentUtils;
 using HcBimUtils.RebarUtils;
+using Newtonsoft.Json;
+using RIMT.BeamRebar.ViewModel;
 using RIMT.Utils.Compares;
 using RIMT.Utils.Entities;
 using RIMT.Utils.Geometries;
@@ -44,9 +46,10 @@ namespace RIMT.Utils.RevitElements
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                return new List<RevBeamHole>();
+                throw new InvalidOperationException(
+                    $"Failed to inspect openings for beam {beam?.Id.Value}.", ex);
             }
             return results;
         }
@@ -98,8 +101,17 @@ namespace RIMT.Utils.RevitElements
                     var targets = stirrups
                         .Where(rebar => rebar != null && rebar.IsValidObject)
                         .Where(rebar => !rebar.RebarNormal().IsPerpendicular(xAxis))
-                        .Where(rebar => rebar.GetLinesOrigin().Any(curve =>
-                            interferenceSolid.IntersectWithCurve(curve, new SolidCurveIntersectionOptions()).SegmentCount > 0))
+                        .Where(rebar =>
+                        {
+                            var centerlines = rebar.GetLinesOrigin();
+                            if (centerlines.Count == 0)
+                                throw new InvalidOperationException(
+                                    $"Centerline geometry is unavailable for stirrup {rebar.Id.Value}.");
+                            return centerlines.Any(curve =>
+                                interferenceSolid.IntersectWithCurve(
+                                    curve,
+                                    new SolidCurveIntersectionOptions()).SegmentCount > 0);
+                        })
                         .ToList();
                     if (!targets.Any()) continue;
 
@@ -111,7 +123,9 @@ namespace RIMT.Utils.RevitElements
                         .ToList();
                     var sourceGroup = groups.FirstOrDefault()?.OrderBy(rebar => rebar.GetRebaLengthRealFromData()).ToList();
                     var sourceRay = sourceGroup?.LastOrDefault()?.GetCurvesOrgin().FirstOrDefault()?.Midpoint();
-                    if (sourceGroup == null || sourceRay == null) continue;
+                    if (sourceGroup == null || sourceGroup.Count == 0 || sourceRay == null)
+                        throw new InvalidOperationException(
+                            "A source stirrup group could not be resolved for opening reinforcement.");
 
                     var barType = document.GetElement(targets[0].GetTypeId()) as RebarBarType;
                     var diameter = barType.GetRebarDiameter();
@@ -131,47 +145,75 @@ namespace RIMT.Utils.RevitElements
                         foreach (var sourceRebar in sourceGroup)
                         {
                             var schemaValue = SchemaInfo.ReadAll(schemaInfo.SchemaBase, schemaInfo.SchemaField, sourceRebar);
+                            if (schemaValue == null)
+                                throw new InvalidOperationException(
+                                    $"Required metadata is missing on source stirrup {sourceRebar.Id.Value}.");
                             var copiedId = ElementTransformUtils.CopyElement(document, sourceRebar.Id, copyDirection).FirstOrDefault();
-                            if (copiedId == null || document.GetElement(copiedId) is not Rebar copiedRebar) continue;
+                            if (copiedId == null || document.GetElement(copiedId) is not Rebar copiedRebar)
+                                throw new InvalidOperationException(
+                                    $"Failed to copy source stirrup {sourceRebar.Id.Value} around an opening.");
                             CopyParameterValue(
                                 sourceRebar,
                                 copiedRebar,
                                 LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE);
-                            if (schemaValue != null)
-                                SchemaInfo.Write(schemaInfo.SchemaBase, copiedRebar, schemaValue);
+                            var copiedInfo = JsonConvert.DeserializeObject<BeamRebarInfo>(schemaValue.Value)
+                                ?? throw new InvalidOperationException(
+                                    $"Metadata on source stirrup {sourceRebar.Id.Value} is invalid.");
+                            copiedInfo.Id = copiedRebar.Id.Value;
+                            copiedInfo.UniqueId = copiedRebar.UniqueId;
+                            copiedInfo.Name = copiedRebar.Name;
+                            schemaValue.Value = JsonConvert.SerializeObject(copiedInfo);
+                            SchemaInfo.Write(schemaInfo.SchemaBase, copiedRebar, schemaValue);
                             results.Add(copiedRebar);
                         }
                     }
                     rebarDeletes.AddRange(targets);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                return results;
+                throw new InvalidOperationException(
+                    $"Failed to create opening-support stirrups for beam {beam?.Id.Value}.", ex);
             }
             return results;
         }
 
         private static void CopyParameterValue(Element source, Element target, string parameterName)
         {
-            var sourceParameter = source.LookupParameter(parameterName);
-            var targetParameter = target.LookupParameter(parameterName);
-            if (sourceParameter == null || targetParameter == null || targetParameter.IsReadOnly) return;
+            var sourceParameter = source.LookupParameter(parameterName)
+                ?? throw new InvalidOperationException(
+                    $"Source parameter '{parameterName}' is missing on element {source.Id.Value}.");
+            var targetParameter = target.LookupParameter(parameterName)
+                ?? throw new InvalidOperationException(
+                    $"Target parameter '{parameterName}' is missing on element {target.Id.Value}.");
+            if (targetParameter.IsReadOnly)
+                throw new InvalidOperationException(
+                    $"Target parameter '{parameterName}' is read-only on element {target.Id.Value}.");
+            if (targetParameter.StorageType != sourceParameter.StorageType)
+                throw new InvalidOperationException(
+                    $"Parameter '{parameterName}' has incompatible storage types while copying opening reinforcement.");
+            bool success;
             switch (sourceParameter.StorageType)
             {
                 case StorageType.Double:
-                    targetParameter.Set(sourceParameter.AsDouble());
+                    success = targetParameter.Set(sourceParameter.AsDouble());
                     break;
                 case StorageType.Integer:
-                    targetParameter.Set(sourceParameter.AsInteger());
+                    success = targetParameter.Set(sourceParameter.AsInteger());
                     break;
                 case StorageType.String:
-                    targetParameter.Set(sourceParameter.AsString());
+                    success = targetParameter.Set(sourceParameter.AsString());
                     break;
                 case StorageType.ElementId:
-                    targetParameter.Set(sourceParameter.AsElementId());
+                    success = targetParameter.Set(sourceParameter.AsElementId());
                     break;
+                default:
+                    throw new InvalidOperationException(
+                        $"Parameter '{parameterName}' has unsupported storage type {sourceParameter.StorageType}.");
             }
+            if (!success)
+                throw new InvalidOperationException(
+                    $"Revit rejected copied parameter '{parameterName}' on element {target.Id.Value}.");
         }
     }
 }

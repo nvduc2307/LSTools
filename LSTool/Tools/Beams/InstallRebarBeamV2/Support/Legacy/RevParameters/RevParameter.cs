@@ -5,13 +5,13 @@ namespace RIMT.Utils.RevParameters
 {
     public class RevParameter
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string Name { get; set; }
         public Parameter Parameter { get; set; }
         public double ValueMm { get; set; }
         public RevParameter(Parameter parameter)
         {
-            Id = int.Parse(parameter.Id.ToString());
+            Id = parameter.Id.Value;
             Name = parameter.Definition.Name;
             Parameter = parameter;
             ValueMm = GetDoubleValue();

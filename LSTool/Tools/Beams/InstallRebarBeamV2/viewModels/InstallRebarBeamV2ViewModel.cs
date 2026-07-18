@@ -12,6 +12,7 @@ using LSTool.Tools.Beams.InstallRebarBeamV2.iservices;
 using LSTool.Tools.Beams.InstallRebarBeamV2.models;
 using LSTool.Tools.Beams.InstallRebarBeamV2.viewModels;
 using LSTool.Tools.Beams.InstallRebarBeamV2.views;
+using LSTool.Tools.Beams.InstallRebarBeamV2.Support.Legacy;
 using RIMT.Utils;
 using RIMT.Utils.canvass;
 using RIMT.Utils.Entities;
@@ -257,6 +258,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                 {
                     ts.SkipAllWarnings();
                     ts.Start();
+                    try
+                    {
+                    RebarSharedParameterSupport.EnsureRequiredParameters(AC.Document);
                     //--------
                     var installRebarTop1 = _installRebarBeamInModelService.InstallRebarTop1(this);
                     var installRebarTop2 = _installRebarBeamInModelService.InstallRebarTop2(this);
@@ -273,51 +277,51 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     #region write rebar type info
                     foreach (var rb in installRebarTop1)
                     {
-                        rb.SetParameterValue(LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_MAIN_REBAR_UPPER_STAGE_1);
+                        RebarSharedParameterSupport.SetRequiredStringParameter(rb, LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_MAIN_REBAR_UPPER_STAGE_1);
                     }
                     foreach (var rb in installRebarTop2)
                     {
-                        rb.SetParameterValue(LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_MAIN_REBAR_UPPER_STAGE_2);
+                        RebarSharedParameterSupport.SetRequiredStringParameter(rb, LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_MAIN_REBAR_UPPER_STAGE_2);
                     }
                     foreach (var rb in installRebarTop3)
                     {
-                        rb.SetParameterValue(LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_MAIN_REBAR_UPPER_STAGE_3);
+                        RebarSharedParameterSupport.SetRequiredStringParameter(rb, LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_MAIN_REBAR_UPPER_STAGE_3);
                     }
                     foreach (var rb in installRebarBot1)
                     {
-                        rb.SetParameterValue(LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_MAIN_REBAR_LOWER_STAGE_1);
+                        RebarSharedParameterSupport.SetRequiredStringParameter(rb, LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_MAIN_REBAR_LOWER_STAGE_1);
                     }
                     foreach (var rb in installRebarBot2)
                     {
-                        rb.SetParameterValue(LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_MAIN_REBAR_LOWER_STAGE_2);
+                        RebarSharedParameterSupport.SetRequiredStringParameter(rb, LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_MAIN_REBAR_LOWER_STAGE_2);
                     }
                     foreach (var rb in installRebarBot3)
                     {
-                        rb.SetParameterValue(LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_MAIN_REBAR_LOWER_STAGE_3);
+                        RebarSharedParameterSupport.SetRequiredStringParameter(rb, LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_MAIN_REBAR_LOWER_STAGE_3);
                     }
                     foreach (var rb in installRebarSide)
                     {
-                        rb.SetParameterValue(LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_ABDOMINAL_REBAR);
+                        RebarSharedParameterSupport.SetRequiredStringParameter(rb, LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_ABDOMINAL_REBAR);
                     }
                     foreach (var rb in installRebarDantories)
                     {
-                        rb.SetParameterValue(LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_DANTORI_REBAR);
+                        RebarSharedParameterSupport.SetRequiredStringParameter(rb, LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_DANTORI_REBAR);
                     }
                     foreach (var rb in installRebarStirrup)
                     {
-                        rb.SetParameterValue(LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_STP);
+                        RebarSharedParameterSupport.SetRequiredStringParameter(rb, LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_STP);
                     }
                     foreach (var rb in installRebarSubVerticalStirrup)
                     {
-                        rb.SetParameterValue(LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_SECONDARY_STP_REBAR);
+                        RebarSharedParameterSupport.SetRequiredStringParameter(rb, LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_SECONDARY_STP_REBAR);
                     }
                     foreach (var rb in installRebarSubHorizontalStirrupForMainRebar)
                     {
-                        rb.SetParameterValue(LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_SECONDARY_STP_REBAR);
+                        RebarSharedParameterSupport.SetRequiredStringParameter(rb, LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_SECONDARY_STP_REBAR);
                     }
                     foreach (var rb in installRebarSubHorizontalStirrupForSideRebar)
                     {
-                        rb.SetParameterValue(LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_SECONDARY_STP_REBAR);
+                        RebarSharedParameterSupport.SetRequiredStringParameter(rb, LSTool.Properties.RTParams.RT_PARAMS_REBAR_TYPE, LSTool.Properties.Langs.RebarStructureType.BEAM_SECONDARY_STP_REBAR);
                     }
                     #endregion
                     #region Create Rebar Beam Assembly
@@ -347,10 +351,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     {
                         var rebarBeamInfo = new BeamRebarInfo()
                         {
-                            Id = int.Parse(x.Id.ToString()),
+                            Id = x.Id.Value,
                             UniqueId = x.UniqueId,
                             Name = x.Name,
-                            HostId = int.Parse(x.GetHostId().ToString()),
+                            HostId = x.GetHostId().Value,
                             RebarBeamType = (int)RIMT.BeamRebar.ViewModel.RebarBeamType.MainBar,
                             RebarBeamLevel = (int)RIMT.BeamRebar.ViewModel.RebarBeamLevel.Top,
                             RebarBeamGroup = (int)RIMT.BeamRebar.ViewModel.RebarBeamGroup.Level1,
@@ -361,10 +365,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     {
                         var rebarBeamInfo = new BeamRebarInfo()
                         {
-                            Id = int.Parse(x.Id.ToString()),
+                            Id = x.Id.Value,
                             UniqueId = x.UniqueId,
                             Name = x.Name,
-                            HostId = int.Parse(x.GetHostId().ToString()),
+                            HostId = x.GetHostId().Value,
                             RebarBeamType = (int)RIMT.BeamRebar.ViewModel.RebarBeamType.MainBar,
                             RebarBeamLevel = (int)RIMT.BeamRebar.ViewModel.RebarBeamLevel.Top,
                             RebarBeamGroup = (int)RIMT.BeamRebar.ViewModel.RebarBeamGroup.Level2,
@@ -375,10 +379,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     {
                         var rebarBeamInfo = new BeamRebarInfo()
                         {
-                            Id = int.Parse(x.Id.ToString()),
+                            Id = x.Id.Value,
                             UniqueId = x.UniqueId,
                             Name = x.Name,
-                            HostId = int.Parse(x.GetHostId().ToString()),
+                            HostId = x.GetHostId().Value,
                             RebarBeamType = (int)RIMT.BeamRebar.ViewModel.RebarBeamType.MainBar,
                             RebarBeamLevel = (int)RIMT.BeamRebar.ViewModel.RebarBeamLevel.Top,
                             RebarBeamGroup = (int)RIMT.BeamRebar.ViewModel.RebarBeamGroup.Level3,
@@ -390,10 +394,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     {
                         var rebarBeamInfo = new BeamRebarInfo()
                         {
-                            Id = int.Parse(x.Id.ToString()),
+                            Id = x.Id.Value,
                             UniqueId = x.UniqueId,
                             Name = x.Name,
-                            HostId = int.Parse(x.GetHostId().ToString()),
+                            HostId = x.GetHostId().Value,
                             RebarBeamType = (int)RIMT.BeamRebar.ViewModel.RebarBeamType.MainBar,
                             RebarBeamLevel = (int)RIMT.BeamRebar.ViewModel.RebarBeamLevel.Bottom,
                             RebarBeamGroup = (int)RIMT.BeamRebar.ViewModel.RebarBeamGroup.Level1,
@@ -404,10 +408,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     {
                         var rebarBeamInfo = new BeamRebarInfo()
                         {
-                            Id = int.Parse(x.Id.ToString()),
+                            Id = x.Id.Value,
                             UniqueId = x.UniqueId,
                             Name = x.Name,
-                            HostId = int.Parse(x.GetHostId().ToString()),
+                            HostId = x.GetHostId().Value,
                             RebarBeamType = (int)RIMT.BeamRebar.ViewModel.RebarBeamType.MainBar,
                             RebarBeamLevel = (int)RIMT.BeamRebar.ViewModel.RebarBeamLevel.Bottom,
                             RebarBeamGroup = (int)RIMT.BeamRebar.ViewModel.RebarBeamGroup.Level2,
@@ -418,10 +422,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     {
                         var rebarBeamInfo = new BeamRebarInfo()
                         {
-                            Id = int.Parse(x.Id.ToString()),
+                            Id = x.Id.Value,
                             UniqueId = x.UniqueId,
                             Name = x.Name,
-                            HostId = int.Parse(x.GetHostId().ToString()),
+                            HostId = x.GetHostId().Value,
                             RebarBeamType = (int)RIMT.BeamRebar.ViewModel.RebarBeamType.MainBar,
                             RebarBeamLevel = (int)RIMT.BeamRebar.ViewModel.RebarBeamLevel.Bottom,
                             RebarBeamGroup = (int)RIMT.BeamRebar.ViewModel.RebarBeamGroup.Level3,
@@ -433,10 +437,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     {
                         var rebarBeamInfo = new BeamRebarInfo()
                         {
-                            Id = int.Parse(x.Id.ToString()),
+                            Id = x.Id.Value,
                             UniqueId = x.UniqueId,
                             Name = x.Name,
-                            HostId = int.Parse(x.GetHostId().ToString()),
+                            HostId = x.GetHostId().Value,
                             RebarBeamType = (int)RIMT.BeamRebar.ViewModel.RebarBeamType.SideBar,
                             RebarBeamLevel = (int)RIMT.BeamRebar.ViewModel.RebarBeamLevel.None,
                             RebarBeamGroup = (int)RIMT.BeamRebar.ViewModel.RebarBeamGroup.None,
@@ -447,10 +451,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     {
                         var rebarBeamInfo = new BeamRebarInfo()
                         {
-                            Id = int.Parse(x.Id.ToString()),
+                            Id = x.Id.Value,
                             UniqueId = x.UniqueId,
                             Name = x.Name,
-                            HostId = int.Parse(x.GetHostId().ToString()),
+                            HostId = x.GetHostId().Value,
                             RebarBeamType = (int)RIMT.BeamRebar.ViewModel.RebarBeamType.Dantory,
                             RebarBeamLevel = (int)RIMT.BeamRebar.ViewModel.RebarBeamLevel.None,
                             RebarBeamGroup = (int)RIMT.BeamRebar.ViewModel.RebarBeamGroup.None,
@@ -462,10 +466,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     {
                         var rebarBeamInfo = new BeamRebarInfo()
                         {
-                            Id = int.Parse(x.Id.ToString()),
+                            Id = x.Id.Value,
                             UniqueId = x.UniqueId,
                             Name = x.Name,
-                            HostId = int.Parse(x.GetHostId().ToString()),
+                            HostId = x.GetHostId().Value,
                             RebarBeamType = (int)RIMT.BeamRebar.ViewModel.RebarBeamType.Stirrup,
                             RebarBeamLevel = (int)RIMT.BeamRebar.ViewModel.RebarBeamLevel.None,
                             RebarBeamGroup = (int)RIMT.BeamRebar.ViewModel.RebarBeamGroup.None,
@@ -476,10 +480,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     {
                         var rebarBeamInfo = new BeamRebarInfo()
                         {
-                            Id = int.Parse(x.Id.ToString()),
+                            Id = x.Id.Value,
                             UniqueId = x.UniqueId,
                             Name = x.Name,
-                            HostId = int.Parse(x.GetHostId().ToString()),
+                            HostId = x.GetHostId().Value,
                             RebarBeamType = (int)RIMT.BeamRebar.ViewModel.RebarBeamType.Stirrup,
                             RebarBeamLevel = (int)RIMT.BeamRebar.ViewModel.RebarBeamLevel.None,
                             RebarBeamGroup = (int)RIMT.BeamRebar.ViewModel.RebarBeamGroup.None,
@@ -490,10 +494,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     {
                         var rebarBeamInfo = new BeamRebarInfo()
                         {
-                            Id = int.Parse(x.Id.ToString()),
+                            Id = x.Id.Value,
                             UniqueId = x.UniqueId,
                             Name = x.Name,
-                            HostId = int.Parse(x.GetHostId().ToString()),
+                            HostId = x.GetHostId().Value,
                             RebarBeamType = (int)RIMT.BeamRebar.ViewModel.RebarBeamType.Stirrup,
                             RebarBeamLevel = (int)RIMT.BeamRebar.ViewModel.RebarBeamLevel.None,
                             RebarBeamGroup = (int)RIMT.BeamRebar.ViewModel.RebarBeamGroup.None,
@@ -504,10 +508,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     {
                         var rebarBeamInfo = new BeamRebarInfo()
                         {
-                            Id = int.Parse(x.Id.ToString()),
+                            Id = x.Id.Value,
                             UniqueId = x.UniqueId,
                             Name = x.Name,
-                            HostId = int.Parse(x.GetHostId().ToString()),
+                            HostId = x.GetHostId().Value,
                             RebarBeamType = (int)RIMT.BeamRebar.ViewModel.RebarBeamType.Stirrup,
                             RebarBeamLevel = (int)RIMT.BeamRebar.ViewModel.RebarBeamLevel.None,
                             RebarBeamGroup = (int)RIMT.BeamRebar.ViewModel.RebarBeamGroup.None,
@@ -530,32 +534,26 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
 
                     foreach (var rb in rebarinfos)
                     {
-                        try
-                        {
-                            var r = AC.Document.GetElement(rb.UniqueId);
-                            var content = JsonConvert.SerializeObject(rb);
-                            ElementInstances.RebarBeamSchemal.SchemaField.Value = content;
-                            SchemaInfo.Write(ElementInstances.RebarBeamSchemal.SchemaBase, r, ElementInstances.RebarBeamSchemal.SchemaField);
-                        }
-                        catch (Exception)
-                        {
-                        }
+                        var r = AC.Document.GetElement(rb.UniqueId)
+                            ?? throw new InvalidOperationException(
+                                $"Created rebar '{rb.UniqueId}' could not be found for metadata writing.");
+                        var content = JsonConvert.SerializeObject(rb);
+                        ElementInstances.RebarBeamSchemal.SchemaField.Value = content;
+                        SchemaInfo.Write(ElementInstances.RebarBeamSchemal.SchemaBase, r, ElementInstances.RebarBeamSchemal.SchemaField);
                     }
 
                     #endregion
                     #region write rebar beam assembly info
-                    try
-                    {
-                        var assemblyInfoUtils =
+                    var assemblyInfoUtils =
                         new AssemblyInfoUtils(new List<Element>() { ElementInstances.Beam.Element }, AC.Document);
-                        rebarBeamAss.SetParameterValueByName(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS,
-                            assemblyInfoUtils.GridName);
-                        rebarBeamAss.SetParameterValueByName(BuiltInParameter.ALL_MODEL_MARK,
-                            assemblyInfoUtils.TypeName);
-                    }
-                    catch (Exception)
-                    {
-                    }
+                    RebarSharedParameterSupport.SetRequiredStringParameter(
+                        rebarBeamAss,
+                        BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS,
+                        assemblyInfoUtils.GridName);
+                    RebarSharedParameterSupport.SetRequiredStringParameter(
+                        rebarBeamAss,
+                        BuiltInParameter.ALL_MODEL_MARK,
+                        assemblyInfoUtils.TypeName);
                     #endregion
                     #region Resetting host
                     var rebars = installRebarTop1
@@ -578,8 +576,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                             {
                                 rb.SetHostId(AC.Document, ElementInstances.Beam.ElementSubs.FirstOrDefault().Element.Id);
                             }
-                            catch (Exception)
+                            catch (Exception ex)
                             {
+                                throw new InvalidOperationException(
+                                    $"Failed to reset the host for rebar {rb.Id.Value}.", ex);
                             }
                         }
                     }
@@ -605,15 +605,35 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     rebarInAss.InitSegment();
                     //--------
                     ts.Commit();
+                    }
+                    catch
+                    {
+                        if (ts.GetStatus() == TransactionStatus.Started)
+                            ts.RollBack();
+                        throw;
+                    }
                 }
 
                 MainView.Close();
             }
             catch (Exception ex)
             {
-                IO.ShowWarning(ex.Message);
+                IO.ShowWarning(GetDetailedError(ex));
             }
         }
+
+        private static string GetDetailedError(Exception exception)
+        {
+            var messages = new List<string>();
+            for (var current = exception; current != null; current = current.InnerException)
+            {
+                if (!string.IsNullOrWhiteSpace(current.Message)
+                    && !messages.Contains(current.Message))
+                    messages.Add(current.Message);
+            }
+            return string.Join(Environment.NewLine, messages);
+        }
+
         [RelayCommand]
         private void Cancel()
         {
@@ -660,10 +680,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                 }
                 return resutls;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed while bypassing beam openings.", ex);
             }
-            return new List<Rebar>();
         }
         private void MainView_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
@@ -707,11 +727,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                 ElementInstances.MainRebarTopUIElement = _drawRebarBeamInCanvasSerice.DrawSectionBeamMainBar(ElementInstances.RebarBeamActive, this);
                 //ElementInstances.MainRebarBotUIElement = _drawRebarBeamInCanvasSerice.DrawSectionBeamMainBarBot(ElementInstances.RebarBeamActive, this);
                 ElementInstances.SideBarUIElement = _drawRebarBeamInCanvasSerice.DrawSectionBeamSideBar(ElementInstances.RebarBeamActive, this);
-#if R24 || R25
-                var beamId = new ElementId(long.Parse(ElementInstances.RebarBeamActive.BeamId.ToString()));
-#else   
                 var beamId = new ElementId(ElementInstances.RebarBeamActive.BeamId);
-#endif
                 AC.UiDoc.Selection.SetElementIds(new List<ElementId>() { beamId });
             };
             foreach (var rebarBeam in ElementInstances.RebarBeams)

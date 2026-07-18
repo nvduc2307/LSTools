@@ -118,30 +118,30 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 var rebarBeamMains = new List<RebarBeamMainBar>();
                 if (rebarTop1s.Any()) rebarBeamMains.AddRange(rebarTop1s);
                 if (rebarTop2s.Any()) rebarBeamMains.AddRange(rebarTop2s);
-                if (rebarTop2s.Any()) rebarBeamMains.AddRange(rebarTop2s);
+                if (rebarTop3s.Any()) rebarBeamMains.AddRange(rebarTop3s);
                 if (rebarBot1s.Any()) rebarBeamMains.AddRange(rebarBot1s);
                 if (rebarBot2s.Any()) rebarBeamMains.AddRange(rebarBot2s);
                 if (rebarBot3s.Any()) rebarBeamMains.AddRange(rebarBot3s);
 
                 if (rebarTop1m.Any()) rebarBeamMains.AddRange(rebarTop1m);
                 if (rebarTop2m.Any()) rebarBeamMains.AddRange(rebarTop2m);
-                if (rebarTop2m.Any()) rebarBeamMains.AddRange(rebarTop2m);
+                if (rebarTop3m.Any()) rebarBeamMains.AddRange(rebarTop3m);
                 if (rebarBot1m.Any()) rebarBeamMains.AddRange(rebarBot1m);
                 if (rebarBot2m.Any()) rebarBeamMains.AddRange(rebarBot2m);
                 if (rebarBot3m.Any()) rebarBeamMains.AddRange(rebarBot3m);
 
                 if (rebarTop1e.Any()) rebarBeamMains.AddRange(rebarTop1e);
                 if (rebarTop2e.Any()) rebarBeamMains.AddRange(rebarTop2e);
-                if (rebarTop2e.Any()) rebarBeamMains.AddRange(rebarTop2e);
+                if (rebarTop3e.Any()) rebarBeamMains.AddRange(rebarTop3e);
                 if (rebarBot1e.Any()) rebarBeamMains.AddRange(rebarBot1e);
                 if (rebarBot2e.Any()) rebarBeamMains.AddRange(rebarBot2e);
                 if (rebarBot3e.Any()) rebarBeamMains.AddRange(rebarBot3e);
                 return rebarBeamMains;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to collect main-bar section data.", ex);
             }
-            return null;
         }
         public List<RebarBeamSectionStart> GetRebarBeamSectionStart(
             InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel,
@@ -167,8 +167,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         break;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to get start-section reinforcement data.", ex);
             }
             return result;
         }
@@ -196,8 +197,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         break;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to get middle-section reinforcement data.", ex);
             }
             return result;
         }
@@ -226,8 +228,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         break;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to get end-section reinforcement data.", ex);
             }
             return result;
         }
@@ -357,8 +360,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         break;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to get main-bar group data.", ex);
             }
             return result;
         }
@@ -487,8 +491,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         break;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to get main-bar level data.", ex);
             }
             return result;
         }
@@ -516,8 +521,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         break;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to get stirrup group data.", ex);
             }
             return result;
         }
@@ -748,8 +754,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                                 }
                             }
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
+                            throw new InvalidOperationException(
+                                $"Failed to calculate main-bar geometry at section index {c}.", ex);
                         }
                         c++;
                     }
@@ -768,9 +776,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
             }
             catch (Exception ex)
             {
-                IO.ShowWarning(ex.Message);
+                throw new InvalidOperationException(
+                    "Failed to calculate main-bar geometry.", ex);
             }
-            return null;
         }
 
         public List<XYZ> GetPointControls(
@@ -832,10 +840,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 }
                 return ps;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException(
+                    $"Failed to calculate control points for beam {boxElement?.Id}.", ex);
             }
-            return null;
         }
 
         public void GenerateRebarDeverlop(
@@ -983,12 +992,12 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                     var eleIdS = new FilteredElementCollector(AC.Document)
                         .WherePasses(solidFilterS)
                         .ToElementIds()
-                        .Where(x => !installRebarBeamV2ViewModel.ElementInstances.Beam.ElementSubs.Any(y => y.Id == int.Parse(x.ToString())))
+                        .Where(x => !installRebarBeamV2ViewModel.ElementInstances.Beam.ElementSubs.Any(y => y.Id == x.Value))
                         .FirstOrDefault();
                     var eleIdE = new FilteredElementCollector(AC.Document)
                         .WherePasses(solidFilterE)
                         .ToElementIds()
-                        .Where(x => !installRebarBeamV2ViewModel.ElementInstances.Beam.ElementSubs.Any(y => y.Id == int.Parse(x.ToString())))
+                        .Where(x => !installRebarBeamV2ViewModel.ElementInstances.Beam.ElementSubs.Any(y => y.Id == x.Value))
                         .FirstOrDefault();
                     if (eleIdS != null)
                     {
@@ -1157,21 +1166,25 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                                 results.Add(rRight);
                                 results.Add(rLeft);
                             }
-                            catch (Exception)
+                            catch (Exception ex)
                             {
+                                throw new InvalidOperationException(
+                                    $"Failed to calculate side-bar pair {i} for beam {subBeam.Id}.", ex);
                             }
                         }
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        throw new InvalidOperationException(
+                            $"Failed to calculate side-bar geometry for beam {subBeam.Id}.", ex);
                     }
                 }
                 return results;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to calculate side-bar geometry.", ex);
             }
-            return null;
         }
 
         public List<MainBarBeamReal> GetDantoryBarBeamReals(
@@ -1246,16 +1259,18 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                             results.Add(dtr);
                         }
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        throw new InvalidOperationException(
+                            $"Failed to calculate dantory geometry for beam {subBeam.Id}.", ex);
                     }
                 }
                 return results;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                throw new InvalidOperationException("Failed to calculate dantory geometry.", ex);
             }
-            return null;
         }
 
         public static bool CheckIndexRebarMain(int i, int qty, int maxQty, double spacingCurrent, double spacingMin)

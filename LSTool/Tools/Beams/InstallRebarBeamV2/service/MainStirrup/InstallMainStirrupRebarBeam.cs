@@ -59,8 +59,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.MainStirrup
                     if (i == (int)quantity)
                         last = new Tuple<RectangleDto, int>(rectangleDto, chanLe);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    throw new InvalidOperationException(
+                        $"Failed to place main stirrup at index {i}.", ex);
                 }
             }
 

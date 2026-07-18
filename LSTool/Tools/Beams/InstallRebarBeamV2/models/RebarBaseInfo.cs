@@ -40,7 +40,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             }
         }
 
-        public int HostId;
+        public long HostId;
         public int RebarBeamType { get; set; }
         /// <summary>
         /// Định nghĩa thứ tự hook trên cùng nối với dưới cùng

@@ -145,11 +145,7 @@ namespace RIMT.Utils.RevParameters
                         para.Set(paraValue);
                         break;
                     case StorageType.ElementId:
-#if R24 || R25
                         para.Set(new ElementId(long.Parse(paraValue)));
-#else
-                        para.Set(new ElementId(int.Parse(paraValue)));
-#endif
                         break;
                 }
 
@@ -178,7 +174,7 @@ namespace RIMT.Utils.RevParameters
                         para.Set(paraValue);
                         break;
                     case StorageType.ElementId:
-                        para.Set(new ElementId(int.Parse(paraValue)));
+                        para.Set(new ElementId(long.Parse(paraValue)));
                         break;
                 }
 
