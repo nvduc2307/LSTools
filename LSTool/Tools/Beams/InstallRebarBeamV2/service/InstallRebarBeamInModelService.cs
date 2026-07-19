@@ -19,6 +19,7 @@ using LSTool.Tools.Beams.InstallRebarBeamV2;
 using RIMT.Utils;
 using HcBimUtils.DocumentUtils;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Application;
+using LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Revit.Writers;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Plans;
@@ -64,7 +65,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
             using (context.Metrics.Measure("stirrup.secondary.horizontal.main"))
                 result.SecondaryHorizontalMainStirrups = InstallRebarSubHorizontalStirrupForMainRebar(installRebarBeamV2ViewModel, context);
             using (context.Metrics.Measure("stirrup.secondary.horizontal.side"))
-                result.SecondaryHorizontalSideStirrups = InstallRebarSubHorizontalStirrupForSideRebar(installRebarBeamV2ViewModel, context);
+            result.SecondaryHorizontalSideStirrups = InstallRebarSubHorizontalStirrupForSideRebar(installRebarBeamV2ViewModel, context);
+            result.TargetHostIdsByRebarId = context.TargetHostIdsByRebarId;
 
             return result;
         }
@@ -97,8 +99,25 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 var rebarSides = _subInstallRebarBeamInModelService.GetSideBarBeamReals(
                     installRebarBeamV2ViewModel,
                     0);
-                foreach (var r in rebarSides)
+                context.DiagnosticLog?.Record("side.creation.started", new
                 {
+                    plannedBarCount = rebarSides.Count,
+                    temporaryHostId = host.Id.Value
+                });
+                for (var index = 0; index < rebarSides.Count; index++)
+                {
+                    var r = rebarSides[index];
+                    var targetHostId = context.GetBeamHost(r.SourceBeamId).Id;
+                    context.DiagnosticLog?.Record("side.rebar.create.requested", new
+                    {
+                        plannedIndex = index,
+                        sourceBeamId = r.SourceBeamId,
+                        temporaryHostId = host.Id.Value,
+                        targetHostId = targetHostId.Value,
+                        r.Diameter,
+                        start = RebarDiagnosticLog.PointSnapshot(r.StartPoint),
+                        end = RebarDiagnosticLog.PointSnapshot(r.EndPoint)
+                    });
                     var diameterSide = context.GetBarType(r.Diameter);
                     var l = r.StartPoint.CreateLine(r.EndPoint);
                     var rebar = RebarCreationCompat.CreateFromCurves(
@@ -111,8 +130,21 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                             true,
                             true);
                     RevRebarUtils.SetSolidRebar3DView(rebar, AC.Document.ActiveView);
+                    context.RegisterTargetHost(rebar, r.SourceBeamId);
+                    context.DiagnosticLog?.RecordRebar(
+                        "side.rebar.created",
+                        rebar,
+                        r.SourceBeamId,
+                        targetHostId,
+                        "side");
                     results.Add(rebar);
                 }
+                context.DiagnosticLog?.Record("side.creation.completed", new
+                {
+                    plannedBarCount = rebarSides.Count,
+                    createdBarCount = results.Count,
+                    rebarIds = results.Select(rebar => rebar.Id.Value).ToList()
+                });
                 return results;
             }
             catch (Exception ex)
@@ -149,6 +181,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                             true,
                             true);
                     RevRebarUtils.SetSolidRebar3DView(rebar, AC.Document.ActiveView);
+                    context.RegisterTargetHost(rebar, r.SourceBeamId);
                     results.Add(rebar);
                 }
                 return results;

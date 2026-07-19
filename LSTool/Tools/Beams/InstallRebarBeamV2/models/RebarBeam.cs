@@ -9,7 +9,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
     public partial class RebarBeam : ObservableObject
     {
         public long BeamId { get; set; }
+        public int SpanIndex { get; set; }
         public string Name { get; set; }
+        public string SpanDisplayName => SpanIndex > 0
+            ? $"Span {SpanIndex} — ID {BeamId} — {Name}"
+            : Name;
         public string NameType { get; set; }
         public double BeamWidthMm { get; set; }
         public double BeamHeightMm { get; set; }
@@ -176,6 +180,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
     public class MainBarBeamReal
     {
         public int Id { get; set; }
+        public long SourceBeamId { get; set; }
         public int Level { get; set; } //[Top, Bot]
         public int Group { get; set; } //[1, 2, 3]
         public bool StartHook { get; set; }

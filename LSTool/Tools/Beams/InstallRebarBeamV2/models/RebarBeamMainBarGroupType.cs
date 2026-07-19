@@ -23,13 +23,13 @@
                 switch (rebarBeamMainBarGroupType)
                 {
                     case RebarBeamMainBarGroupType.GroupLevel1:
-                        result = "1（段筋）";
+                        result = "1 (Layer)";
                         break;
                     case RebarBeamMainBarGroupType.GroupLevel2:
-                        result = "2（段筋）";
+                        result = "2 (Layers)";
                         break;
                     case RebarBeamMainBarGroupType.GroupLevel3:
-                        result = "3（段筋）";
+                        result = "3 (Layers)";
                         break;
                 }
                 return result;

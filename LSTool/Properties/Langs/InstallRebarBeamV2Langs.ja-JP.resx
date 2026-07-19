@@ -118,84 +118,84 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="IRBV2_GROUP_SETTING_REBAR_BOT" xml:space="preserve">
-    <value>下段筋</value>
+    <value>Bottom Reinforcement</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_REBAR_TOP" xml:space="preserve">
-    <value>上段筋</value>
+    <value>Top Reinforcement</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_REBAR_STIRRUP" xml:space="preserve">
-    <value>スターラップ</value>
+    <value>Main Stirrup</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_SECTION_END" xml:space="preserve">
-    <value>右端</value>
+    <value>End Section</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_SECTION_MID" xml:space="preserve">
-    <value>中央</value>
+    <value>Middle Section</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_SECTION_START" xml:space="preserve">
-    <value>左端</value>
+    <value>Start Section</value>
   </data>
   <data name="IRBV2_TAB_SETTING_BEAM" xml:space="preserve">
-    <value>梁設定</value>
+    <value>Beam Settings</value>
   </data>
   <data name="IRBV2_TAB_SETTING_SECTION" xml:space="preserve">
-    <value>鉄筋本数設定</value>
+    <value>Rebar Settings</value>
   </data>
   <data name="IRBV2_TAB_SETTING_STIRRUP_TYPE" xml:space="preserve">
-    <value>STP設定</value>
+    <value>Stirrup Settings</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_REBAR_SIDE" xml:space="preserve">
-    <value>腹筋</value>
+    <value>Side Bars</value>
   </data>
   <data name="IRBV2_SETTING_REBAR_DIAMETER" xml:space="preserve">
-    <value>呼び径</value>
+    <value>Diameter</value>
   </data>
   <data name="IRBV2_SETTING_REBAR_SPACING" xml:space="preserve">
     <value>@</value>
   </data>
   <data name="IRBV2_SETTING_REBAR_QUANTITY" xml:space="preserve">
-    <value>本数</value>
+    <value>Quantity</value>
   </data>
   <data name="IRBV2_COMMAND_NAME" xml:space="preserve">
-    <value>梁配筋生成</value>
+    <value>Install Beam Reinforcement</value>
   </data>
   <data name="IRBV2_GROUP_NAME" xml:space="preserve">
-    <value>グループ </value>
+    <value>Group</value>
   </data>
   <data name="IRBV2_FUKASHI_TITLE" xml:space="preserve">
-    <value>フカシマッピング</value>
+    <value>Fukashi Mapping</value>
   </data>
   <data name="IRBV2_FUKASHI_TOP" xml:space="preserve">
-    <value>フカシ上</value>
+    <value>Fukashi Top</value>
   </data>
   <data name="IRBV2_FUKASHI_BOT" xml:space="preserve">
-    <value>フカシ下</value>
+    <value>Fukashi Bottom</value>
   </data>
   <data name="IRBV2_FUKASHI_RIGHT" xml:space="preserve">
-    <value>フカシ右</value>
+    <value>Fukashi Right</value>
   </data>
   <data name="IRBV2_FUKASHI_LEFT" xml:space="preserve">
-    <value>フカシ左</value>
+    <value>Fukashi Left</value>
   </data>
   <data name="IRBV2_SETTING_SPAN" xml:space="preserve">
-    <value>スパン設定</value>
+    <value>Span</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_ANCHOR" xml:space="preserve">
-    <value>定着設定</value>
+    <value>Anchor Settings</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_BEAM" xml:space="preserve">
-    <value>梁設定</value>
+    <value>Beam Settings</value>
   </data>
   <data name="IRBV2_SETTING_COVER" xml:space="preserve">
-    <value>かぶり</value>
+    <value>Concrete Cover</value>
   </data>
   <data name="IRBV2_SETTING_DISTANCE_R_TO_R" xml:space="preserve">
-    <value>鉄筋間隔</value>
+    <value>Rebar Spacing</value>
   </data>
   <data name="IRBV2_TAB_SETTING_SUB_SETTING" xml:space="preserve">
-    <value>追加設定</value>
+    <value>Additional Settings</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_DANTORY" xml:space="preserve">
-    <value>段取り筋</value>
+    <value>Erection Bars</value>
   </data>
 </root>

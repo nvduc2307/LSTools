@@ -14,6 +14,7 @@ using LSTool.Tools.Beams.InstallRebarBeamV2.viewModels;
 using LSTool.Tools.Beams.InstallRebarBeamV2.views;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Support.Legacy;
 using LSTool.Tools.Beams.InstallRebarBeamV2.UI.Preview;
+using LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics;
 using RIMT.Utils;
 using RIMT.Utils.canvass;
 using RIMT.Utils.Entities;
@@ -36,10 +37,22 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
         [RelayCommand]
         private void OK()
         {
+            RebarDiagnosticLog diagnosticLog = null;
             try
             {
                 _previewRefreshCoordinator.CancelPending();
+                diagnosticLog = RebarDiagnosticLog.Start(this);
+                DiagnosticLog = diagnosticLog;
+                diagnosticLog.Record("command.ok.requested", new
+                {
+                    activeViewId = AC.Document.ActiveView?.Id.Value,
+                    activeViewName = AC.Document.ActiveView?.Name
+                });
                 _beamStressRuleTypeService.Update(ElementInstances.RebarBeams, ElementInstances.BeamStressRuleType);
+                diagnosticLog.Record("beam.stress.updated", new
+                {
+                    rebarBeamCount = ElementInstances.RebarBeams?.Count ?? 0
+                });
                 using (var ts = new Transaction(AC.Document, "Install beam rebar V2"))
                 {
                     ts.SkipAllWarnings();
@@ -62,6 +75,21 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     var installRebarSubHorizontalStirrupForMainRebar = installResult.SecondaryHorizontalMainStirrups;
                     var installRebarSubHorizontalStirrupForSideRebar = installResult.SecondaryHorizontalSideStirrups;
                     var allCreatedRebars = installResult.AllRebars.ToList();
+                    var sideRebarIds = new HashSet<long>(
+                        installRebarSide.Select(rebar => rebar.Id.Value));
+                    diagnosticLog.Record("installation.created", new
+                    {
+                        totalCount = allCreatedRebars.Count,
+                        sideCount = installRebarSide.Count,
+                        dantoryCount = installRebarDantories.Count,
+                        mainStirrupCount = installRebarStirrup.Count,
+                        secondaryVerticalStirrupCount = installRebarSubVerticalStirrup.Count,
+                        secondaryHorizontalMainStirrupCount = installRebarSubHorizontalStirrupForMainRebar.Count,
+                        secondaryHorizontalSideStirrupCount = installRebarSubHorizontalStirrupForSideRebar.Count,
+                        temporaryHostId = installResult.TemporaryHostId?.Value,
+                        defaultTargetHostId = installResult.TargetHostId?.Value,
+                        mappedTargetCount = installResult.TargetHostIdsByRebarId.Count
+                    });
                     #region write rebar type info
                     using (installResult.Metrics.Measure("metadata.type"))
                     {
@@ -140,13 +168,59 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     #region Resetting host
                     using (installResult.Metrics.Measure("rehost"))
                     {
+                        var temporaryHostId = installResult.TemporaryHostId;
+                        diagnosticLog.Record("rehost.started", new
+                        {
+                            totalCount = allCreatedRebars.Count,
+                            sideCount = installRebarSide.Count,
+                            temporaryHostId = temporaryHostId?.Value,
+                            defaultTargetHostId = installResult.TargetHostId?.Value,
+                            mappedTargetCount = installResult.TargetHostIdsByRebarId.Count
+                        });
                         foreach (var rebar in allCreatedRebars)
                         {
+                            var targetHostId = installResult.TargetHostIdsByRebarId
+                                .TryGetValue(rebar.Id.Value, out var spanHostId)
+                                ? spanHostId
+                                : installResult.TargetHostId;
+                            var currentHostId = rebar.GetHostId();
+                            var diagnosticGroup = sideRebarIds.Contains(rebar.Id.Value)
+                                ? "side"
+                                : "other";
+                            diagnosticLog.RecordRebar(
+                                "rehost.before",
+                                rebar,
+                                intendedHostId: targetHostId,
+                                group: diagnosticGroup);
+                            if (currentHostId.Value == targetHostId.Value)
+                            {
+                                diagnosticLog.RecordRebar(
+                                    "rehost.skipped.already-correct",
+                                    rebar,
+                                    intendedHostId: targetHostId,
+                                    group: diagnosticGroup);
+                                continue;
+                            }
+                            if (currentHostId.Value != temporaryHostId.Value)
+                                throw new InvalidOperationException(
+                                    $"Rebar {rebar.Id.Value} has unexpected host {currentHostId.Value}; " +
+                                    $"expected temporary host {temporaryHostId.Value}.");
+
                             try
                             {
                                 rebar.SetHostId(
                                     AC.Document,
-                                    installResult.TargetHostId);
+                                    targetHostId);
+                                if (rebar.GetHostId().Value != targetHostId.Value)
+                                {
+                                    throw new InvalidOperationException(
+                                        $"Revit did not assign the expected host {targetHostId.Value}.");
+                                }
+                                diagnosticLog.RecordRebar(
+                                    "rehost.after",
+                                    rebar,
+                                    intendedHostId: targetHostId,
+                                    group: diagnosticGroup);
                             }
                             catch (Exception ex)
                             {
@@ -155,10 +229,64 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                             }
                         }
 
-                        if (installResult.TemporaryHostId != null
-                            && installResult.TemporaryHostId != ElementId.InvalidElementId)
+                        var stillTemporaryHosted = allCreatedRebars
+                            .Where(rebar => rebar.GetHostId().Value == temporaryHostId.Value)
+                            .Select(rebar => rebar.Id.Value)
+                            .ToList();
+                        diagnosticLog.Record("temporary-host.cleanup.precheck", new
                         {
-                            AC.Document.Delete(installResult.TemporaryHostId);
+                            temporaryHostId = temporaryHostId?.Value,
+                            stillTemporaryHostedCount = stillTemporaryHosted.Count,
+                            stillTemporaryHostedIds = stillTemporaryHosted
+                        });
+                        if (stillTemporaryHosted.Count > 0)
+                        {
+                            throw new InvalidOperationException(
+                                $"Temporary host cleanup was blocked because rebar ids " +
+                                $"{string.Join(", ", stillTemporaryHosted)} were not rehosted.");
+                        }
+
+                        if (temporaryHostId != null
+                            && temporaryHostId != ElementId.InvalidElementId)
+                        {
+                            var deletedIds = AC.Document.Delete(temporaryHostId)
+                                .Select(id => id.Value)
+                                .ToList();
+                            diagnosticLog.Record("temporary-host.deleted", new
+                            {
+                                temporaryHostId = temporaryHostId.Value,
+                                deletedIds
+                            });
+                            AC.Document.Regenerate();
+                            var deletedCreatedRebars = allCreatedRebars
+                                .Where(rebar => !rebar.IsValidObject
+                                    || AC.Document.GetElement(rebar.Id) == null)
+                                .Select(rebar => rebar.Id.Value)
+                                .ToList();
+                            diagnosticLog.Record("temporary-host.cleanup.completed", new
+                            {
+                                createdRebarCount = allCreatedRebars.Count,
+                                deletedCreatedRebarCount = deletedCreatedRebars.Count,
+                                deletedCreatedRebarIds = deletedCreatedRebars
+                            });
+                            if (deletedCreatedRebars.Count > 0)
+                            {
+                                throw new InvalidOperationException(
+                                    $"Deleting the temporary host also deleted created rebar ids " +
+                                    $"{string.Join(", ", deletedCreatedRebars)}.");
+                            }
+                        }
+                        foreach (var sideRebar in installRebarSide)
+                        {
+                            var targetHostId = installResult.TargetHostIdsByRebarId
+                                .TryGetValue(sideRebar.Id.Value, out var spanHostId)
+                                ? spanHostId
+                                : installResult.TargetHostId;
+                            diagnosticLog.RecordRebar(
+                                "side.rebar.after-cleanup",
+                                sideRebar,
+                                intendedHostId: targetHostId,
+                                group: "side");
                         }
                     }
                     #endregion
@@ -172,6 +300,14 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                                 out List<Rebar> rebarDeletes)
                             .Select(rebar => rebar.Id)
                             .ToList();
+                        diagnosticLog.Record("opening.processed", new
+                        {
+                            inputStirrupCount = rebarsSTP.Count,
+                            replacementCount = rbsHole.Count,
+                            deletedOriginalCount = rebarDeletes.Count,
+                            replacementIds = rbsHole.Select(id => id.Value).ToList(),
+                            deletedOriginalIds = rebarDeletes.Select(rebar => rebar.Id.Value).ToList()
+                        });
                         if (rbsHole.Count != 0)
                         {
                             rebarBeamAss.AddMemberIds(rbsHole);
@@ -186,24 +322,80 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                             .ToList();
                         rebarInAss.InitSegment();
                     }
+                    foreach (var sideRebar in installRebarSide)
+                    {
+                        var targetHostId = installResult.TargetHostIdsByRebarId
+                            .TryGetValue(sideRebar.Id.Value, out var spanHostId)
+                            ? spanHostId
+                            : installResult.TargetHostId;
+                        diagnosticLog.RecordRebar(
+                            "side.rebar.before-commit",
+                            sideRebar,
+                            intendedHostId: targetHostId,
+                            group: "side");
+                    }
                     System.Diagnostics.Debug.WriteLine(
                         $"InstallRebarBeamV2: {installResult.Metrics.ToSummary()}");
+                    diagnosticLog.Record("transaction.committing", new
+                    {
+                        metrics = installResult.Metrics.ToSummary(),
+                        assemblyId = rebarBeamAss.Id.Value,
+                        assemblyMemberCount = rebarBeamAss.GetMemberIds().Count,
+                        finalSideRebarCount = installRebarSide.Count
+                    });
                     //--------
                     ts.Commit();
-                    }
-                    catch
+                    diagnosticLog.Record("transaction.committed", new
                     {
+                        transactionStatus = ts.GetStatus().ToString(),
+                        finalSideRebarCount = installRebarSide.Count
+                    });
+                    foreach (var sideRebar in installRebarSide)
+                    {
+                        var targetHostId = installResult.TargetHostIdsByRebarId
+                            .TryGetValue(sideRebar.Id.Value, out var spanHostId)
+                            ? spanHostId
+                            : installResult.TargetHostId;
+                        diagnosticLog.RecordRebar(
+                            "side.rebar.after-commit",
+                            sideRebar,
+                            intendedHostId: targetHostId,
+                            group: "side");
+                    }
+                    }
+                    catch (Exception ex)
+                    {
+                        diagnosticLog?.RecordException("transaction.failed", ex);
                         if (ts.GetStatus() == TransactionStatus.Started)
+                        {
                             ts.RollBack();
+                            diagnosticLog?.Record("transaction.rolled-back", new
+                            {
+                                transactionStatus = ts.GetStatus().ToString()
+                            });
+                        }
                         throw;
                     }
                 }
 
+                diagnosticLog.Record("run.completed", new
+                {
+                    logPath = diagnosticLog.FilePath
+                });
                 MainView.Close();
             }
             catch (Exception ex)
             {
-                IO.ShowWarning(GetDetailedError(ex));
+                diagnosticLog?.RecordException("command.failed", ex);
+                var message = GetDetailedError(ex);
+                if (diagnosticLog != null)
+                    message += $"{Environment.NewLine}{Environment.NewLine}Diagnostic log:{Environment.NewLine}{diagnosticLog.FilePath}";
+                IO.ShowWarning(message);
+            }
+            finally
+            {
+                DiagnosticLog = null;
+                diagnosticLog?.Dispose();
             }
         }
 

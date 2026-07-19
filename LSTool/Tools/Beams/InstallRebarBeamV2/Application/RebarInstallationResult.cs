@@ -19,6 +19,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application
         public List<Rebar> SecondaryHorizontalSideStirrups { get; set; } = new();
         public ElementId TemporaryHostId { get; set; }
         public ElementId TargetHostId { get; set; }
+        public IReadOnlyDictionary<long, ElementId> TargetHostIdsByRebarId { get; set; } =
+            new Dictionary<long, ElementId>();
         public RebarExecutionMetrics Metrics { get; set; }
 
         public IEnumerable<Rebar> AllRebars => TopLevel1

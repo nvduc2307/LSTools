@@ -166,7 +166,7 @@ namespace RIMT.Utils.RevRebars
                 else
                 {
                     LSTool.Tools.Beams.InstallRebarBeamV2.Support.Legacy.RebarSharedParameterSupport
-                        .SetRequiredStringParameter(rebar, shapeParameterName, "不明");
+                        .SetRequiredStringParameter(rebar, shapeParameterName, "Unknown");
                 }
 
                 return RoundUpToTen(Math.Round(baseLengthMm + correctionMm));

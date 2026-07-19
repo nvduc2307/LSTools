@@ -177,13 +177,18 @@
             <ComboBox 
                 ItemsSource="{Binding SettingStirrupSectionViewModel. ElementInstances.RebarBeams}"
                 SelectedItem="{Binding SettingStirrupSectionViewModel. ElementInstances.RebarBeamActive}"
-                Width="200">
+                Width="330">
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding Name}"/>
+                        <TextBlock Text="{Binding SpanDisplayName}"/>
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
+            <Button Margin="10,0,0,0"
+                    Padding="12,0"
+                    Height="28"
+                    Command="{Binding CopyCurrentSpanToAllSpansCommand}"
+                    Content="Copy Current Span to All Spans"/>
         </StackPanel>
 
       <Grid Margin="0,5,0,0">
@@ -274,7 +279,7 @@
                      <!--<TextBlock Style="{StaticResource SectionLabel}" Margin="0,5,8,4"
            Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_GROUP_SETTING_REBAR_STIRRUP}"/>-->
                      <CheckBox VerticalAlignment="Center"
-          Content="全断面共通"
+          Content="Use for All Sections"
           IsChecked="{Binding ElementInstances.IsRebarBeamStirrupSame}"/>
                   </StackPanel>
                </Border>
@@ -305,7 +310,7 @@
                         <!--<TextBlock Style="{StaticResource SectionLabel}" Margin="0,5,8,4"
   Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_GROUP_SETTING_REBAR_STIRRUP}"/>-->
                         <CheckBox VerticalAlignment="Center"
- Content="全断面共通"
+ Content="Use for All Sections"
  IsChecked="{Binding ElementInstances.IsRebarBeamStirrupSame}"/>
                      </StackPanel>
                   </Border>
@@ -336,7 +341,7 @@ Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamS
                      <!--<TextBlock Style="{StaticResource SectionLabel}" Margin="0,5,8,4"
   Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_GROUP_SETTING_REBAR_STIRRUP}"/>-->
                      <CheckBox VerticalAlignment="Center"
- Content="全断面共通"
+ Content="Use for All Sections"
  IsChecked="{Binding ElementInstances.IsRebarBeamStirrupSame}"/>
                   </StackPanel>
                </Border>
@@ -374,7 +379,7 @@ Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamS
             </Grid.RowDefinitions>
 
             <!--Daichinh-->
-            <GroupBox Grid.Row="0" Header="あばら筋形状">
+            <GroupBox Grid.Row="0" Header="Stirrup Shape">
                <StackPanel HorizontalAlignment="Left" Orientation="Vertical">
                   <Grid Height="100">
                      <Grid.ColumnDefinitions>
@@ -405,7 +410,7 @@ Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamS
                      </RadioButton>
                   </Grid>
 
-                  <GroupBox Header="キャップ形状">
+                  <GroupBox Header="Cap Shape">
                      <Grid>
                         <Grid.ColumnDefinitions>
                            <ColumnDefinition/>
@@ -435,7 +440,7 @@ Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamS
                      <RowDefinition/>
                      <RowDefinition/>
                   </Grid.RowDefinitions>
-                  <GroupBox Grid.Row="0" Header="巾止め筋形状">
+                  <GroupBox Grid.Row="0" Header="Crosstie Shape">
                      <StackPanel HorizontalAlignment="Left" Orientation="Vertical">
                         <Grid>
                            <Grid.ColumnDefinitions>
@@ -476,7 +481,7 @@ Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamS
                   <GroupBox 
                 Margin="0,29,0,0"
                 Grid.Row="1" 
-                Header="中子形状（副あばら筋）">
+                Header="Inner Stirrup Shape (Secondary Stirrup)">
                      <StackPanel HorizontalAlignment="Left" Orientation="Vertical">
                         <Grid>
                            <Grid.ColumnDefinitions>
@@ -502,11 +507,11 @@ Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamS
                   </GroupBox>
                </Grid>
             </StackPanel>
-            <!--<GroupBox Grid.Column="2" Header="貫通孔設定">
+            <!--<GroupBox Grid.Column="2" Header="Opening Settings">
                <StackPanel Margin="10">
                   <StackPanel Orientation="Horizontal">
                      <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                        <Label Content="配筋パターン" FontSize="12" VerticalAlignment="Center"/>
+                        <Label Content="Reinforcement Pattern" FontSize="12" VerticalAlignment="Center"/>
                         <TextBox 
                         behaviors:TextBoxBehavior.SelectAllTextOnFocus="True" 
                         Grid.Column="1"

@@ -130,7 +130,12 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 .ToList();
             if (!RebarDiameters.Any()) throw new Exception("Please Load Diameter");
             GetDiameterRebarBeam();
-            RebarBeams = Beam.ElementSubs?.Select(x => new RebarBeam(x)).ToList();
+            RebarBeams = Beam.ElementSubs?
+                .Select((member, index) => new RebarBeam(member)
+                {
+                    SpanIndex = index + 1
+                })
+                .ToList();
             InitDataRebarBeam();
             RebarBeamActive = RebarBeams.FirstOrDefault();
             var beamId = new ElementId(RebarBeamActive.BeamId);
@@ -246,6 +251,27 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             ApplySection(this.RebarBeamActive.RebarBeamSectionStart);
             ApplySection(this.RebarBeamActive.RebarBeamSectionMid);
             ApplySection(this.RebarBeamActive.RebarBeamSectionEnd);
+        }
+
+        public void CopyActiveSpanSettingsToAll()
+        {
+            var source = RebarBeamActive
+                ?? throw new InvalidOperationException("Select a source span before copying settings.");
+            foreach (var target in RebarBeams.Where(beam => beam.BeamId != source.BeamId))
+            {
+                RebarBeam.ResetActionChange(target);
+                target.MainStirrupType1 = source.MainStirrupType1;
+                target.MainStirrupType2 = source.MainStirrupType2;
+                target.MainStirrupType3 = source.MainStirrupType3;
+                target.MainStirrupTypeHat = source.MainStirrupTypeHat;
+                target.HorizontalDaiPhu = source.HorizontalDaiPhu;
+                target.VerticalDaiPhu = source.VerticalDaiPhu;
+                target.QuantityStirrupSupportHole = source.QuantityStirrupSupportHole;
+
+                CopySectionSettings(target.RebarBeamSectionStart, source.RebarBeamSectionStart);
+                CopySectionSettings(target.RebarBeamSectionMid, source.RebarBeamSectionMid);
+                CopySectionSettings(target.RebarBeamSectionEnd, source.RebarBeamSectionEnd);
+            }
         }
         private void GetDiameterRebarBeam()
         {
@@ -370,8 +396,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
 
                 rebarBeamSection.RebarBeamSideBar.Diameter =
                     sectionActive.RebarBeamSideBar.Diameter;
-                rebarBeamSection.RebarBeamSideBar.Quantity =
-                    sectionActive.RebarBeamSideBar.Quantity;
+                rebarBeamSection.RebarBeamSideBar.QuantitySide =
+                    sectionActive.RebarBeamSideBar.QuantitySide;
             }
             catch (Exception ex)
             {
@@ -673,6 +699,60 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 throw new InvalidOperationException(
                     "Failed to generate the coordinate system for the selected beam assembly.", ex);
             }
+        }
+
+        private static void CopySectionSettings(
+            RebarBeamSection target,
+            RebarBeamSection source)
+        {
+            if (target == null || source == null)
+                throw new InvalidOperationException("The source or target span section is unavailable.");
+
+            CopyMainBar(target.RebarBeamTop.RebarBeamTopLevel1, source.RebarBeamTop.RebarBeamTopLevel1);
+            CopyMainBar(target.RebarBeamTop.RebarBeamTopLevel2, source.RebarBeamTop.RebarBeamTopLevel2);
+            CopyMainBar(target.RebarBeamTop.RebarBeamTopLevel3, source.RebarBeamTop.RebarBeamTopLevel3);
+            CopyMainBar(target.RebarBeamBot.RebarBeamBotLevel1, source.RebarBeamBot.RebarBeamBotLevel1);
+            CopyMainBar(target.RebarBeamBot.RebarBeamBotLevel2, source.RebarBeamBot.RebarBeamBotLevel2);
+            CopyMainBar(target.RebarBeamBot.RebarBeamBotLevel3, source.RebarBeamBot.RebarBeamBotLevel3);
+
+            var topGroupId = source.RebarBeamTop.RebarGroupTypeActive?.Id;
+            if (topGroupId != null)
+            {
+                target.RebarBeamTop.RebarGroupTypeActive = target.RebarBeamTop.RebarBeamMainBarGroups
+                    .FirstOrDefault(group => group.Id == topGroupId);
+                RebarBeamTop.TopRebarGroupTypeChangeFunc(target.RebarBeamTop);
+            }
+
+            var bottomGroupId = source.RebarBeamBot.RebarGroupTypeActive?.Id;
+            if (bottomGroupId != null)
+            {
+                target.RebarBeamBot.RebarGroupTypeActive = target.RebarBeamBot.RebarBeamMainBarGroups
+                    .FirstOrDefault(group => group.Id == bottomGroupId);
+                RebarBeamBot.BotRebarGroupTypeChangeFunc(target.RebarBeamBot);
+            }
+
+            target.RebarBeamStirrup.Diameter = source.RebarBeamStirrup.Diameter;
+            target.RebarBeamStirrup.Quantity = source.RebarBeamStirrup.Quantity;
+            target.RebarBeamStirrup.QtyInstall = source.RebarBeamStirrup.QtyInstall;
+            target.RebarBeamStirrup.Spacing = source.RebarBeamStirrup.Spacing;
+
+            target.RebarBeamSideBar.Diameter = source.RebarBeamSideBar.Diameter;
+            target.RebarBeamSideBar.QuantitySide = source.RebarBeamSideBar.QuantitySide;
+            target.RebarBeamSideBar.RebarBeamType = source.RebarBeamSideBar.RebarBeamType;
+        }
+
+        private static void CopyMainBar(RebarBeamMainBar target, RebarBeamMainBar source)
+        {
+            target.Diameter = source.Diameter;
+            target.Quantity = source.Quantity;
+            target.QtyInstall = source.QtyInstall;
+            target.RebarBeamType = source.RebarBeamType;
+            target.RebarGroupType = source.RebarGroupType;
+            target.RebarLevelType = source.RebarLevelType;
+            target.HasHorizontalHook = source.HasHorizontalHook;
+            target.Hooks2 = source.Hooks2 == null
+                ? null
+                : new Dictionary<int, bool>(source.Hooks2);
         }
     }
 }

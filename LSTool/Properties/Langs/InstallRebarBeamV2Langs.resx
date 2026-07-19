@@ -118,34 +118,34 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="IRBV2_GROUP_SETTING_REBAR_BOT" xml:space="preserve">
-    <value>Setting Rebar Bot</value>
+    <value>Bottom Reinforcement</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_REBAR_TOP" xml:space="preserve">
-    <value>Setting Rebar Top</value>
+    <value>Top Reinforcement</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_REBAR_STIRRUP" xml:space="preserve">
     <value>Main Stirrup</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_SECTION_END" xml:space="preserve">
-    <value>Section End</value>
+    <value>End Section</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_SECTION_MID" xml:space="preserve">
-    <value>Section Mid</value>
+    <value>Middle Section</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_SECTION_START" xml:space="preserve">
-    <value>Section Start</value>
+    <value>Start Section</value>
   </data>
   <data name="IRBV2_TAB_SETTING_BEAM" xml:space="preserve">
-    <value>Setting Beam</value>
+    <value>Beam Settings</value>
   </data>
   <data name="IRBV2_TAB_SETTING_SECTION" xml:space="preserve">
-    <value>Setting Section</value>
+    <value>Rebar Settings</value>
   </data>
   <data name="IRBV2_TAB_SETTING_STIRRUP_TYPE" xml:space="preserve">
-    <value>Stirrup Type</value>
+    <value>Stirrup Settings</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_REBAR_SIDE" xml:space="preserve">
-    <value>SideBar</value>
+    <value>Side Bars</value>
   </data>
   <data name="IRBV2_SETTING_REBAR_DIAMETER" xml:space="preserve">
     <value>Diameter</value>
@@ -157,7 +157,7 @@
     <value>Quantity</value>
   </data>
   <data name="IRBV2_COMMAND_NAME" xml:space="preserve">
-    <value>InstallRebarBeamView</value>
+    <value>Install Beam Reinforcement</value>
   </data>
   <data name="IRBV2_GROUP_NAME" xml:space="preserve">
     <value>Group</value>
@@ -178,24 +178,24 @@
     <value>Fukashi Left</value>
   </data>
   <data name="IRBV2_SETTING_SPAN" xml:space="preserve">
-    <value>Setting Span</value>
+    <value>Span</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_ANCHOR" xml:space="preserve">
-    <value>Setting Anchor</value>
+    <value>Anchor Settings</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_BEAM" xml:space="preserve">
-    <value>Setting Beam</value>
+    <value>Beam Settings</value>
   </data>
   <data name="IRBV2_SETTING_COVER" xml:space="preserve">
-    <value>Setting Cover</value>
+    <value>Concrete Cover</value>
   </data>
   <data name="IRBV2_SETTING_DISTANCE_R_TO_R" xml:space="preserve">
-    <value>DISTANCE_R_TO_R</value>
+    <value>Rebar Spacing</value>
   </data>
   <data name="IRBV2_TAB_SETTING_SUB_SETTING" xml:space="preserve">
-    <value>Sub Setting</value>
+    <value>Additional Settings</value>
   </data>
   <data name="IRBV2_GROUP_SETTING_DANTORY" xml:space="preserve">
-    <value>Setting Dantory</value>
+    <value>Erection Bars</value>
   </data>
 </root>

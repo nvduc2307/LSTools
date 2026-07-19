@@ -40,6 +40,8 @@ InstallRebarBeamV2/
 - Main bars now follow `Planner -> MainBarCreationPlan -> Writer`; geometry calculation and Revit element creation are timed separately.
 - The created rebar collection is materialized once for assembly creation, metadata lookup, and rehosting.
 - The real target host id is resolved once and carried in the installation result.
+- Span-local side bars, dantory bars, and stirrups retain their source beam id and are rehosted to that physical span after the rebar assembly is created. Continuous main bars keep the assembly-wide primary host behavior.
+- Temporary-host cleanup now verifies the assigned host and confirms that no created rebar was cascade-deleted.
 
 ### Geometry and opening processing
 
@@ -47,6 +49,7 @@ InstallRebarBeamV2/
 - Beam and sub-beam lookups use id dictionaries instead of repeated linear searches.
 - The maximum main-bar quantity handles empty and one-bar layouts without invalid spacing math.
 - Opening processing reuses the cached `BoxElement`, prefilters candidate stirrups, groups source stirrups once per beam, caches corrected lengths and schema payloads, and deduplicates deletes by element id.
+- Side-bar planning validates both the expected `QuantitySide x 2` geometry count and the number of distinct vertical levels for every span.
 
 ### Parameters and metadata
 

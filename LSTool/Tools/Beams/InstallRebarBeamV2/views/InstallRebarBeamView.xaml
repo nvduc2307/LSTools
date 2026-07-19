@@ -309,15 +309,16 @@
                         <Button Style="{StaticResource ButtonSecondary}"
                                 Command="{Binding ApplyCommand}"
                                 Margin="8,0,0,0"
-                                Content="{x:Static langs:General.APPLY}"/>
+                                Content="Apply to Current"
+                                ToolTip="Apply the selected preset to the current span only"/>
                         <Button Style="{StaticResource ButtonSecondary}"
                                 Command="{Binding SaveCommand}"
                                 Margin="5,0,0,0"
-                                Content="{x:Static langs:General.SAVE}"/>
+                                Content="Save"/>
                         <Button Style="{StaticResource ButtonSecondary}"
                                 Command="{Binding DeleteCommand}"
                                 Margin="5,0,0,0"
-                                Content="{x:Static langs:General.DELETE}"/>
+                                Content="Delete"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="1"
@@ -330,7 +331,7 @@
                         <Button Style="{StaticResource ButtonSecondary}"
                                 Width="Auto"
                                 Command="{Binding SaveAsCommand}">
-                            <TextBlock Text="{x:Static langs:General.SAVE_AS}" Padding="10,0"/>
+                            <TextBlock Text="Save As" Padding="10,0"/>
                         </Button>
                     </StackPanel>
                 </Grid>
@@ -371,11 +372,11 @@
                         Margin="12,8,12,12">
                 <Button Style="{StaticResource ButtonPrimary}"
                         Command="{Binding OKCommand}"
-                        Content="{x:Static langs:General.OK}"/>
+                        Content="OK"/>
                 <Button Style="{StaticResource ButtonSecondary}"
                         Command="{Binding CancelCommand}"
                         Margin="8,0,0,0"
-                        Content="{x:Static langs:General.CANCEL}"/>
+                        Content="Cancel"/>
             </StackPanel>
 
         </StackPanel>

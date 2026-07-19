@@ -14,6 +14,7 @@ using LSTool.Tools.Beams.InstallRebarBeamV2.viewModels;
 using LSTool.Tools.Beams.InstallRebarBeamV2.views;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Support.Legacy;
 using LSTool.Tools.Beams.InstallRebarBeamV2.UI.Preview;
+using LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics;
 using RIMT.Utils;
 using RIMT.Utils.canvass;
 using RIMT.Utils.Entities;
@@ -57,6 +58,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
         public CanvasPageBase CanvasPageSectionMid { get; set; }
         public CanvasPageBase CanvasPageSectionEnd { get; set; }
         public SettingStirrupSectionViewModel SettingStirrupSectionViewModel { get; set; }
+        internal RebarDiagnosticLog DiagnosticLog { get; set; }
 
         public InstallRebarBeamV2ViewModel(
             IRebarBeamTypeService rebarBeamTypeService,
@@ -177,6 +179,26 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
             _drawRebarBeamInCanvasSerice.DrawSectionBeamStirrup(ElementInstances.RebarBeamActive, this);
             QueuePreviewRefresh(PreviewRegion.AllBars);
 
+        }
+
+        [RelayCommand]
+        private void CopyCurrentSpanToAllSpans()
+        {
+            try
+            {
+                _previewRefreshCoordinator.CancelPending();
+                var targetSpanCount = Math.Max(0, ElementInstances.RebarBeams.Count - 1);
+                ElementInstances.CopyActiveSpanSettingsToAll();
+                InitAction();
+                QueuePreviewRefresh(PreviewRegion.AllBars);
+                IO.ShowInfo(targetSpanCount == 0
+                    ? "There are no additional spans to update."
+                    : $"Current settings were copied to {targetSpanCount} span(s).");
+            }
+            catch (Exception ex)
+            {
+                IO.ShowWarning(ex.Message);
+            }
         }
         [RelayCommand]
         private void Save()

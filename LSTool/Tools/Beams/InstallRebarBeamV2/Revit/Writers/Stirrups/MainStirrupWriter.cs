@@ -52,6 +52,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 var cb = 0;
                 foreach (var subBeam in subBeams)
                 {
+                    var spanResultStartIndex = result.Count;
                     var rebarBeam = rebarBeams[cb];
                     var beamStressRule = rebarBeam.BeamStressRule;
                     var qbeamStressRule = beamStressRule.Stress.Count;
@@ -243,6 +244,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                     installMainStirrupRebarMidSegment.RunAtMidSegment(lastPositionStartSegment.Item1, lastPositionEndSegment.Item1);
                     result.AddRange(installMainStirrupRebarMidSegment.Rebars);
 
+                    foreach (var rebar in result.Skip(spanResultStartIndex))
+                        context.RegisterTargetHost(rebar, subBeam.Id);
                     cb++;
                 }
 
