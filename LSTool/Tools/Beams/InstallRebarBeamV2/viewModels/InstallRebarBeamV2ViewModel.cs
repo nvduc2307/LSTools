@@ -147,6 +147,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
             ElementInstances.RebarBeamActive.MainStirrupType1 = x2 == null ? true : x2.MainStirrupType1;
             ElementInstances.RebarBeamActive.MainStirrupType2 = x2 == null ? true : x2.MainStirrupType2;
             ElementInstances.RebarBeamActive.MainStirrupType3 = x2 == null ? true : x2.MainStirrupType3;
+            ElementInstances.RebarBeamActive.EnsureMainStirrupShapeSelected();
             ElementInstances.RebarBeamActive.QuantityStirrupSupportHole = x2 == null ? 2 : x2.QuantityStirrupSupportHole;
             ElementInstances.RebarBeamActive.MainStirrupTypeHat = x2 == null ? true : x2.MainStirrupTypeHat;
             ElementInstances.RebarBeamActive.HorizontalDaiPhu = x2 == null ? true : x2.HorizontalDaiPhu;

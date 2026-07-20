@@ -66,6 +66,20 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 }
             }
         }
+
+        /// <summary>
+        /// A persisted preset must always select exactly one main stirrup shape.
+        /// Older presets can deserialize with every shape disabled, which leaves
+        /// the stirrup writer without an implementation to execute.
+        /// </summary>
+        public bool EnsureMainStirrupShapeSelected()
+        {
+            if (MainStirrupType1 || MainStirrupType2 || MainStirrupType3)
+                return false;
+
+            MainStirrupType1 = true;
+            return true;
+        }
      
         [ObservableProperty]
         private bool _mainStirrupTypeHat;

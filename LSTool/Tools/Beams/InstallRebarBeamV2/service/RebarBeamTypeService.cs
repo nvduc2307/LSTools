@@ -56,6 +56,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
         {
             try
             {
+                rebarBeamSave.EnsureMainStirrupShapeSelected();
                 List<RebarBeam> rebarBeamSaveNews = [.. new List<RebarBeam>() { rebarBeamSave }];
                 var rebarBeamSaveTarget = rebarBeamSaveNews.FirstOrDefault();
                 RebarBeam.ResetActionChange(rebarBeamSaveTarget);
@@ -82,7 +83,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 if (isRebarBeamTypeExist) throw new Exception("Type is existed");
                 var rebarBeamType = new RebarBeam
                 {
-                    NameType = nameType
+                    NameType = nameType,
+                    MainStirrupType1 = true
                 };
                 rebarBeams.Add(rebarBeamType);
                 foreach (var item in rebarBeams)

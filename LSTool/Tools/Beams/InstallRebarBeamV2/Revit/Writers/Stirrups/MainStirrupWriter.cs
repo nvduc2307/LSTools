@@ -49,6 +49,16 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
 
                 var rebarBeams = installRebarBeamV2ViewModel.ElementInstances.RebarBeams;
                 var subBeams = installRebarBeamV2ViewModel.ElementInstances.Beam.ElementSubs;
+                var mainStirrupShape = installRebarBeamV2ViewModel.ElementInstances.RebarBeamActive;
+                var defaultedMainStirrupShape = mainStirrupShape.EnsureMainStirrupShapeSelected();
+                context.DiagnosticLog?.Record("stirrup.main.shape", new
+                {
+                    type1 = mainStirrupShape.MainStirrupType1,
+                    type2 = mainStirrupShape.MainStirrupType2,
+                    type3 = mainStirrupShape.MainStirrupType3,
+                    typeHat = mainStirrupShape.MainStirrupTypeHat,
+                    defaultedToType1 = defaultedMainStirrupShape
+                });
                 var cb = 0;
                 foreach (var subBeam in subBeams)
                 {
@@ -173,9 +183,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                     //rải thép ở segment Start, End trước
                     InstallMainStirrupRebarBeam installMainStirrupRebarStartSegment = null, installMainStirrupRebarEndSegment = null,
                         installMainStirrupRebarMidSegment = null;
-                    if (installRebarBeamV2ViewModel.ElementInstances.RebarBeamActive.MainStirrupType1)
+                    if (mainStirrupShape.MainStirrupType1)
                     {
-                        if (!installRebarBeamV2ViewModel.ElementInstances.RebarBeamActive.MainStirrupTypeHat)
+                        if (!mainStirrupShape.MainStirrupTypeHat)
                         {
                             installMainStirrupRebarStartSegment = new MainStirrupShape3(mainStirrupSegmentStart);
                             installMainStirrupRebarEndSegment = new MainStirrupShape3(mainStirrupSegmentEnd);
@@ -186,12 +196,12 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                             installMainStirrupRebarEndSegment = new MainStirrupShape3_2(mainStirrupSegmentEnd);
                         }
                     }
-                    else if (installRebarBeamV2ViewModel.ElementInstances.RebarBeamActive.MainStirrupType2)
+                    else if (mainStirrupShape.MainStirrupType2)
                     {
                         installMainStirrupRebarStartSegment = new MainStirrupShape1(mainStirrupSegmentStart);
                         installMainStirrupRebarEndSegment = new MainStirrupShape1(mainStirrupSegmentEnd);
                     }
-                    else if (installRebarBeamV2ViewModel.ElementInstances.RebarBeamActive.MainStirrupType3)
+                    else if (mainStirrupShape.MainStirrupType3)
                     {
                         installMainStirrupRebarStartSegment = new MainStirrupShape2(mainStirrupSegmentStart);
                         installMainStirrupRebarEndSegment = new MainStirrupShape2(mainStirrupSegmentEnd);
@@ -226,17 +236,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                     mainStirrupSegmentMid.BoxElementPoint.P7 =
                         mainStirrupSegmentMid.BoxElementPoint.P7.ProjectOnto(endPlane);
 
-                    if (installRebarBeamV2ViewModel.ElementInstances.RebarBeamActive.MainStirrupType1)
+                    if (mainStirrupShape.MainStirrupType1)
                     {
-                        installMainStirrupRebarMidSegment = !installRebarBeamV2ViewModel.ElementInstances.RebarBeamActive.MainStirrupTypeHat
+                        installMainStirrupRebarMidSegment = !mainStirrupShape.MainStirrupTypeHat
                             ? new MainStirrupShape3(mainStirrupSegmentMid)
                             : new MainStirrupShape3_2(mainStirrupSegmentMid);
                     }
-                    else if (installRebarBeamV2ViewModel.ElementInstances.RebarBeamActive.MainStirrupType2)
+                    else if (mainStirrupShape.MainStirrupType2)
                     {
                         installMainStirrupRebarMidSegment = new MainStirrupShape1(mainStirrupSegmentMid);
                     }
-                    else if (installRebarBeamV2ViewModel.ElementInstances.RebarBeamActive.MainStirrupType3)
+                    else if (mainStirrupShape.MainStirrupType3)
                     {
                         installMainStirrupRebarMidSegment = new MainStirrupShape2(mainStirrupSegmentMid);
                     }

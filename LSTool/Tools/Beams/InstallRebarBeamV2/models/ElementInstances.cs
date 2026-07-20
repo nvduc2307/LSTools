@@ -141,6 +141,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             RebarBeamActive.MainStirrupType3 = RebarBeamTypeSelected == null ? true : RebarBeamTypeSelected.MainStirrupType3;
             RebarBeamActive.MainStirrupType2 = RebarBeamTypeSelected == null ? true : RebarBeamTypeSelected.MainStirrupType2;
             RebarBeamActive.MainStirrupType1 = RebarBeamTypeSelected == null ? true : RebarBeamTypeSelected.MainStirrupType1;
+            RebarBeamActive.EnsureMainStirrupShapeSelected();
             RebarBeamActive.MainStirrupTypeHat = RebarBeamTypeSelected == null ? true : RebarBeamTypeSelected.MainStirrupTypeHat;
             RebarBeamActive.HorizontalDaiPhu = RebarBeamTypeSelected == null ? true : RebarBeamTypeSelected.HorizontalDaiPhu;
             RebarBeamActive.VerticalDaiPhu = RebarBeamTypeSelected == null ? true : RebarBeamTypeSelected.VerticalDaiPhu;
@@ -216,6 +217,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 rebarBeam.MainStirrupType1 = RebarBeamTypeSelected == null ? true : RebarBeamTypeSelected.MainStirrupType1;
                 rebarBeam.MainStirrupType2 = RebarBeamTypeSelected == null ? true : RebarBeamTypeSelected.MainStirrupType2;
                 rebarBeam.MainStirrupType3 = RebarBeamTypeSelected == null ? true : RebarBeamTypeSelected.MainStirrupType3;
+                rebarBeam.EnsureMainStirrupShapeSelected();
                 rebarBeam.QuantityStirrupSupportHole = RebarBeamTypeSelected == null ? 2 : RebarBeamTypeSelected.QuantityStirrupSupportHole;
                 rebarBeam.MainStirrupTypeHat = RebarBeamTypeSelected == null ? true : RebarBeamTypeSelected.MainStirrupTypeHat;
                 rebarBeam.HorizontalDaiPhu = RebarBeamTypeSelected == null ? true : RebarBeamTypeSelected.HorizontalDaiPhu;
@@ -612,7 +614,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
         {
             try
             {
-                return JsonConvert.DeserializeObject<List<RebarBeam>>(File.ReadAllText(PathRebarBeamType));
+                var rebarBeamTypes = JsonConvert.DeserializeObject<List<RebarBeam>>(
+                    File.ReadAllText(PathRebarBeamType)) ?? new List<RebarBeam>();
+                foreach (var rebarBeamType in rebarBeamTypes)
+                    rebarBeamType?.EnsureMainStirrupShapeSelected();
+                return rebarBeamTypes;
             }
             catch (Exception)
             {
