@@ -19,7 +19,6 @@ using RIMT.Utils;
 using RIMT.Utils.canvass;
 using RIMT.Utils.Entities;
 using RIMT.Utils.RevitElements;
-using RIMT.Utils.RevParameters;
 using RIMT.Utils.RevRebars;
 using RIMT.Utils.SelectFilters;
 using RIMT.Utils.SkipWarning;
@@ -40,7 +39,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
         private IInstallRebarBeamInModelService _installRebarBeamInModelService;
         private readonly PreviewRefreshCoordinator _previewRefreshCoordinator;
         public Element OBJ { get; set; }
-        public MappingFukashiView MappingFukashiView { get; set; }
         public InstallRebarBeamView MainView { get; set; }
         public SettingRebarSectionView SettingRebarSectionView { get; set; }
         public SettingStirrupRebarSectionView SettingStirrupRebarSectionView { get; set; }
@@ -91,29 +89,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
             UserControlViewCurrent = SettingRebarSectionView;
             UserControlAnchorBeamTypeViewCurrent = AnchorBeamType1View;
             MainView = new InstallRebarBeamView() { DataContext = this };
-            MappingFukashiView = new MappingFukashiView() { DataContext = this };
             MainView.Loaded += MainView_Loaded;
             _previewRefreshCoordinator = new PreviewRefreshCoordinator(RefreshPreview, TimeSpan.FromMilliseconds(100));
             InitAction();
-        }
-
-        [RelayCommand]
-        private void OkMappingFukashi()
-        {
-            try
-            {
-                MappingFukashiView.Close();
-                MainView.ShowDialog();
-            }
-            catch (Exception ex)
-            {
-                IO.ShowWarning(ex.Message);
-            }
-        }
-        [RelayCommand]
-        private void CancelMappingFukashi()
-        {
-            MappingFukashiView.Close();
         }
 
         [RelayCommand]
@@ -175,7 +153,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
             ElementInstances.RebarBeamActive.VerticalDaiPhu = x2 == null ? true : x2.VerticalDaiPhu;
 
             _drawRebarBeamInCanvasSerice.DrawSectionBeamConcrete(ElementInstances.RebarBeamActive, this);
-            _drawRebarBeamInCanvasSerice.DrawOutLineFukashi(ElementInstances.RebarBeamActive, this);
             _drawRebarBeamInCanvasSerice.DrawSectionBeamStirrup(ElementInstances.RebarBeamActive, this);
             QueuePreviewRefresh(PreviewRegion.AllBars);
 
@@ -228,7 +205,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                 UserControlViewCurrent = SettingRebarSectionView;
                 UserControlAnchorBeamTypeViewCurrent = AnchorBeamType1View;
                 MainView = new InstallRebarBeamView() { DataContext = this };
-                MappingFukashiView = new MappingFukashiView() { DataContext = this };
                 MainView.Loaded += MainView_Loaded;
                 InitAction();
                 MainView.ShowDialog();

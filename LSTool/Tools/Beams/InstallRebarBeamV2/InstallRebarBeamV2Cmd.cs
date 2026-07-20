@@ -29,7 +29,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2
                         new BeamStressRuleTypeService(),
                         drawService,
                         installService);
-                    installRebarBeamV2ViewModel.MappingFukashiView.ShowDialog();
+                    installRebarBeamV2ViewModel.MainView.ShowDialog();
                     tsg.Assimilate();
                 }
                 catch (Autodesk.Revit.Exceptions.OperationCanceledException) { }

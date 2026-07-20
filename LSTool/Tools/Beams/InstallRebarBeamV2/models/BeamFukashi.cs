@@ -13,6 +13,14 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
         private RevParameter _fukashiRight;
         [ObservableProperty]
         private RevParameter _fukashiLeft;
+
+        public BeamFukashi()
+        {
+            FukashiTop = new RevParameter();
+            FukashiBot = new RevParameter();
+            FukashiRight = new RevParameter();
+            FukashiLeft = new RevParameter();
+        }
     }
 }
 

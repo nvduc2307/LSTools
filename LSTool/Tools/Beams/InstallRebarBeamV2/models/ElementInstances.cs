@@ -12,7 +12,6 @@ using RIMT.Utils.Entities;
 using RIMT.Utils.FilterElementsInRevit;
 using RIMT.Utils.Paths;
 using RIMT.Utils.RevitElements;
-using RIMT.Utils.RevParameters;
 using RIMT.Utils.RevRebars;
 using System.IO;
 using System.Windows;
@@ -62,7 +61,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
         }
         public RebarBeamDantory RebarBeamDantory { get; set; }
         public Action RebarBeamActiveChange { get; set; }
-        public List<RevParameter> Parameters { get; set; }
         public BeamFukashi BeamFukashi { get; set; }
         public CoverBeam CoverBeam { get; set; }
         public BeamStressRuleType BeamStressRuleType { get; set; }
@@ -154,24 +152,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             MainRebarTopUIElementStirrup = new List<UIElement>();
             MainRebarBotUIElementStirrup = new List<UIElement>();
             SideBarUIElementStirrup = new List<UIElement>();
+            // Client scope: Fukashi is always zero and must not read family parameters.
             BeamFukashi = new BeamFukashi();
-            Parameters = GetParameters(_document).ToList();
-            BeamFukashi.FukashiTop =
-                Parameters.FirstOrDefault(x => x.Name == LSTool.Properties.Langs.ShareParameterInfo.FUKASHI_TOP)
-                ?? Parameters.FirstOrDefault(x => x.Name == LSTool.Properties.Langs.ShareParameterInfo.FUKASHI_TOP_1)
-                ?? Parameters.FirstOrDefault();
-            BeamFukashi.FukashiRight =
-                Parameters.FirstOrDefault(x => x.Name == LSTool.Properties.Langs.ShareParameterInfo.FUKASHI_RIGHT)
-                ?? Parameters.FirstOrDefault(x => x.Name == LSTool.Properties.Langs.ShareParameterInfo.FUKASHI_RIGHT_1)
-                ?? Parameters.FirstOrDefault();
-            BeamFukashi.FukashiBot =
-                Parameters.FirstOrDefault(x => x.Name == LSTool.Properties.Langs.ShareParameterInfo.FUKASHI_BOTTOM)
-                ?? Parameters.FirstOrDefault(x => x.Name == LSTool.Properties.Langs.ShareParameterInfo.FUKASHI_BOTTOM_1)
-                ?? Parameters.FirstOrDefault();
-            BeamFukashi.FukashiLeft =
-                Parameters.FirstOrDefault(x => x.Name == LSTool.Properties.Langs.ShareParameterInfo.FUKASHI_LEFT)
-                ?? Parameters.FirstOrDefault(x => x.Name == LSTool.Properties.Langs.ShareParameterInfo.FUKASHI_LEFT_1)
-                ?? Parameters.FirstOrDefault();
             CoverBeam = new CoverBeam
             {
                 TopCover = 30,
@@ -625,34 +607,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 rebarBeamSection.RebarBeamTop.RebarBeamTopLevel1.Hooks2 = new();
                 rebarBeamSection.RebarBeamBot.RebarBeamBotLevel1.Hooks2 = new();
             }
-        }
-        private IEnumerable<RevParameter> GetParameters(Document document)
-        {
-            var results = new List<RevParameter>();
-            try
-            {
-                var beam = Beam.ElementSubs
-                    .Where(x => x.Element is FamilyInstance)
-                    .Select(x => x.Element)
-                    .Cast<FamilyInstance>()
-                    .FirstOrDefault();
-                if (beam == null) return results;
-                var beamSymbol = beam.Symbol;
-                var paramNormal = RevParameterUtils.GetAllParameters(beam);
-                var paramCustomNormal = RevParameterUtils.GetAllParametersUserDefine(beam);
-                var paramType = RevParameterUtils.GetAllParameters(beamSymbol);
-                results.AddRange(paramNormal);
-                results.AddRange(paramCustomNormal);
-                results.AddRange(paramType);
-            }
-            catch (Exception)
-            {
-            }
-            results = results
-                .Where(x => x.Parameter.StorageType == StorageType.Double)
-                .ToList();
-            results.Insert(0, new RevParameter());
-            return results;
         }
         private List<RebarBeam> GetRebarBeamTypes()
         {

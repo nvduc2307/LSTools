@@ -77,7 +77,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
             CanvasPageSectionMid = new CanvasPageBase(SettingRebarSectionView.FindName("CanvasSectionMid") as Canvas);
             CanvasPageSectionEnd = new CanvasPageBase(SettingRebarSectionView.FindName("CanvasSectionEnd") as Canvas);
             _drawRebarBeamInCanvasSerice.DrawSectionBeamConcrete(ElementInstances.RebarBeamActive, this);
-            _drawRebarBeamInCanvasSerice.DrawOutLineFukashi(ElementInstances.RebarBeamActive, this);
             _drawRebarBeamInCanvasSerice.DrawSectionBeamStirrup(ElementInstances.RebarBeamActive, this);
             RefreshPreview(PreviewRegion.AllBars);
         }
