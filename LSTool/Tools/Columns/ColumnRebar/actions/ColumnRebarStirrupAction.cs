@@ -1,4 +1,5 @@
-﻿using Autodesk.Revit.UI;
+﻿using Autodesk.Revit.DB.Structure;
+using Autodesk.Revit.UI;
 using LSTool.Tools.Columns.ColumnRebar.models;
 using LSTool.Utils;
 
@@ -8,10 +9,22 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
     {
         private UIDocument _uidocument;
         private Document _document;
-        public ColumnRebarStirrupAction(UIDocument uidocument)
+        private List<RebarBarType> _rebarBarTypes;
+        private Element _host;
+        public ColumnRebarStirrupAction(
+            UIDocument uidocument,
+            Element host)
         {
             _uidocument = uidocument;
             _document = _uidocument.Document;
+            _host = host;
+            _rebarBarTypes = new FilteredElementCollector(_document)
+                .WhereElementIsElementType()
+                .OfClass(typeof(RebarBarType))
+                .Cast<RebarBarType>()
+                .Where(x => x.Name.Contains("D"))
+                .OrderBy(x => x.Name)
+                .ToList();
         }
         public void CreateStirrupMain(List<ColumnConcreteModel> ccRInfos)
         {
@@ -65,17 +78,34 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 var shapes_Mid = _installStirrup(start_zone2, End_zone2, baseShapes, ccRInfo.SpacingST, ccRInfo.SpacingST / 2, ccRInfo.SpacingST / 2);
                 var shapes_End = _installStirrup(start_zone3, End_zone3, baseShapes, ccRInfo.SpacingSTE, 50, ccRInfo.SpacingSTE / 2);
 
+                var rebarHookTypes = new FilteredElementCollector(_document)
+                    .WhereElementIsElementType()
+                    .OfClass(typeof(RebarHookType))
+                    .Cast<RebarHookType>()
+                    .ToList();
+
+                if (!rebarHookTypes.Any())
+                    throw new Exception("Hook Type is null");
+                var hook135 = rebarHookTypes.FirstOrDefault(x=>Math.Abs(x.HookAngle.ToDegrees() - 135) <= 1);
+                if (hook135 == null)
+                    throw new Exception("Hook 135 is null");
                 foreach (var item in shapes_Start)
                 {
-                    _document.CreateCurves(item);
+                    RebarHelper.CreateRebarStirrupTie(
+                        _document,
+                        item, ccRInfo.DiameterST, XYZ.BasisZ, hook135, hook135, _rebarBarTypes, _host);
                 }
                 foreach (var item in shapes_Mid)
                 {
-                    _document.CreateCurves(item);
+                    RebarHelper.CreateRebarStirrupTie(
+                        _document,
+                        item, ccRInfo.DiameterST, XYZ.BasisZ, hook135, hook135, _rebarBarTypes, _host);
                 }
                 foreach (var item in shapes_End)
                 {
-                    _document.CreateCurves(item);
+                    RebarHelper.CreateRebarStirrupTie(
+                        _document,
+                        item, ccRInfo.DiameterST, XYZ.BasisZ, hook135, hook135, _rebarBarTypes, _host);
                 }
             }
             catch (Exception)

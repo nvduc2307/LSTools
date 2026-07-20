@@ -25,6 +25,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private ColumnRebarAnchorAction _columnRebarAnchorAction;
         private ColumnRebarStirrupAction _columnRebarStirrupAction;
         private ColumnRebarMainAction _columnRebarMainAction;
+
+        private Element _host;
         public ColumnRebarAction(UIDocument uidocument)
         {
             _uidocument = uidocument;
@@ -49,11 +51,12 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 OkCommand = new RelayCommand(_OkCommand),
                 CancelCommand = new RelayCommand(_CancelCommand)
             };
-            _columnRebarStirrupAction = new ColumnRebarStirrupAction(_uidocument);
+            _columnRebarStirrupAction = new ColumnRebarStirrupAction(_uidocument, _host);
             _columnRebarMainAction = new ColumnRebarMainAction(
                 _uidocument,
                 _viewModel.ColumnRebarAnchorModelUI,
-                _viewModel.SettingRebarStandardModel);
+                _viewModel.SettingRebarStandardModel,
+                _host);
             _view = new ColumnRebarView() { DataContext = _viewModel };
         }
         public void Execute()

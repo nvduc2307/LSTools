@@ -1,5 +1,6 @@
 ﻿using LSTool.Tools.Generals.SettingDiameters.action;
 using LSTool.Tools.Generals.SettingRebarStandard.models;
+using LSTool.Utils;
 using Newtonsoft.Json;
 
 namespace LSTool.Tools.Columns.ColumnRebar.actions
@@ -10,6 +11,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         {
             ValidateSettingRebarStandard();
             ValidateRebarDiameter();
+            ValidateRebarHost();
             _columnConcreteAction.ValidateShareParameter();
         }
         private void ValidateRebarDiameter()
@@ -21,6 +23,15 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             {
                 ts.Start();
                 action.CreateRebarBarType(rebarDatas);
+                ts.Commit();
+            }
+        }
+        private void ValidateRebarHost()
+        {
+            using (var ts = new Transaction(_document, "RebarDatabasesAction"))
+            {
+                ts.Start();
+                _host = RebarHelper.CreateRebarHost(_document);
                 ts.Commit();
             }
         }
