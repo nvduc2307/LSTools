@@ -1,4 +1,4 @@
-﻿<Window x:Class="LSTool.Tools.Beams.InstallRebarBeamV2.views.InstallRebarBeamView"
+<Window x:Class="LSTool.Tools.Beams.InstallRebarBeamV2.views.InstallRebarBeamView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -8,23 +8,27 @@
         xmlns:langs ="clr-namespace:LSTool.Properties.Langs"
         mc:Ignorable="d"
         Title="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_COMMAND_NAME}"
-        SizeToContent="WidthAndHeight"
+        Width="1280"
+        Height="840"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         WindowStyle="None"
-        MinHeight="700"
-        MinWidth="990">
+        MinHeight="760"
+        MinWidth="1280"
+        Background="#F2F5F4"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
     <Window.Resources>
         <ResourceDictionary>
             <Style x:Key="ButtonPrimary" TargetType="Button">
-                <Setter Property="Height" Value="28"/>
-                <Setter Property="MinWidth" Value="80"/>
-                <Setter Property="Padding" Value="12,0"/>
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="MinWidth" Value="120"/>
+                <Setter Property="Padding" Value="16,0"/>
                 <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="Background" Value="#4A90D9"/>
+                <Setter Property="Background" Value="#11A37F"/>
                 <Setter Property="Foreground" Value="White"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
-                <Setter Property="BorderBrush" Value="#3A7BC8"/>
+                <Setter Property="BorderBrush" Value="#0D8B6D"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Template">
                     <Setter.Value>
@@ -32,15 +36,16 @@
                             <Border Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}"
                                     CornerRadius="4">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#3A7BC8"/>
+                                    <Setter Property="Background" Value="#0D8B6D"/>
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
-                                    <Setter Property="Background" Value="#2B6CB0"/>
+                                    <Setter Property="Background" Value="#08745A"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -48,14 +53,14 @@
                 </Setter>
             </Style>
             <Style x:Key="ButtonSecondary" TargetType="Button">
-                <Setter Property="Height" Value="28"/>
-                <Setter Property="MinWidth" Value="70"/>
-                <Setter Property="Padding" Value="10,0"/>
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="MinWidth" Value="80"/>
+                <Setter Property="Padding" Value="14,0"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Background" Value="White"/>
-                <Setter Property="Foreground" Value="#4A90D9"/>
+                <Setter Property="Foreground" Value="#24414A"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
-                <Setter Property="BorderBrush" Value="#B8D4EE"/>
+                <Setter Property="BorderBrush" Value="#C6D5D0"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Template">
                     <Setter.Value>
@@ -63,15 +68,16 @@
                             <Border Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}"
                                     CornerRadius="4">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#EBF4FF"/>
+                                    <Setter Property="Background" Value="#E7F6F1"/>
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
-                                    <Setter Property="Background" Value="#D6EAF8"/>
+                                    <Setter Property="Background" Value="#D5ECE5"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -156,7 +162,7 @@
                 </Setter>
             </Style>
             <Style TargetType="ComboBox">
-                <Setter Property="Height" Value="28"/>
+                <Setter Property="Height" Value="30"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Background" Value="White"/>
                 <Setter Property="BorderBrush" Value="#B8D4EE"/>
@@ -234,7 +240,7 @@
             </Style>
 
             <Style TargetType="TextBox">
-                <Setter Property="Height" Value="28"/>
+                <Setter Property="Height" Value="30"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
             </Style>
             <Style x:Key="TitleBarButton" TargetType="Button">
@@ -263,123 +269,200 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+
+            <Style x:Key="NavRadio" TargetType="RadioButton">
+                <Setter Property="Height" Value="46"/>
+                <Setter Property="Margin" Value="0,3"/>
+                <Setter Property="Padding" Value="14,0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Foreground" Value="#B8C8C4"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontWeight" Value="Medium"/>
+                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Border x:Name="NavItem"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="3,0,0,0"
+                                    CornerRadius="4"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter VerticalAlignment="Center"
+                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="NavItem" Property="Background" Value="#24343E"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="NavItem" Property="Background" Value="#183C35"/>
+                                    <Setter TargetName="NavItem" Property="BorderBrush" Value="#21C99A"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="SidebarCaption" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="#718A84"/>
+                <Setter Property="FontSize" Value="10"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="Margin" Value="2,0,0,8"/>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
-    <Border Background="White" BorderBrush="#B8D4EE" BorderThickness="1">
-        <StackPanel>
+    <Border Background="#F2F5F4" BorderBrush="#20313A" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="50"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="54"/>
+            </Grid.RowDefinitions>
 
-            <Border Height="32"
-                    Background="#1A5276"
+            <Border Grid.Row="0"
+                    Background="#14242C"
+                    BorderBrush="#11A37F"
+                    BorderThickness="0,0,0,2"
                     MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-                <DockPanel LastChildFill="True">
-                    <Button DockPanel.Dock="Right"
+                <Grid Margin="16,0,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="4" Height="26" CornerRadius="2"
+                            Background="#21C99A" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Foreground="White" FontSize="15" FontWeight="SemiBold"
+                                   Text="Beam Reinforcement"/>
+                        <TextBlock Foreground="#9CB0AA" FontSize="10"
+                                   Text="Multi-span configuration workspace"/>
+                    </StackPanel>
+                    <Button Grid.Column="2"
                             Style="{StaticResource TitleBarButton}"
                             Click="CloseButton_Click"
-                            Content="×"
+                            Content="&#x00D7;"
                             ToolTip="Close"/>
-                    <TextBlock Margin="10,0,8,0"
-                               VerticalAlignment="Center"
-                               Foreground="White"
-                               FontWeight="SemiBold"
-                               Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                </DockPanel>
-            </Border>
-
-            <!-- Toolbar: type selector + CRUD actions -->
-            <Border Background="#F7FBFF"
-                    BorderBrush="#B8D4EE"
-                    BorderThickness="0,0,0,1"
-                    Padding="12,7">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                    </Grid.ColumnDefinitions>
-
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <ComboBox ItemsSource="{Binding ElementInstances.RebarBeamTypes}"
-                                  SelectedItem="{Binding ElementInstances.RebarBeamTypeSelected}"
-                                  Width="120">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding NameType}"/>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                        <Button Style="{StaticResource ButtonSecondary}"
-                                Command="{Binding ApplyCommand}"
-                                Margin="8,0,0,0"
-                                Content="Apply to Current"
-                                ToolTip="Apply the selected preset to the current span only"/>
-                        <Button Style="{StaticResource ButtonSecondary}"
-                                Command="{Binding SaveCommand}"
-                                Margin="5,0,0,0"
-                                Content="Save"/>
-                        <Button Style="{StaticResource ButtonSecondary}"
-                                Command="{Binding DeleteCommand}"
-                                Margin="5,0,0,0"
-                                Content="Delete"/>
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="1"
-                                HorizontalAlignment="Right"
-                                Orientation="Horizontal"
-                                VerticalAlignment="Center">
-                        <TextBox Text="{Binding ElementInstances.RebarBeamTypeName}"
-                                 Width="140"
-                                 Margin="0,0,8,0"/>
-                        <Button Style="{StaticResource ButtonSecondary}"
-                                Width="Auto"
-                                Command="{Binding SaveAsCommand}">
-                            <TextBlock Text="Save As" Padding="10,0"/>
-                        </Button>
-                    </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Horizontal tab strip -->
-            <Border BorderBrush="#B8D4EE" BorderThickness="0,0,0,1" Background="White">
-                <StackPanel Orientation="Horizontal">
-                    <RadioButton Style="{StaticResource TabRadio}"
-                                 Command="{Binding TabSettingRebarSectionViewCommand}"
-                                 GroupName="menuTab"
-                                 IsChecked="True"
-                                 Content="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_TAB_SETTING_SECTION}"
-                                 Checked="RadioButton_Checked"/>
-                    <RadioButton Style="{StaticResource TabRadio}"
-                                 Command="{Binding TabSettingStirrupRebarSectionViewCommand}"
-                                 GroupName="menuTab"
-                                 Content="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_TAB_SETTING_STIRRUP_TYPE}"/>
-                    <RadioButton Style="{StaticResource TabRadio}"
-                                 Command="{Binding TabSettingBeamViewCommand}"
-                                 GroupName="menuTab"
-                                 Content="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_TAB_SETTING_BEAM}"/>
-                    <RadioButton Style="{StaticResource TabRadio}"
-                                 Command="{Binding TabSettingSubSettingViewCommand}"
-                                 GroupName="menuTab"
-                                 Content="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_TAB_SETTING_SUB_SETTING}"/>
-                </StackPanel>
+            <Grid Grid.Row="1" Margin="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="196"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Background="#17252E" CornerRadius="8" Padding="12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Style="{StaticResource SidebarCaption}" Text="PRESET LIBRARY"/>
+                            <ComboBox ItemsSource="{Binding ElementInstances.RebarBeamTypes}"
+                                      SelectedItem="{Binding ElementInstances.RebarBeamTypeSelected}"
+                                      Width="172">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding NameType}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <Button Style="{StaticResource ButtonSecondary}"
+                                    Command="{Binding ApplyCommand}"
+                                    Margin="0,8,0,0"
+                                    Content="Apply to Current Span"
+                                    ToolTip="Apply the selected preset to the current span only"/>
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Style="{StaticResource ButtonSecondary}"
+                                        Command="{Binding SaveCommand}" Margin="0,0,4,0" Content="Save"/>
+                                <Button Grid.Column="1" Style="{StaticResource ButtonSecondary}"
+                                        Command="{Binding DeleteCommand}" Margin="4,0,0,0" Content="Delete"/>
+                            </Grid>
+                            <TextBox Text="{Binding ElementInstances.RebarBeamTypeName}"
+                                     Margin="0,8" Height="30" VerticalContentAlignment="Center"/>
+                            <Button Style="{StaticResource ButtonSecondary}"
+                                    Command="{Binding SaveAsCommand}" Content="Save as New Preset"/>
+                        </StackPanel>
+
+                        <Border Grid.Row="1" Height="1" Background="#2D414A" Margin="0,16"/>
+
+                        <StackPanel Grid.Row="2">
+                            <TextBlock Style="{StaticResource SidebarCaption}" Text="WORKSPACE"/>
+                            <RadioButton Style="{StaticResource NavRadio}"
+                                         Command="{Binding TabSettingRebarSectionViewCommand}"
+                                         GroupName="menuTab" IsChecked="True"
+                                         Content="01   Rebar Layout"
+                                         Checked="RadioButton_Checked"/>
+                            <RadioButton Style="{StaticResource NavRadio}"
+                                         Command="{Binding TabSettingStirrupRebarSectionViewCommand}"
+                                         GroupName="menuTab" Content="02   Stirrup System"/>
+                            <RadioButton Style="{StaticResource NavRadio}"
+                                         Command="{Binding TabSettingBeamViewCommand}"
+                                         GroupName="menuTab" Content="03   Beam Rules"/>
+                            <RadioButton Style="{StaticResource NavRadio}"
+                                         Command="{Binding TabSettingSubSettingViewCommand}"
+                                         GroupName="menuTab" Content="04   Additional Bars"/>
+                        </StackPanel>
+
+                        <Border Grid.Row="3" Background="#20343D" CornerRadius="6" Padding="10" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="TIP" Foreground="#21C99A" FontSize="10" FontWeight="Bold"/>
+                                <TextBlock Text="Use Copy Current Span to All Spans when the layout is repeated."
+                                           Foreground="#B8C8C4" FontSize="10" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="2" Background="White" BorderBrush="#D7E0DD"
+                        BorderThickness="1" CornerRadius="8" Padding="8">
+                    <ScrollViewer VerticalScrollBarVisibility="Hidden"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  CanContentScroll="False">
+                        <ContentControl Content="{Binding UserControlViewCurrent}"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"/>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <Border Grid.Row="2" Background="White" BorderBrush="#D7E0DD" BorderThickness="0,1,0,0">
+                <Grid Margin="12,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Ready to generate" Foreground="#24414A" FontWeight="SemiBold"/>
+                        <TextBlock Text="Review the selected span and copied settings before creating reinforcement."
+                                   Foreground="#718A84" FontSize="10"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource ButtonSecondary}" Command="{Binding CancelCommand}"
+                                Margin="0,0,8,0" Content="Cancel"/>
+                        <Button Style="{StaticResource ButtonPrimary}" Command="{Binding OKCommand}"
+                                Content="Create Reinforcement"/>
+                    </StackPanel>
+                </Grid>
             </Border>
-
-            <!-- Content area -->
-            <UserControl Content="{Binding UserControlViewCurrent}" Margin="10,10,10,0"/>
-
-            <Separator Margin="12,8,12,0" Background="#D6EAF8"/>
-
-            <!-- Footer -->
-            <StackPanel Orientation="Horizontal"
-                        HorizontalAlignment="Right"
-                        Margin="12,8,12,12">
-                <Button Style="{StaticResource ButtonPrimary}"
-                        Command="{Binding OKCommand}"
-                        Content="OK"/>
-                <Button Style="{StaticResource ButtonSecondary}"
-                        Command="{Binding CancelCommand}"
-                        Margin="8,0,0,0"
-                        Content="Cancel"/>
-            </StackPanel>
-
-        </StackPanel>
+        </Grid>
     </Border>
 </Window>
 

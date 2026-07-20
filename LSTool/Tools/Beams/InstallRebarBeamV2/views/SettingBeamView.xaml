@@ -22,9 +22,9 @@
             <Setter Property="Margin" Value="2,0,0,0"/>
         </Style>
         <Style TargetType="GroupBox">
-            <Setter Property="BorderBrush" Value="#B8D4EE"/>
-            <Setter Property="Padding" Value="5"/>
-            <Setter Property="Foreground" Value="#1A5276"/>
+            <Setter Property="BorderBrush" Value="#C9D8D3"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Foreground" Value="#24414A"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
         </Style>
@@ -142,8 +142,16 @@
         </Style>
 
     </UserControl.Resources>
-    <StackPanel Width="950" Height="670">
-        <StackPanel Margin="0,10,0,0">
+    <StackPanel Background="#FAFCFB">
+        <Border Background="#F1F7F5" BorderBrush="#C9D8D3" BorderThickness="1"
+                CornerRadius="6" Padding="12,9" Margin="0,0,0,8">
+            <StackPanel>
+                <TextBlock Text="Beam Rules" Foreground="#185B4A" FontSize="14" FontWeight="SemiBold"/>
+                <TextBlock Text="Define cover, anchorage, stress zones and extension rules for the selected assembly."
+                           Foreground="#718A84" FontSize="10" Margin="0,4,0,0"/>
+            </StackPanel>
+        </Border>
+        <StackPanel>
             <StackPanel>
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -152,7 +160,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <GroupBox 
+                    <GroupBox Margin="0,0,4,0"
                         Header="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_COVER}">
                         <Canvas Height="150">
                             <Image Height="150" Source="../imgs/SettingCover.png"/>
@@ -182,7 +190,7 @@
                                 HorizontalAlignment="Left" VerticalAlignment="Center"/>
                         </Canvas>
                     </GroupBox>
-                    <GroupBox 
+                    <GroupBox Margin="4,0,4,0"
                         Grid.Column="1" 
                         Header="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_DISTANCE_R_TO_R}">
                         <Canvas Height="150">
@@ -197,14 +205,15 @@
                     </GroupBox>
                     <GroupBox Header="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_GROUP_SETTING_ANCHOR}" 
                         Grid.ColumnSpan="2" 
-                        Grid.Column="2">
+                        Grid.Column="2"
+                        Margin="4,0,0,0">
                         <StackPanel>
                             <ComboBox 
                             ItemsSource="{Binding ElementInstances.RebarBeamAnchorTypes}"
                             SelectedItem="{Binding ElementInstances.RebarBeamAnchorType}"
                             Width="70"
                             Height="25"
-                            Margin="10,10,0,10"
+                            Margin="8"
                             HorizontalAlignment="Left">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
@@ -218,7 +227,7 @@
                     </GroupBox>
                 </Grid>
             </StackPanel>
-            <StackPanel Margin="0,5,0,10">
+            <StackPanel Margin="0,8,0,0">
                 <GroupBox 
                     Header="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_GROUP_SETTING_BEAM}">
                     <Canvas 
