@@ -13,7 +13,6 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private Document _document;
         private ColumnRebarView _view;
 
-
         private CustomExternalCommand _externalColumnRebarCmd;
         private ExternalEvent _externalColumnRebarCmdEvent;
         private SettingRebarStandardSchema _settingRebarStandardSchema;
@@ -25,6 +24,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private ColumnRebarAnchorAction _columnRebarAnchorAction;
         private ColumnRebarStirrupAction _columnRebarStirrupAction;
         private ColumnRebarMainAction _columnRebarMainAction;
+        private CanvasSectionPreViewAction _canvasSectionPreViewAction;
 
         private Element _host;
         public ColumnRebarAction(UIDocument uidocument)
@@ -58,13 +58,22 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 _viewModel.SettingRebarStandardModel,
                 _host);
             _view = new ColumnRebarView() { DataContext = _viewModel };
+            _view.Loaded += _view_Loaded;
         }
+
+        private void _view_Loaded(object sender, System.Windows.RoutedEventArgs e)
+        {
+            _canvasSectionPreViewAction = new CanvasSectionPreViewAction(_view.CanvasSectionPreView);
+        }
+
         public void Execute()
         {
             var cls = _columnConcreteAction.SelectColumns();
+            _columnConcreteAction.QtyActionChange = _QtyActionChange;
             _viewModel.ColumnConcreteModels = _columnConcreteAction.GetColumnConcreteModels(cls);
             _viewModel.ColumnConcreteModel = _viewModel.ColumnConcreteModels.FirstOrDefault();
             _view.Show();
+            UpdateCanvas();
         }
     }
 }

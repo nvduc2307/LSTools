@@ -11,6 +11,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private const double _cover = 50;
         private UIDocument _uidocument;
         private Document _document;
+        public Action QtyActionChange { get; set; }
         public ColumnConcreteAction(UIDocument uidocument)
         {
             _uidocument = uidocument;
@@ -53,7 +54,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                         Cover = _cover,
                         VTX = vtx,
                         VTY = vty,
-                        VTZ = vtz
+                        VTZ = vtz,
                     };
                     GetDistanceColumn(
                         cl,
@@ -122,7 +123,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                         ?? ccM.DiameterSTs.FirstOrDefault();
                     ccM.SpacingST = ts_spacing;
                     ccM.SpacingSTE = ts_spacing_end;
-
+                    ccM.SpacingDXAction = QtyActionChange;
+                    ccM.SpacingDYAction = QtyActionChange;
                     results.Add(ccM);
                 }
                 catch (Exception ex)
@@ -132,6 +134,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             }
             return results;
         }
+
         public void SetRebarSetting(
             Document document,
             List<ColumnConcreteModel> cls)

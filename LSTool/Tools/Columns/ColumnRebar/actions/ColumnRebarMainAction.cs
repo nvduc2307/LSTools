@@ -159,12 +159,14 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             }
             foreach (var face in faces)
             {
+                var index = faces.IndexOf(face);
                 var isOdd = CheckPositionSole(faceType, face);
+                var isOddPrev = index == 0 ? false
+                    : CheckPositionSole(faceType, faces[index - 1]);
                 var cover = face.Cover.FromMillimeters();
                 var vtX = (face.Pb2 - face.Pb1).Normalize();
                 var vtY = -face.Plane.Normal;
                 var vtZ = XYZ.BasisZ;
-                var index = faces.IndexOf(face);
                 var diameter = face.Diameter.FromMillimeters();
                 var lapLength = _settingRebarStandardModel.L1 * diameter;
                 var minHook = _settingRebarStandardModel.HMin * diameter;
@@ -174,6 +176,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 var length = face.Pb1.DistanceTo(face.Pt1);
                 var rebarPosition = rebarPositions[index];
                 var rebarPositionNext = rebarPositions[index + 1];
+                var rebarPositionPrev = index == 0 ? null : rebarPositions[index - 1];
                 var isLapDiff = IsDifferentFace(face, faces[index + 1]);
                 var rbCount = rebarPosition.Count;
                 foreach (var item in rebarPosition)
@@ -182,9 +185,15 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     if (ignoreFirstEnd && (numberOf == 0 || numberOf == rbCount - 1))
                         continue;
                     var condit1 = numberOf % 2 == 0;
+                    var condit1Prev = item.Index % 2 == 0;
                     var isSole = !condit1 && !isOdd ? true : condit1 && isOdd ? true : false;
+                    var isSolePrev = index == 0 ? false 
+                        : !condit1Prev && !isOddPrev ? false : condit1Prev && isOddPrev ? false : true;
                     var lapLengthGap = lapLength + (isSole ? lapLength + gapLap : 0);
                     var rebarPositionNextTarget = rebarPositionNext.FirstOrDefault(x => x.Index == item.Index);
+                    var rebarPositionPrevTarget = rebarPositionPrev == null 
+                        ? null 
+                        : rebarPositionPrev.FirstOrDefault(x => x.Index == item.Index);
                     if (isLapDiff)
                     {
                         var p1 = index == 0
@@ -194,32 +203,60 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                         var p3 = p2 - face.Plane.Normal * minHook;
                         var ps = index == 0 ?
                             new List<XYZ>() { p1 - vtY * minHook, p1, p2, p3 }
-                            : new List<XYZ>() { p1 + vtZ * (isSole ? lapLength + gapLap : 0), p2, p3 };
+                            : new List<XYZ>() { p1 + vtZ * (isSolePrev ? lapLength + gapLap : 0), p2, p3 };
                         RebarHelper.CreateRebar(_document, ps.PointsToCurves(), $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
                     }
                     else
                     {
-                        if (rebarPositionNextTarget == null)
+                        if (rebarPositionPrevTarget == null)
                         {
-                            var p1 = item.Position - vtZ * anchor;
-                            var p2 = item.Position + vtZ * (length + lapLengthGap);
-                            var ps = index == 0 ?
-                            new List<XYZ>() { p1 - vtY * minHook, p1, p2 }
-                            : new List<XYZ>() { p1 + vtZ * (isSole ? lapLength + gapLap : 0), p2 };
-                            RebarHelper.CreateRebar(_document, ps.PointsToCurves(), $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                            if (rebarPositionNextTarget == null)
+                            {
+                                var p1 = item.Position - vtZ * anchor;
+                                var p2 = item.Position + vtZ * (length + lapLengthGap);
+                                var ps = index == 0 ?
+                                new List<XYZ>() { p1 - vtY * minHook, p1, p2 }
+                                : new List<XYZ>() { p1 + vtZ * (isSolePrev ? lapLength + gapLap : 0), p2 };
+                                RebarHelper.CreateRebar(_document, ps.PointsToCurves(), $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                            }
+                            else
+                            {
+                                var p1 = index == 0
+                                ? item.Position - vtZ * anchor
+                                : item.Position;
+                                var p2 = item.Position + vtZ * (length - face.HeightBeamZone.FromMillimeters());
+                                var p3 = rebarPositionNextTarget.Position;
+                                var p4 = rebarPositionNextTarget.Position + vtZ * lapLengthGap;
+                                var ps = index == 0 ?
+                                new List<XYZ>() { p1 - vtY * minHook, p1, p2.Add(face.HeightBeamZone <= 5 ? vtZ * lapLengthGap : vtZ * 0.0), face.HeightBeamZone <= 5 ? null : p3, face.HeightBeamZone <= 5 ? null : p4 }
+                                : new List<XYZ>() { p1 + vtZ * (isSolePrev ? lapLength + gapLap : 0), p2.Add(face.HeightBeamZone <= 5 ? vtZ * lapLengthGap : vtZ * 0.0), face.HeightBeamZone <= 5 ? null : p3, face.HeightBeamZone <= 5 ? null : p4 };
+                                RebarHelper.CreateRebar(_document, ps.Where(x => x != null).ToList().PointsToCurves(), $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                            }
                         }
                         else
                         {
-                            var p1 = index == 0
-                            ? item.Position - vtZ * anchor
-                            : item.Position;
-                            var p2 = item.Position + vtZ * (length - face.HeightBeamZone.FromMillimeters());
-                            var p3 = rebarPositionNextTarget.Position;
-                            var p4 = rebarPositionNextTarget.Position + vtZ * lapLengthGap;
-                            var ps = index == 0 ?
-                            new List<XYZ>() { p1 - vtY * minHook, p1, p2.Add(face.HeightBeamZone <= 5 ? vtZ * lapLengthGap : vtZ * 0.0), face.HeightBeamZone <= 5 ? null : p3, face.HeightBeamZone <= 5 ? null : p4 }
-                            : new List<XYZ>() { p1 + vtZ * (isSole ? lapLength + gapLap : 0), p2.Add(face.HeightBeamZone <= 5 ? vtZ * lapLengthGap : vtZ * 0.0), face.HeightBeamZone <= 5 ? null : p3, face.HeightBeamZone <= 5 ? null : p4 };
-                            RebarHelper.CreateRebar(_document, ps.Where(x => x != null).ToList().PointsToCurves(), $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                            if (rebarPositionNextTarget == null)
+                            {
+                                var p1 = item.Position;
+                                var p2 = item.Position + vtZ * (length + lapLengthGap);
+                                var ps = index == 0 ?
+                                new List<XYZ>() { p1 - vtY * minHook, p1, p2 }
+                                : new List<XYZ>() { p1 + vtZ * (isSolePrev ? lapLength + gapLap : 0), p2 };
+                                RebarHelper.CreateRebar(_document, ps.PointsToCurves(), $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                            }
+                            else
+                            {
+                                var p1 = index == 0
+                                ? item.Position - vtZ * anchor
+                                : item.Position;
+                                var p2 = item.Position + vtZ * (length - face.HeightBeamZone.FromMillimeters());
+                                var p3 = rebarPositionNextTarget.Position;
+                                var p4 = rebarPositionNextTarget.Position + vtZ * lapLengthGap;
+                                var ps = index == 0 ?
+                                new List<XYZ>() { p1 - vtY * minHook, p1, p2.Add(face.HeightBeamZone <= 5 ? vtZ * lapLengthGap : vtZ * 0.0), face.HeightBeamZone <= 5 ? null : p3, face.HeightBeamZone <= 5 ? null : p4 }
+                                : new List<XYZ>() { p1 + vtZ * (isSolePrev ? lapLength + gapLap : 0), p2.Add(face.HeightBeamZone <= 5 ? vtZ * lapLengthGap : vtZ * 0.0), face.HeightBeamZone <= 5 ? null : p3, face.HeightBeamZone <= 5 ? null : p4 };
+                                RebarHelper.CreateRebar(_document, ps.Where(x => x != null).ToList().PointsToCurves(), $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                            }
                         }
                     }
                 }
@@ -229,8 +266,11 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         {
             var result = new List<List<Curve>>();
             var face = faces.Last();
+            var faceCount = faces.Count;
+            var maxQty = faces.Max(x => x.RebarQty);
             var faceType = (ColumnFaceType)face.FaceType;
             var isOdd = CheckPositionSole(faceType, face);
+            var isOddPrev = CheckPositionSole(faceType, faces[faceCount - 2]);
             var diameter = face.Diameter.FromMillimeters();
             var lapLength = _settingRebarStandardModel.L1 * diameter;
             var minHook = _settingRebarStandardModel.HMin * diameter;
@@ -245,9 +285,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             var length = face.Pb1.DistanceTo(face.Pt1);
             var rebarPositions = SolvePositionInstallRebar(sp, ep,
                 int.Parse(Math.Round(face.RebarQty, 0).ToString()),
-                int.Parse(Math.Round(face.RebarQty, 0).ToString()));
+                int.Parse(Math.Round(maxQty, 0).ToString()));
             var rbCount = rebarPositions.Count;
-            var faceCount = faces.Count;
             var rebarPositionNext = rebarPositions[faceCount - 2];
             var isLapDiff = IsDifferentFace(face, faces[faceCount - 2]);
             foreach (var rebarPosition in rebarPositions)
@@ -255,8 +294,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 var index = rebarPositions.IndexOf(rebarPosition);
                 if (ignoreFirstEnd && (index == 0 || index == rbCount - 1))
                     continue;
-                var condit1 = index % 2 == 0;
-                var isSole = !condit1 && !isOdd ? true : condit1 && isOdd ? true : false;
+                var condit1 = rebarPosition.Index % 2 == 0;
+                var isSole = !condit1 && !isOddPrev ? false : condit1 && isOddPrev ? false : true;
                 var lapLengthGap = lapLength + (isSole ? lapLength + gapLap : 0);
                 var rbStart = isLapDiff
                     ? rebarPosition.Position - vtZ * anchor

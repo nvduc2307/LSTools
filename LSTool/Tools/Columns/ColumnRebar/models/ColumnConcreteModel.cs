@@ -18,10 +18,30 @@ namespace LSTool.Tools.Columns.ColumnRebar.models
         private string _diameterDY;
         [ObservableProperty]
         private string _diameterST;
-        [ObservableProperty]
         private double _spacingDX;
-        [ObservableProperty]
         private double _spacingDY;
+        public double SpacingDX
+        {
+            get => _spacingDX;
+            set
+            {
+                _spacingDX = value;
+                OnPropertyChanged();
+                SpacingDXAction?.Invoke();
+            }
+        }
+        public double SpacingDY
+        {
+            get => _spacingDY;
+            set
+            {
+                _spacingDY = value;
+                OnPropertyChanged();
+                SpacingDYAction?.Invoke();
+            }
+        }
+        public Action SpacingDXAction { get; set; }
+        public Action SpacingDYAction { get; set; }
         [ObservableProperty]
         private double _spacingST;
         [ObservableProperty]
