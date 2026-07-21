@@ -29,14 +29,17 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             
         }
         public void DrawSection(
-            double height, 
-            double width, 
-            double cover,
-            int dx,
-            int dy,
-            int qtyMaxX,
-            int qtyMaxY)
+            List<ColumnConcreteModel> columnConcreteModels,
+            ColumnConcreteModel columnConcreteModel)
         {
+            var height = columnConcreteModel.Height;
+            var width = columnConcreteModel.Width;
+            var cover = columnConcreteModel.Cover;
+            var dx = int.Parse(Math.Round(columnConcreteModel.SpacingDX, 0).ToString());
+            var dy = int.Parse(Math.Round(columnConcreteModel.SpacingDY, 0).ToString());
+            var qtyMaxX = int.Parse(Math.Round(columnConcreteModels.Max(x => x.SpacingDX), 0).ToString());
+            var qtyMaxY = int.Parse(Math.Round(columnConcreteModels.Max(x => x.SpacingDY), 0).ToString());
+
             ClearCanvas(_canvas);
             DrawSectionConcrete(height, width);
             DrawSectionStirrupMain(height, width, cover);

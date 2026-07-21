@@ -73,7 +73,9 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             _viewModel.ColumnConcreteModels = _columnConcreteAction.GetColumnConcreteModels(cls);
             _viewModel.ColumnConcreteModel = _viewModel.ColumnConcreteModels.FirstOrDefault();
             _view.Show();
-            UpdateCanvas();
+            _canvasSectionPreViewAction?.DrawSection(
+                _viewModel.ColumnConcreteModels,
+                _viewModel.ColumnConcreteModel);
         }
     }
 }
