@@ -28,19 +28,21 @@ namespace LSTool.Cores.canvas
             GenerateUi();
         }
 
+        public void UpdateStatus()
+        {
+            if (!(UIElement is wd.Shapes.Ellipse el)) return;
+            el.Fill = !IsSelected ? Options.Fill : StyleColorInCanvas.Color_Selected1;
+            el.Stroke = !IsSelected ? Options.Fill : StyleColorInCanvas.Color_Selected1;
+        }
         private void UIElement_MouseLeftButtonUp(object sender, wd.Input.MouseButtonEventArgs e)
         {
             ClickAction?.Invoke(this);
         }
-
         private void GenerateUi()
         {
-            if (UIElement is wd.Shapes.Ellipse el)
-            {
-                el.Cursor = System.Windows.Input.Cursors.Hand;
-                el.Fill = Options.Fill;
-            }
-            ;
+            if (!(UIElement is wd.Shapes.Ellipse el)) return;
+            el.Cursor = System.Windows.Input.Cursors.Hand;
+            el.Fill = Options.Fill;
             var p = new wd.Point(Point.X - Diameter / 2,
                 Point.Y - Diameter / 2);
             Canvas.SetLeft(UIElement, p.X);

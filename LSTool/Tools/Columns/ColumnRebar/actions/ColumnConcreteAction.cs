@@ -55,6 +55,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                         VTX = vtx,
                         VTY = vty,
                         VTZ = vtz,
+                        Ties = new List<List<ColumnStirrupPosition>>()
                     };
                     GetDistanceColumn(
                         cl,

@@ -29,7 +29,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         }
         private void _CancelCommand()
         {
-            _view.Close();
+            //_view.Close();
+            _canvasSectionPreViewAction.CreateTies(_viewModel.ColumnConcreteModel);
         }
         private void _OkCommand()
         {

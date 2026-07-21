@@ -16,8 +16,10 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private double _canvasWidth;
         private double _ratio;
         private double _scale;
+        public List<InstanceInCanvasCircel> RebarSelected { get; set; }
         public CanvasSectionPreViewAction(Canvas canvas)
         {
+            RebarSelected = new List<InstanceInCanvasCircel>();
             _canvas = canvas;
             _ratio = 0.6;
             GetCanvasInfo(canvas,
@@ -26,7 +28,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             out _canvasVTY,
             out _canvasHeight,
             out _canvasWidth);
-            
+
         }
         public void DrawSection(
             List<ColumnConcreteModel> columnConcreteModels,
@@ -43,7 +45,62 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             ClearCanvas(_canvas);
             DrawSectionConcrete(height, width);
             DrawSectionStirrupMain(height, width, cover);
-            DrawRebarMain(height, width, cover, dx, dy, qtyMaxX, qtyMaxY);
+            var rbs = DrawRebarMain(height, width, cover, dx, dy, qtyMaxX, qtyMaxY);
+            UpdateTies(columnConcreteModel, rbs);
+        }
+        public void UpdateTies(ColumnConcreteModel columnConcreteModel, List<InstanceInCanvasCircel> rbs)
+        {
+            if (!columnConcreteModel.Ties.Any()) return;
+            foreach (var poss in columnConcreteModel.Ties)
+            {
+                var possTeis = new List<wd.Point>();
+                foreach (var pos in poss)
+                {
+                    var rb = rbs.FirstOrDefault(x => x.Id == pos.Index && x.HostId == pos.Face);
+                    if (rb == null) continue;
+                    possTeis.Add(rb.Point);
+                }
+                var qty = possTeis.Count;
+                if (qty != 2 && qty != 5) continue;
+                
+                var pll = new InstanceInCanvasPolyline(
+                    _canvas,
+                    OptionStyleInstanceInCanvas.OPTION_REBAR_LINE,
+                    possTeis);
+                pll.DrawInCanvas();
+            }
+        }
+        public void CreateTies(ColumnConcreteModel columnConcreteModel, bool isAddData = true)
+        {
+            try
+            {
+                var qty = RebarSelected.Count;
+                if (qty != 2 && qty != 4) throw new Exception("Số điểm của đai phụ phải là 2 hoặc 4");
+                if (RebarSelected.GroupBy(x => x.HostId).Any(x => x.Count() > 2))
+                    throw new Exception("Số điểm của đai phụ trên 1 mặt phẳng không được quá 3 điểm");
+                if (qty == 4)
+                    RebarSelected.Add(RebarSelected.First());
+                var pll = new InstanceInCanvasPolyline(
+                    _canvas,
+                    OptionStyleInstanceInCanvas.OPTION_REBAR_LINE,
+                    RebarSelected.Select(x => x.Point).ToList());
+                pll.DrawInCanvas();
+                if (isAddData)
+                    columnConcreteModel.Ties.Add(
+                        RebarSelected
+                        .Select(x => new ColumnStirrupPosition() { Face = x.HostId, Index = x.Id })
+                        .ToList());
+            }
+            catch (Exception ex)
+            {
+                IO.ShowWarning(ex.Message);
+            }
+            foreach (var item in RebarSelected)
+            {
+                item.IsSelected = false;
+                item.UpdateStatus();
+            }
+            RebarSelected = new List<InstanceInCanvasCircel>();
         }
         private void DrawSectionConcrete(double height, double width)
         {
@@ -68,7 +125,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 - _canvasVTX * widthInCanvas/2,
             };
             var rec = new InstanceInCanvasPolygon(
-                _canvas, 
+                _canvas,
                 OptionStyleInstanceInCanvas.OPTION_CONCRETE_STRUCTURE,
                 shape);
             rec.DrawInCanvas();
@@ -98,8 +155,9 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 shape);
             rec.DrawInCanvas();
         }
-        private void DrawRebarMain(double height, double width, double cover, int dx, int dy, int qtyMaxX, int qtyMaxY)
+        private List<InstanceInCanvasCircel> DrawRebarMain(double height, double width, double cover, int dx, int dy, int qtyMaxX, int qtyMaxY)
         {
+            var result = new List<InstanceInCanvasCircel>();
             var heightInCanvas = MMToPixel(Math.Abs(height - 2 * cover * 1.3)) * _scale;
             var widthInCanvas = MMToPixel(Math.Abs(width - 2 * cover * 1.3)) * _scale;
 
@@ -115,19 +173,24 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             var p4 = _canvasCenter
                 + _canvasVTY * heightInCanvas / 2
                 - _canvasVTX * widthInCanvas / 2;
-            _DrawRebarMain(dy, qtyMaxY, p4, p1, (int)ColumnFaceType.Left, true);
-            _DrawRebarMain(dx, qtyMaxX, p1, p2, (int)ColumnFaceType.Top);
-            _DrawRebarMain(dy, qtyMaxY, p2, p3, (int)ColumnFaceType.Right, true);
-            _DrawRebarMain(dx, qtyMaxX, p3, p4, (int)ColumnFaceType.Bottom);
-
-            void _DrawRebarMain(
-                int qty, 
-                int qtyMax, 
-                wd.Point pStart, 
-                wd.Point pEnd, 
+            var qtyL = _DrawRebarMain(dy, qtyMaxY, p4, p1, (int)ColumnFaceType.Left, true);
+            var qtyT = _DrawRebarMain(dx, qtyMaxX, p1, p2, (int)ColumnFaceType.Top);
+            var qtyR = _DrawRebarMain(dy, qtyMaxY, p2, p3, (int)ColumnFaceType.Right, true);
+            var qtyB = _DrawRebarMain(dx, qtyMaxX, p3, p4, (int)ColumnFaceType.Bottom);
+            result.AddRange(qtyL);
+            result.AddRange(qtyT);
+            result.AddRange(qtyR);
+            result.AddRange(qtyB);
+            return result;
+            List<InstanceInCanvasCircel> _DrawRebarMain(
+                int qty,
+                int qtyMax,
+                wd.Point pStart,
+                wd.Point pEnd,
                 int faceId,
                 bool ignoreStartEnd = false)
             {
+                var result = new List<InstanceInCanvasCircel>();
                 var vtBase = pStart.GetVector(pEnd);
                 var vt = vtBase.VtNormal();
                 var distance = vtBase.VtDistance();
@@ -140,14 +203,13 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     var c = new InstanceInCanvasCircel(_canvas, OptionStyleInstanceInCanvas.OPTION_REBAR, rebarPos.Position, 10);
                     c.Id = rebarPos.Index;
                     c.HostId = faceId;
-                    c.ClickAction = _RebarClickAction;
+                    if (index != 0 && index != qty - 1)
+                        c.ClickAction = _RebarClickAction;
                     c.DrawInCanvas();
+                    result.Add(c);
                 }
+                return result;
             }
-        }
-        private void _RebarClickAction(InstanceInCanvasCircel circel)
-        {
-            IO.ShowInfo($"{circel.Id.ToString()}_{(ColumnFaceType)circel.HostId}");
         }
         private void GetCanvasInfo(
             Canvas canvas,
@@ -170,6 +232,13 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private void ClearCanvas(Canvas canvas)
         {
             canvas.Children.Clear();
+        }
+        private void _RebarClickAction(InstanceInCanvasCircel circel)
+        {
+            circel.IsSelected = !circel.IsSelected;
+            circel.UpdateStatus();
+            RebarSelected.Add(circel);
+            //IO.ShowInfo($"{circel.Id.ToString()}_{(ColumnFaceType)circel.HostId}");
         }
         private List<ColumnRebarPositionInCanvasModel> SolvePositionInstallRebar(wd.Point start, wd.Point end, int qty, int maxQty)
         {

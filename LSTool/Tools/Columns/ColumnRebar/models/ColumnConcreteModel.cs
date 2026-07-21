@@ -46,5 +46,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.models
         private double _spacingST;
         [ObservableProperty]
         private double _spacingSTE;
+        [ObservableProperty]
+        private List<List<ColumnStirrupPosition>> _ties;
     }
 }
