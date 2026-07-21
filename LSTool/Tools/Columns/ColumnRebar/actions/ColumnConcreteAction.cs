@@ -135,7 +135,6 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             }
             return results;
         }
-
         public void SetRebarSetting(
             Document document,
             List<ColumnConcreteModel> cls)

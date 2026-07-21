@@ -2,6 +2,7 @@
 using Autodesk.Revit.UI;
 using LSTool.Tools.Columns.ColumnRebar.models;
 using LSTool.Utils;
+using Newtonsoft.Json;
 
 namespace LSTool.Tools.Columns.ColumnRebar.actions
 {
@@ -25,6 +26,33 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 .Where(x => x.Name.Contains("D"))
                 .OrderBy(x => x.Name)
                 .ToList();
+        }
+        public void SaveSettingColumnStirrupPosition(
+            List<ColumnConcreteModel> ccRInfos, 
+            ColumnStirrupPositionSchema columnStirrupPositionSchema)
+        {
+            foreach (var col in ccRInfos)
+            {
+                if (!col.Ties.Any()) continue;
+                var content = JsonConvert.SerializeObject(col.Ties);
+                var ele = _document.GetElement(col.Id);
+                columnStirrupPositionSchema.Write(ele, content);
+            }
+        }
+        public void GetSettingColumnStirrupPosition(
+            List<ColumnConcreteModel> cols,
+            ColumnStirrupPositionSchema columnStirrupPositionSchema)
+        {
+            var result = new List<List<ColumnStirrupPosition>>();
+            foreach (var col in cols)
+            {
+                var ele = _document.GetElement(col.Id);
+                var content = columnStirrupPositionSchema.Read(ele);
+                if(string.IsNullOrEmpty(content)) continue;
+                var objs = JsonConvert.DeserializeObject<List<List<ColumnStirrupPosition>>>(content);
+                if(objs == null) continue;
+                col.Ties = objs;
+            }
         }
         public void CreateStirrupMain(List<ColumnConcreteModel> ccRInfos)
         {

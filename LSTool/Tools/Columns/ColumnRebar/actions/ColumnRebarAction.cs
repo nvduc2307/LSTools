@@ -1,4 +1,5 @@
 ﻿using Autodesk.Revit.UI;
+using LSTool.Tools.Columns.ColumnRebar.models;
 using LSTool.Tools.Columns.ColumnRebar.viewModels;
 using LSTool.Tools.Columns.ColumnRebar.views;
 using LSTool.Tools.Generals.SettingRebarStandard.actions;
@@ -15,7 +16,9 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
 
         private CustomExternalCommand _externalColumnRebarCmd;
         private ExternalEvent _externalColumnRebarCmdEvent;
+
         private SettingRebarStandardSchema _settingRebarStandardSchema;
+        private ColumnStirrupPositionSchema _columnStirrupPositionSchema;
 
         private ColumnRebarVM _viewModel;
 
@@ -36,6 +39,9 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             _settingRebarStandardSchema = new SettingRebarStandardSchema(
                 SettingRebarStandardSchema.GUID,
                 SettingRebarStandardSchema.NAME);
+            _columnStirrupPositionSchema = new ColumnStirrupPositionSchema(
+                ColumnStirrupPositionSchema.GUID,
+                ColumnStirrupPositionSchema.NAME);
             _columnRebarAnchorAction = new ColumnRebarAnchorAction(_uidocument);
             _externalColumnRebarCmd = new CustomExternalCommand("columnRebarCmd")
             {
@@ -72,6 +78,9 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             _columnConcreteAction.QtyActionChange = _QtyActionChange;
             _viewModel.ColumnConcreteModels = _columnConcreteAction.GetColumnConcreteModels(cls);
             _viewModel.ColumnConcreteModel = _viewModel.ColumnConcreteModels.FirstOrDefault();
+            _columnRebarStirrupAction.GetSettingColumnStirrupPosition(
+                _viewModel.ColumnConcreteModels,
+                _columnStirrupPositionSchema);
             _view.Show();
             _canvasSectionPreViewAction?.DrawSection(
                 _viewModel.ColumnConcreteModels,

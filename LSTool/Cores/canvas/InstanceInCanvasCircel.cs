@@ -10,7 +10,8 @@ namespace LSTool.Cores.canvas
         public int HostId { get; set; }
         public wd.Point Point { get; set; }
         public double Diameter { get; set; }
-        public Action<InstanceInCanvasCircel> ClickAction { get; set; }
+        public Action<InstanceInCanvasCircel> LClickAction { get; set; }
+        public Action<InstanceInCanvasCircel> RClickAction { get; set; }
         public InstanceInCanvasCircel(Canvas canvasPageBase, OptionStyleInstanceInCanvas options, wd.Point centerBase, double diameter) : base(canvasPageBase, options)
         {
             Diameter = diameter;
@@ -25,8 +26,10 @@ namespace LSTool.Cores.canvas
                 Fill = Options.Fill,
             };
             UIElement.MouseLeftButtonUp += UIElement_MouseLeftButtonUp;
+            UIElement.MouseRightButtonUp += UIElement_MouseRightButtonUp;
             GenerateUi();
         }
+
 
         public void UpdateStatus()
         {
@@ -34,9 +37,13 @@ namespace LSTool.Cores.canvas
             el.Fill = !IsSelected ? Options.Fill : StyleColorInCanvas.Color_Selected1;
             el.Stroke = !IsSelected ? Options.Fill : StyleColorInCanvas.Color_Selected1;
         }
+        private void UIElement_MouseRightButtonUp(object sender, wd.Input.MouseButtonEventArgs e)
+        {
+            RClickAction?.Invoke(this);
+        }
         private void UIElement_MouseLeftButtonUp(object sender, wd.Input.MouseButtonEventArgs e)
         {
-            ClickAction?.Invoke(this);
+            LClickAction?.Invoke(this);
         }
         private void GenerateUi()
         {

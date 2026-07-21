@@ -16,6 +16,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private double _canvasWidth;
         private double _ratio;
         private double _scale;
+        private ColumnConcreteModel _columnConcreteModel;
+        private List<ColumnConcreteModel> _columnConcreteModels;
         public List<InstanceInCanvasCircel> RebarSelected { get; set; }
         public CanvasSectionPreViewAction(Canvas canvas)
         {
@@ -34,6 +36,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             List<ColumnConcreteModel> columnConcreteModels,
             ColumnConcreteModel columnConcreteModel)
         {
+            _columnConcreteModels = columnConcreteModels;
+            _columnConcreteModel = columnConcreteModel;
             var height = columnConcreteModel.Height;
             var width = columnConcreteModel.Width;
             var cover = columnConcreteModel.Cover;
@@ -204,7 +208,10 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     c.Id = rebarPos.Index;
                     c.HostId = faceId;
                     if (index != 0 && index != qty - 1)
-                        c.ClickAction = _RebarClickAction;
+                    {
+                        c.LClickAction = _RebarClickAction;
+                        c.RClickAction = _RClickAction;
+                    }
                     c.DrawInCanvas();
                     result.Add(c);
                 }
@@ -238,7 +245,18 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             circel.IsSelected = !circel.IsSelected;
             circel.UpdateStatus();
             RebarSelected.Add(circel);
-            //IO.ShowInfo($"{circel.Id.ToString()}_{(ColumnFaceType)circel.HostId}");
+        }
+        private void _RClickAction(InstanceInCanvasCircel circel)
+        {
+            if (_columnConcreteModel == null) return;
+            var teisNew = new List<List<ColumnStirrupPosition>>();
+            foreach (var item in _columnConcreteModel.Ties)
+            {
+                if (item.Any(x => x.Index == circel.Id && x.Face == circel.HostId)) continue;
+                teisNew.Add(item);
+            }
+            _columnConcreteModel.Ties = teisNew;
+            DrawSection(_columnConcreteModels, _columnConcreteModel);
         }
         private List<ColumnRebarPositionInCanvasModel> SolvePositionInstallRebar(wd.Point start, wd.Point end, int qty, int maxQty)
         {
