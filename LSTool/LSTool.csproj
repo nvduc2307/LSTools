@@ -46,6 +46,8 @@
       <None Remove="Tools\Beams\BeamRebar\imgs\Setting_Develop.png" />
       <None Remove="Tools\Columns\ColumnRebar\imgs\Foundation_Anchol.png" />
       <None Remove="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Anchol.png" />
+      <None Remove="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Beam_Div.png" />
+      <None Remove="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Col_Div.png" />
       <None Remove="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Lap.png" />
     </ItemGroup>
     <ItemGroup>
@@ -91,6 +93,8 @@
         <Resource Include="Tools\Beams\BeamRebar\imgs\Setting_Develop.png" />
         <Resource Include="Tools\Columns\ColumnRebar\imgs\Foundation_Anchol.png" />
         <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Anchol.png" />
+        <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Beam_Div.png" />
+        <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Col_Div.png" />
         <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Lap.png" />
     </ItemGroup>
     

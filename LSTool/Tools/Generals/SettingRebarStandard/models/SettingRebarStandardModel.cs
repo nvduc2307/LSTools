@@ -3,19 +3,41 @@
     public partial class SettingRebarStandardModelUI : ObservableObject
     {
         [ObservableProperty]
-        private double _l1;
+        private int _l1;
         [ObservableProperty]
-        private double _g;
+        private int _g;
         [ObservableProperty]
-        private double _l2;
+        private int _l2;
         [ObservableProperty]
-        private double _hMin;
+        private int _hMin;
+        private double _lC;
+        public double LC
+        {
+            get => _lC;
+            set
+            {
+                _lC = value;
+                OnPropertyChanged();
+                LCAction?.Invoke(this);
+            }
+        }
+        public Action<SettingRebarStandardModelUI> LCAction { get; set; }
+        [ObservableProperty]
+        private double _eC;
+        [ObservableProperty]
+        private double _eB;
+        [ObservableProperty]
+        private double _coverC;
     }
     public class SettingRebarStandardModel
     {
-        public double L1 { get; set; }
-        public double G { get; set; }
-        public double L2 { get; set; }
-        public double HMin { get; set; }
+        public int L1 { get; set; }
+        public int G { get; set; }
+        public int L2 { get; set; }
+        public int HMin { get; set; }
+        public double LC { get; set; }
+        public double EC { get; set; }
+        public double EB { get; set; }
+        public double CoverC { get; set; }
     }
 }

@@ -6,8 +6,10 @@
         {
             ValidateQtyRebar();
             _columnConcreteAction.SetRebarSetting(_document, _viewModel.ColumnConcreteModels);
-            _columnRebarStirrupAction.CreateStirrupMain(_viewModel.ColumnConcreteModels);
-            _columnRebarMainAction.CreateRebarMain(_viewModel.ColumnConcreteModels);
+            _columnRebarStirrupAction.CreateStirrupMain(_viewModel.ColumnConcreteModels,
+                _viewModel.SettingRebarStandardModel);
+            _columnRebarMainAction.CreateRebarMain(_viewModel.ColumnConcreteModels,
+                _viewModel.SettingRebarStandardModel);
             _columnRebarAnchorAction.SaveColumnRebarAnchor(_viewModel.ColumnRebarAnchorModelUI);
             _columnRebarStirrupAction.SaveSettingColumnStirrupPosition(
                 _viewModel.ColumnConcreteModels, 

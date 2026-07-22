@@ -9,7 +9,6 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
     {
         private void Validate()
         {
-            ValidateSettingRebarStandard();
             ValidateRebarDiameter();
             ValidateRebarHost();
             _columnConcreteAction.ValidateShareParameter();
@@ -34,16 +33,6 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 _host = RebarHelper.CreateRebarHost(_document);
                 ts.Commit();
             }
-        }
-        private void ValidateSettingRebarStandard()
-        {
-            var error = "SettingRebarStandard is not found";
-            var content = _settingRebarStandardSchema.Read(_document.ProjectInformation);
-            if (string.IsNullOrEmpty(content))
-                throw new Exception(error);
-            var obj = JsonConvert.DeserializeObject<SettingRebarStandardModel>(content);
-            if (obj == null)
-                throw new Exception(error);
         }
         private void ValidateQtyRebar()
         {

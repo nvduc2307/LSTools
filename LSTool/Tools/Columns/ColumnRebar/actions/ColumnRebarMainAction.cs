@@ -14,6 +14,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private SettingRebarStandardModelUI _settingRebarStandardModel;
         private List<RebarBarType> _rebarBarTypes;
         private Element _host;
+        private double _e;
         public ColumnRebarMainAction(
             UIDocument uidocument,
             ColumnRebarAnchorModelUI columnRebarAnchorModel,
@@ -33,8 +34,11 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 .OrderBy(x => x.Name)
                 .ToList();
         }
-        public void CreateRebarMain(List<ColumnConcreteModel> cCols)
+        public void CreateRebarMain(
+            List<ColumnConcreteModel> cCols,
+            SettingRebarStandardModelUI standard)
         {
+            _e = standard.EC;
             foreach (ColumnConcreteModel cModel in cCols)
             {
                 var qtyX = cModel.SpacingDX;
@@ -317,7 +321,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         }
         private bool IsDifferentFace(ColumnFaceModel fs, ColumnFaceModel fe)
         {
-            var e = 100;
+            var e = _e;
             var pCheck = fs.Pt1;
             var pInterSec = pCheck.RayIntersectPlane(fe.Plane.Normal, fe.Plane);
             var distance = Math.Round(pCheck.DistanceTo(pInterSec).ToMillimeters(), 0);

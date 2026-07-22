@@ -1,6 +1,7 @@
 ﻿using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
 using LSTool.Tools.Columns.ColumnRebar.models;
+using LSTool.Tools.Generals.SettingRebarStandard.models;
 using LSTool.Utils;
 using System.IO;
 
@@ -8,7 +9,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
 {
     public class ColumnConcreteAction
     {
-        private const double _cover = 50;
+        private double _cover = 50;
         private UIDocument _uidocument;
         private Document _document;
         public Action QtyActionChange { get; set; }
@@ -26,8 +27,11 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             if (!columns.Any()) return columns;
             return columns;
         }
-        public List<ColumnConcreteModel> GetColumnConcreteModels(List<FamilyInstance> columns)
+        public List<ColumnConcreteModel> GetColumnConcreteModels(
+            List<FamilyInstance> columns,
+            SettingRebarStandardModelUI standard)
         {
+            _cover = standard.CoverC;
             var results = new List<ColumnConcreteModel>();
             if (!columns.Any()) return results;
             var fTransf = columns.FirstOrDefault().GetTransform();

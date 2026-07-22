@@ -76,7 +76,9 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         {
             var cls = _columnConcreteAction.SelectColumns();
             _columnConcreteAction.QtyActionChange = _QtyActionChange;
-            _viewModel.ColumnConcreteModels = _columnConcreteAction.GetColumnConcreteModels(cls);
+            _viewModel.ColumnConcreteModels = _columnConcreteAction
+                .GetColumnConcreteModels(cls,
+                _viewModel.SettingRebarStandardModel);
             _viewModel.ColumnConcreteModel = _viewModel.ColumnConcreteModels.FirstOrDefault();
             _columnRebarStirrupAction.GetSettingColumnStirrupPosition(
                 _viewModel.ColumnConcreteModels,

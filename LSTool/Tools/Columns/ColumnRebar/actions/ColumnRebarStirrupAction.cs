@@ -1,6 +1,7 @@
 ﻿using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
 using LSTool.Tools.Columns.ColumnRebar.models;
+using LSTool.Tools.Generals.SettingRebarStandard.models;
 using LSTool.Utils;
 using Newtonsoft.Json;
 
@@ -12,6 +13,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private Document _document;
         private List<RebarBarType> _rebarBarTypes;
         private Element _host;
+        private double _stressZone;
         public ColumnRebarStirrupAction(
             UIDocument uidocument,
             Element host)
@@ -26,6 +28,23 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 .Where(x => x.Name.Contains("D"))
                 .OrderBy(x => x.Name)
                 .ToList();
+        }
+        public void CreateStirrupMain(
+            List<ColumnConcreteModel> ccRInfos,
+            SettingRebarStandardModelUI standard)
+        {
+            _stressZone = standard.LC;
+            using (var ts = new SubTransaction(_document))
+            {
+                ts.Start();
+                var count = ccRInfos.Count;
+                foreach (var ccRInfo in ccRInfos)
+                {
+                    var index = ccRInfos.IndexOf(ccRInfo);
+                    InstallStirrupMain(ccRInfo, index == 0 || index == count - 1 ? false : true);
+                }
+                ts.Commit();
+            }
         }
         public void SaveSettingColumnStirrupPosition(
             List<ColumnConcreteModel> ccRInfos, 
@@ -54,20 +73,6 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 col.Ties = objs;
             }
         }
-        public void CreateStirrupMain(List<ColumnConcreteModel> ccRInfos)
-        {
-            using (var ts = new SubTransaction(_document))
-            {
-                ts.Start();
-                var count = ccRInfos.Count;
-                foreach (var ccRInfo in ccRInfos)
-                {
-                    var index = ccRInfos.IndexOf(ccRInfo);
-                    InstallStirrupMain(ccRInfo, index == 0 || index == count - 1 ? false : true);
-                }
-                ts.Commit();
-            }
-        }
         private void InstallStirrupMain(ColumnConcreteModel ccRInfo, bool hasBeamZone)
         {
             try
@@ -80,7 +85,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     + ccRInfo.VTZ * ccRInfo.Length.FromMillimeters() / 2
                     - ccRInfo.VTZ * (hasBeamZone ? ccRInfo.HeightBeamZone.FromMillimeters() : 0);
                 var length = start.DistanceTo(end);
-                var stressZone = 0.25;
+                var stressZone = _stressZone;
 
                 var start_zone1 = start;
                 var End_zone1 = start + ccRInfo.VTZ * length * stressZone;
