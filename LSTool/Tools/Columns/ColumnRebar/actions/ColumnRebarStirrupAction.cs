@@ -195,10 +195,6 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                         if (posTarget == null) continue;
                         if (posTargets.Count >= 4) continue;
                         posTargets.Add(posTarget);
-                        //var f = _GetFace(posTarget, ccRInfo);
-                        //if (f == null) continue;
-                        //var p = posTarget.Position.RayIntersectPlane(f.Plane.Normal, f.Plane);
-                        //shape.Add(p);
                     }
                     var cposTargets = posTargets.Count;
                     if (cposTargets != 2 && cposTargets != 4) continue;
