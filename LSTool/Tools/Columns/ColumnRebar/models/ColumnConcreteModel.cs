@@ -48,5 +48,6 @@ namespace LSTool.Tools.Columns.ColumnRebar.models
         private double _spacingSTE;
         [ObservableProperty]
         private List<List<ColumnStirrupPosition>> _ties;
+        public List<List<ColumnRebarPositionModel>> RebarMainPositionss { get; set; }
     }
 }

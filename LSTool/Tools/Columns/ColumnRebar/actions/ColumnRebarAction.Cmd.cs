@@ -10,6 +10,7 @@
                 _viewModel.SettingRebarStandardModel);
             _columnRebarMainAction.CreateRebarMain(_viewModel.ColumnConcreteModels,
                 _viewModel.SettingRebarStandardModel);
+            _columnRebarStirrupAction.CreateStirrupSub(_viewModel.ColumnConcreteModels);
             _columnRebarAnchorAction.SaveColumnRebarAnchor(_viewModel.ColumnRebarAnchorModelUI);
             _columnRebarStirrupAction.SaveSettingColumnStirrupPosition(
                 _viewModel.ColumnConcreteModels, 
@@ -30,10 +31,13 @@
                 _viewModel.ColumnConcreteModels,
                 _viewModel.ColumnConcreteModel);
         }
+        private void _CreateTeiCommand()
+        {
+            _canvasSectionPreViewAction.CreateTies(_viewModel.ColumnConcreteModel);
+        }
         private void _CancelCommand()
         {
-            //_view.Close();
-            _canvasSectionPreViewAction.CreateTies(_viewModel.ColumnConcreteModel);
+            _view.Close();
         }
         private void _OkCommand()
         {

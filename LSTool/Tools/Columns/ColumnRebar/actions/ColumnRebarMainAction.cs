@@ -84,26 +84,46 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             var faceTops = cCols.Select(x => x.FaceTop).ToList();
             var faceRights = cCols.Select(x => x.FaceRight).ToList();
             var faceBots = cCols.Select(x => x.FaceBottom).ToList();
+            var rebarPositions = new List<List<ColumnRebarPositionModel>>();
 
-            InstallRebarFace(faceLefts, true);
-            InstallRebarFace(faceBots);
-            InstallRebarFace(faceRights, true);
-            InstallRebarFace(faceTops);
+            rebarPositions.AddRange(InstallRebarFace(faceLefts, true));
+            rebarPositions.AddRange(InstallRebarFace(faceBots));
+            rebarPositions.AddRange(InstallRebarFace(faceRights, true));
+            rebarPositions.AddRange(InstallRebarFace(faceTops));
+
+            foreach (var col in cCols)
+            {
+                var poss = rebarPositions.Where(x => x.FirstOrDefault().HostId == col.Id).ToList();
+                if (poss == null) continue;
+                if (!poss.Any()) continue;
+                col.RebarMainPositionss = poss;
+            }
         }
-        private void InstallRebarFace(List<ColumnFaceModel> faces, bool ignoreFirstEnd = false)
+        private List<List<ColumnRebarPositionModel>> InstallRebarFace(List<ColumnFaceModel> faces, bool ignoreFirstEnd = false)
         {
+            var result = new List<List<ColumnRebarPositionModel>>();
             var fCount = faces.Count;
             if (fCount == 1)
-                CreateRebarColumn_Single(faces, ignoreFirstEnd);
+            {
+                CreateRebarColumn_Single(faces, ignoreFirstEnd, out List<List<ColumnRebarPositionModel>> rebarPositions0);
+                result.AddRange(rebarPositions0);
+            }    
             else
             {
                 //Truong hop co nhieu cot
-                CreateRebarColumn_Multi(faces, ignoreFirstEnd);
-                CreateRebarColumn_Multi_Last(faces, ignoreFirstEnd);
+                CreateRebarColumn_Multi(faces, ignoreFirstEnd, out List<List<ColumnRebarPositionModel>> rebarPositions1);
+                CreateRebarColumn_Multi_Last(faces, ignoreFirstEnd, out List<List<ColumnRebarPositionModel>> rebarPositions2);
+                result.AddRange(rebarPositions1);
+                result.AddRange(rebarPositions2);
             }
+            return result;
         }
-        private void CreateRebarColumn_Single(List<ColumnFaceModel> faces, bool ignoreFirstEnd)
+        private void CreateRebarColumn_Single(
+            List<ColumnFaceModel> faces, 
+            bool ignoreFirstEnd,
+            out List<List<ColumnRebarPositionModel>> rebarPoss)
         {
+            rebarPoss = new List<List<ColumnRebarPositionModel>>();
             var result = new List<List<Curve>>();
             var face = faces.First();
             var diameter = face.Diameter.FromMillimeters();
@@ -119,7 +139,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             var length = face.Pb1.DistanceTo(face.Pt1);
             var rebarPositions = SolvePositionInstallRebar(sp, ep,
                 int.Parse(Math.Round(face.RebarQty, 0).ToString()),
-                int.Parse(Math.Round(face.RebarQty, 0).ToString()));
+                int.Parse(Math.Round(face.RebarQty, 0).ToString()), face);
+            rebarPoss.Add(rebarPositions);
             var rbCount = rebarPositions.Count;
             foreach (var rebarPosition in rebarPositions)
             {
@@ -142,8 +163,12 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
             }
         }
-        private void CreateRebarColumn_Multi(List<ColumnFaceModel> faces, bool ignoreFirstEnd)
+        private void CreateRebarColumn_Multi(
+            List<ColumnFaceModel> faces, 
+            bool ignoreFirstEnd, 
+            out List<List<ColumnRebarPositionModel>> rebarPoss)
         {
+            rebarPoss = new List<List<ColumnRebarPositionModel>>();
             var rebarPositions = new List<List<ColumnRebarPositionModel>>();
             var qtyMax = faces.Max(x => x.RebarQty);
             var fCount = faces.Count;
@@ -158,7 +183,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 var ep = face.Pb2 + vtY * cover - vtX * cover;
                 var ps = SolvePositionInstallRebar(sp, ep,
                     int.Parse(Math.Round(face.RebarQty, 0).ToString()),
-                    int.Parse(Math.Round(qtyMax, 0).ToString()));
+                    int.Parse(Math.Round(qtyMax, 0).ToString()), face);
                 rebarPositions.Add(ps);
             }
             foreach (var face in faces)
@@ -265,9 +290,14 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     }
                 }
             }
+            rebarPoss = rebarPositions;
         }
-        private void CreateRebarColumn_Multi_Last(List<ColumnFaceModel> faces, bool ignoreFirstEnd)
+        private void CreateRebarColumn_Multi_Last(
+            List<ColumnFaceModel> faces, 
+            bool ignoreFirstEnd,
+            out List<List<ColumnRebarPositionModel>> rebarPoss)
         {
+            rebarPoss = new List<List<ColumnRebarPositionModel>>();
             var result = new List<List<Curve>>();
             var face = faces.Last();
             var faceCount = faces.Count;
@@ -289,7 +319,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             var length = face.Pb1.DistanceTo(face.Pt1);
             var rebarPositions = SolvePositionInstallRebar(sp, ep,
                 int.Parse(Math.Round(face.RebarQty, 0).ToString()),
-                int.Parse(Math.Round(maxQty, 0).ToString()));
+                int.Parse(Math.Round(maxQty, 0).ToString()), face);
+            rebarPoss.Add(rebarPositions);
             var rbCount = rebarPositions.Count;
             var rebarPositionNext = rebarPositions[faceCount - 2];
             var isLapDiff = IsDifferentFace(face, faces[faceCount - 2]);
@@ -327,7 +358,12 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             var distance = Math.Round(pCheck.DistanceTo(pInterSec).ToMillimeters(), 0);
             return distance >= e;
         }
-        private List<ColumnRebarPositionModel> SolvePositionInstallRebar(XYZ start, XYZ end, int qty, int maxQty)
+        private List<ColumnRebarPositionModel> SolvePositionInstallRebar(
+            XYZ start, 
+            XYZ end, 
+            int qty, 
+            int maxQty, 
+            ColumnFaceModel hostFace)
         {
             var results = new List<ColumnRebarPositionModel>();
             try
@@ -340,17 +376,20 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 for (int i = 0; i < haft; i++)
                 {
                     var p = start + i * spacing * vt;
-                    results.Add(new ColumnRebarPositionModel() { Index = i + 1, Position = p });
+                    results.Add(new ColumnRebarPositionModel() 
+                    { Index = i + 1, Position = p, Face = hostFace.FaceType, HostId = hostFace.HostId });
                 }
                 if (qtyDu == 1)
                 {
                     var p = start.MidPoint(end);
-                    results.Add(new ColumnRebarPositionModel() { Index = 1 + maxQty / 2, Position = p });
+                    results.Add(new ColumnRebarPositionModel() 
+                    { Index = 1 + maxQty / 2, Position = p, Face = hostFace.FaceType, HostId = hostFace.HostId });
                 }
                 for (int i = 0; i < haft; i++)
                 {
                     var p = end - i * spacing * vt;
-                    results.Add(new ColumnRebarPositionModel() { Index = maxQty - i, Position = p });
+                    results.Add(new ColumnRebarPositionModel() 
+                    { Index = maxQty - i, Position = p, Face = hostFace.FaceType, HostId = hostFace.HostId });
                 }
             }
             catch (Exception)

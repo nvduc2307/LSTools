@@ -16,6 +16,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private double _canvasWidth;
         private double _ratio;
         private double _scale;
+        private double _dimaterRebarInCanvas = 15;
         private ColumnConcreteModel _columnConcreteModel;
         private List<ColumnConcreteModel> _columnConcreteModels;
         public List<InstanceInCanvasCircel> RebarSelected { get; set; }
@@ -66,7 +67,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 }
                 var qty = possTeis.Count;
                 if (qty != 2 && qty != 5) continue;
-                
+
                 var pll = new InstanceInCanvasPolyline(
                     _canvas,
                     OptionStyleInstanceInCanvas.OPTION_REBAR_LINE,
@@ -84,10 +85,11 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     throw new Exception("Số điểm của đai phụ trên 1 mặt phẳng không được quá 3 điểm");
                 if (qty == 4)
                     RebarSelected.Add(RebarSelected.First());
+                var ps = RebarSelected.Select(x => x.Point).ToList();
                 var pll = new InstanceInCanvasPolyline(
                     _canvas,
                     OptionStyleInstanceInCanvas.OPTION_REBAR_LINE,
-                    RebarSelected.Select(x => x.Point).ToList());
+                    ps);
                 pll.DrawInCanvas();
                 if (isAddData)
                     columnConcreteModel.Ties.Add(
@@ -162,8 +164,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private List<InstanceInCanvasCircel> DrawRebarMain(double height, double width, double cover, int dx, int dy, int qtyMaxX, int qtyMaxY)
         {
             var result = new List<InstanceInCanvasCircel>();
-            var heightInCanvas = MMToPixel(Math.Abs(height - 2 * cover * 1.3)) * _scale;
-            var widthInCanvas = MMToPixel(Math.Abs(width - 2 * cover * 1.3)) * _scale;
+            var heightInCanvas = MMToPixel(Math.Abs(height - 2 * cover * 1.5)) * _scale;
+            var widthInCanvas = MMToPixel(Math.Abs(width - 2 * cover * 1.5)) * _scale;
 
             var p1 = _canvasCenter
                 - _canvasVTY * heightInCanvas / 2
@@ -204,7 +206,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 {
                     var index = rebarPoss.IndexOf(rebarPos);
                     if (ignoreStartEnd && (index == 0 || index == qty - 1)) continue;
-                    var c = new InstanceInCanvasCircel(_canvas, OptionStyleInstanceInCanvas.OPTION_REBAR, rebarPos.Position, 10);
+                    var c = new InstanceInCanvasCircel(_canvas, OptionStyleInstanceInCanvas.OPTION_REBAR, rebarPos.Position, _dimaterRebarInCanvas);
                     c.Id = rebarPos.Index;
                     c.HostId = faceId;
                     if (index != 0 && index != qty - 1)
@@ -244,7 +246,14 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         {
             circel.IsSelected = !circel.IsSelected;
             circel.UpdateStatus();
-            RebarSelected.Add(circel);
+            if (circel.IsSelected)
+                RebarSelected.Add(circel);
+            else
+            {
+                var circleTar = RebarSelected.FirstOrDefault(x => x.Id == circel.Id && x.HostId == circel.HostId);
+                if (circleTar != null)
+                    RebarSelected.Remove(circleTar);
+            }
         }
         private void _RClickAction(InstanceInCanvasCircel circel)
         {

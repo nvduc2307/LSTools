@@ -22,6 +22,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.viewModels
         public ColumnRebarAnchorModelUI ColumnRebarAnchorModelUI { get; set; }
         public SettingRebarStandardModelUI SettingRebarStandardModel { get; set; }
         public RelayCommand OkCommand { get; set; }
+        public RelayCommand CreateTeiCommand { get; set; }
         public RelayCommand CancelCommand { get; set; }
     }
 }

@@ -55,6 +55,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 ColumnRebarAnchorModelUI = _columnRebarAnchorAction.GetColumnRebarAnchor(),
                 ColumnConcreteModelAction = _ColumnConcreteModelAction,
                 OkCommand = new RelayCommand(_OkCommand),
+                CreateTeiCommand = new RelayCommand(_CreateTeiCommand),
                 CancelCommand = new RelayCommand(_CancelCommand)
             };
             _columnRebarStirrupAction = new ColumnRebarStirrupAction(_uidocument, _host);
@@ -66,6 +67,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             _view = new ColumnRebarView() { DataContext = _viewModel };
             _view.Loaded += _view_Loaded;
         }
+
+        
 
         private void _view_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {

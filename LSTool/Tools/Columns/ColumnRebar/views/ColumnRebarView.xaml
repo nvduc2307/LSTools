@@ -193,16 +193,22 @@
             Grid.Row="1">
             <StackPanel Orientation="Horizontal">
                 <Button
-                Command="{Binding OkCommand}"
-                Margin="0,0,10,0"
-                Width="70"
-                Height="25"
-                Content="Ok"/>
+                    Command="{Binding CreateTeiCommand}"
+                    Margin="0,0,10,0"
+                    Width="70"
+                    Height="25"
+                    Content="Create Tei"/>
                 <Button
-                Command="{Binding CancelCommand}"
-                Width="70"
-                Height="25"
-                Content="Cancel"/>
+                    Command="{Binding OkCommand}"
+                    Margin="0,0,10,0"
+                    Width="70"
+                    Height="25"
+                    Content="Ok"/>
+                <Button
+                    Command="{Binding CancelCommand}"
+                    Width="70"
+                    Height="25"
+                    Content="Cancel"/>
             </StackPanel>
         </StackPanel>
     </Grid>
