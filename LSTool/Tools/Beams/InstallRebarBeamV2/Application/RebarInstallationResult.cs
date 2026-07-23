@@ -1,5 +1,6 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
+using LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Plans;
 
 namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application
 {
@@ -21,6 +22,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application
         public ElementId TargetHostId { get; set; }
         public IReadOnlyDictionary<long, ElementId> TargetHostIdsByRebarId { get; set; } =
             new Dictionary<long, ElementId>();
+        public IReadOnlyDictionary<long, MainBarRunPlan>
+            MainBarRunsByRebarId { get; set; } =
+                new Dictionary<long, MainBarRunPlan>();
         public RebarExecutionMetrics Metrics { get; set; }
 
         public IEnumerable<Rebar> AllRebars => TopLevel1

@@ -14,8 +14,16 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.SubVerticalStirrup
         {
             var diameter = SubStirrupDto.RebarBarTypeCustom.RebarBarType.GetRebarDiameter();
             var length = SubStirrupDto.BoxElementPoint.P4.DotProduct(SubStirrupDto.Direction) - SubStirrupDto.BoxElementPoint.P1.DotProduct(SubStirrupDto.Direction);
+            if (length <= 0.0 || SubStirrupDto.Spacing <= 0.0)
+            {
+                throw new InvalidOperationException(
+                    "Vertical secondary stirrup segment length and spacing "
+                    + "must be positive.");
+            }
+
             var quantity = length / SubStirrupDto.Spacing;
             var phanDu = quantity - (int)quantity;
+            var remainderLength = phanDu * SubStirrupDto.Spacing;
 
             var chanLe = 0;
             for (var i = 0; i < quantity; i++)
@@ -26,7 +34,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.SubVerticalStirrup
                 { Bottom = SubStirrupDto.Bottom, Top = SubStirrupDto.Top, Transform = transform, DirectionToInside = SubStirrupDto.DirectionInside }, chanLe);
             }
             // Thêm một cây nữa
-            if (hasRemainder && phanDu > diameter * 2)
+            if (hasRemainder && remainderLength > diameter * 2)
             {
                 var transform = Transform.CreateTranslation(length * SubStirrupDto.Direction);
                 PlaceRebar(new LineDto
@@ -46,10 +54,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.SubVerticalStirrup
         public Tuple<LineDto, int> RunForEndAndStartSegment()
         {
             Tuple<LineDto, int> last = null;
-            var diameter = SubStirrupDto.RebarBarTypeCustom.RebarBarType.GetRebarDiameter();
             var length = SubStirrupDto.BoxElementPoint.P4.DotProduct(SubStirrupDto.Direction) - SubStirrupDto.BoxElementPoint.P1.DotProduct(SubStirrupDto.Direction);
+            if (length <= 0.0 || SubStirrupDto.Spacing <= 0.0)
+            {
+                throw new InvalidOperationException(
+                    "Vertical secondary stirrup segment length and spacing "
+                    + "must be positive.");
+            }
+
             var quantity = length / SubStirrupDto.Spacing;
             var phanDu = quantity - (int)quantity;
+            var remainderLength = phanDu * SubStirrupDto.Spacing;
             var chanLe = 0;
             for (var i = 0; i < quantity; i++)
             {
@@ -63,12 +78,12 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.SubVerticalStirrup
                     DirectionToInside = SubStirrupDto.DirectionInside,
                 };
                 PlaceRebar(lineDto, chanLe);
-                if (i == (int)quantity)
-                    last = new Tuple<LineDto, int>(lineDto, chanLe);
+                last = new Tuple<LineDto, int>(lineDto, chanLe);
             }
-            if (phanDu > SubStirrupDto.Spacing * 0.5)
+            if (remainderLength > SubStirrupDto.Spacing * 0.5)
             {
-                var transform = Transform.CreateTranslation(((int)quantity + 1) * SubStirrupDto.Direction * SubStirrupDto.Spacing);
+                var transform = Transform.CreateTranslation(
+                    length * SubStirrupDto.Direction);
                 var lineDto = new LineDto
                 {
                     Top = SubStirrupDto.Top,
@@ -84,24 +99,39 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.SubVerticalStirrup
 
         public Tuple<LineDto, LineDto> RunAtMidSegment(LineDto limitOfStartSegment, LineDto limitOfEndSegment)
         {
+            if (limitOfStartSegment == null || limitOfEndSegment == null)
+            {
+                throw new InvalidOperationException(
+                    "Vertical secondary stirrup middle zone requires both "
+                    + "start and end boundary references.");
+            }
+
             LineDto limitStart = null, limitEnd = null;
             var length = SubStirrupDto.BoxElementPoint.P4.DotProduct(SubStirrupDto.Direction) - SubStirrupDto.BoxElementPoint.P1.DotProduct(SubStirrupDto.Direction);
+            if (length <= 0.0 || SubStirrupDto.Spacing <= 0.0)
+            {
+                throw new InvalidOperationException(
+                    "Vertical secondary stirrup middle-zone length and "
+                    + "spacing must be positive.");
+            }
+
             var chanLe = 0;
             var center = length / 2;
             var left = center - SubStirrupDto.Spacing;
             var right = center + SubStirrupDto.Spacing;
             var tempPositions2 = new List<LineDto>();
+            LineDto centerLine;
             {
                 var transform = Transform.CreateTranslation(center * SubStirrupDto.Direction);
 
-                var lineDto = new LineDto
+                centerLine = new LineDto
                 {
                     Top = SubStirrupDto.Top,
                     Bottom = SubStirrupDto.Bottom,
                     DirectionToInside = SubStirrupDto.DirectionInside,
                     Transform = transform
                 };
-                tempPositions2.Add(lineDto);
+                tempPositions2.Add(centerLine);
             }
             {
                 var max = 0;
@@ -142,11 +172,21 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.SubVerticalStirrup
                     if (max > 1000) break;
                 }
             }
+            limitStart ??= centerLine;
+            limitEnd ??= centerLine;
             tempPositions2 = tempPositions2.OrderBy(x => x.Transform.OfPoint(x.Top).DotProduct(SubStirrupDto.Direction)).ToList();
             var dotProductEndOfStartSegment = limitOfStartSegment.Transform.OfPoint(limitOfStartSegment.Top).DotProduct(SubStirrupDto.Direction);
             var dotProductStartOfMidSegment = limitStart.Transform.OfPoint(limitStart.Top).DotProduct(SubStirrupDto.Direction);
             if (Math.Abs(dotProductEndOfStartSegment - dotProductStartOfMidSegment) < SubStirrupDto.Spacing * 0.5)
             {
+                if (tempPositions2.Count <= 1)
+                {
+                    throw new InvalidOperationException(
+                        "Vertical secondary stirrup middle zone is too "
+                        + "short to place a bar without violating the "
+                        + "minimum boundary spacing.");
+                }
+
                 var moveTransform =
                     Transform.CreateTranslation(-SubStirrupDto.Direction * SubStirrupDto.Spacing * 0.5);
                 tempPositions2 = tempPositions2.Skip(1).Select(x =>
@@ -160,6 +200,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.SubVerticalStirrup
             {
                 PlaceRebar(lineDto, chanLe++);
             }
+            limitStart = tempPositions2.First();
+            limitEnd = tempPositions2.Last();
             var limitStartAndEnd = new Tuple<LineDto, LineDto>(limitStart, limitEnd);
             return limitStartAndEnd;
         }
@@ -167,22 +209,30 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.SubVerticalStirrup
         {
             LineDto limitStart = null, limitEnd = null;
             var length = SubStirrupDto.BoxElementPoint.P4.DotProduct(SubStirrupDto.Direction) - SubStirrupDto.BoxElementPoint.P1.DotProduct(SubStirrupDto.Direction);
+            if (length <= 0.0 || SubStirrupDto.Spacing <= 0.0)
+            {
+                throw new InvalidOperationException(
+                    "Vertical secondary stirrup middle-zone length and "
+                    + "spacing must be positive.");
+            }
+
             var chanLe = 0;
             var center = length / 2;
             var left = center - SubStirrupDto.Spacing;
             var right = center + SubStirrupDto.Spacing;
             var tempPositions2 = new List<LineDto>();
+            LineDto centerLine;
             {
                 var transform = Transform.CreateTranslation(center * SubStirrupDto.Direction);
 
-                var lineDto = new LineDto
+                centerLine = new LineDto
                 {
                     Top = SubStirrupDto.Top,
                     Bottom = SubStirrupDto.Bottom,
                     DirectionToInside = SubStirrupDto.DirectionInside,
                     Transform = transform
                 };
-                tempPositions2.Add(lineDto);
+                tempPositions2.Add(centerLine);
             }
             {
                 var max = 0;
@@ -229,6 +279,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.SubVerticalStirrup
             {
                 PlaceRebar(lineDto, chanLe++);
             }
+            limitStart ??= centerLine;
+            limitEnd ??= centerLine;
             var limitStartAndEnd = new Tuple<LineDto, LineDto>(limitStart, limitEnd);
             return limitStartAndEnd;
         }

@@ -19,6 +19,7 @@ using LSTool.Tools.Beams.InstallRebarBeamV2;
 using RIMT.Utils;
 using HcBimUtils.DocumentUtils;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Application;
+using LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars;
 using System.Diagnostics;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Revit.Writers;
 
@@ -50,6 +51,12 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 var host = context.TemporaryHost;
                 var rebarBeams = installRebarBeamV2ViewModel.ElementInstances.RebarBeams;
                 var subBeams = installRebarBeamV2ViewModel.ElementInstances.Beam.ElementSubs;
+                if (rebarBeams.Count != subBeams.Count)
+                {
+                    throw new InvalidOperationException(
+                        "Beam configuration count does not match the selected "
+                        + "physical span count.");
+                }
 
                 var vectorX = installRebarBeamV2ViewModel.ElementInstances.Beam.BoxElement.VTX;
                 var vectorY = installRebarBeamV2ViewModel.ElementInstances.Beam.BoxElement.VTY;
@@ -58,81 +65,48 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 // lặp 4 lần: top2, top3, bot2, bot 3
                 for (var sectionIndex = 0; sectionIndex < 4; sectionIndex++)
                 {
-                    List<MainBarBeamReal> mainRebarReals = null;
+                    RebarBeamMainBarLevelType level;
+                    RebarBeamMainBarGroupType group;
                     if (sectionIndex == 0)
                     {
-                        var rebarInfo = _subInstallRebarBeamInModelService.GetRebarBeamGroupInfo(
-                                installRebarBeamV2ViewModel,
-                                RebarBeamSectionType.SectionStart,
-                                RebarBeamMainBarLevelType.RebarTop,
-                                RebarBeamMainBarGroupType.GroupLevel2)
-                            .FirstOrDefault();
-                        var diameter = context.GetBarType(rebarInfo.Diameter);
-
-                        mainRebarReals = _subInstallRebarBeamInModelService.GetMainBarBeamReals(
-                            installRebarBeamV2ViewModel,
-                            RebarBeamMainBarLevelType.RebarTop,
-                            RebarBeamMainBarGroupType.GroupLevel2,
-                            diameter.ModelBarDiameter / 4);
+                        level = RebarBeamMainBarLevelType.RebarTop;
+                        group = RebarBeamMainBarGroupType.GroupLevel2;
                     }
                     else if (sectionIndex == 1)
                     {
-                        var rebarInfo = _subInstallRebarBeamInModelService.GetRebarBeamGroupInfo(
-                                installRebarBeamV2ViewModel,
-                                RebarBeamSectionType.SectionStart,
-                                RebarBeamMainBarLevelType.RebarTop,
-                                RebarBeamMainBarGroupType.GroupLevel3)
-                            .FirstOrDefault();
-                        var diameter = context.GetBarType(rebarInfo.Diameter);
-
-                        mainRebarReals = _subInstallRebarBeamInModelService.GetMainBarBeamReals(
-                            installRebarBeamV2ViewModel,
-                            RebarBeamMainBarLevelType.RebarTop,
-                            RebarBeamMainBarGroupType.GroupLevel3,
-                            diameter.ModelBarDiameter / 4);
+                        level = RebarBeamMainBarLevelType.RebarTop;
+                        group = RebarBeamMainBarGroupType.GroupLevel3;
                     }
                     else if (sectionIndex == 2)
                     {
-                        var rebarInfo = _subInstallRebarBeamInModelService.GetRebarBeamGroupInfo(
-                                installRebarBeamV2ViewModel,
-                                RebarBeamSectionType.SectionStart,
-                                RebarBeamMainBarLevelType.RebarBot,
-                                RebarBeamMainBarGroupType.GroupLevel2)
-                            .FirstOrDefault();
-                        var diameter = context.GetBarType(rebarInfo.Diameter);
-
-                        mainRebarReals = _subInstallRebarBeamInModelService.GetMainBarBeamReals(
-                            installRebarBeamV2ViewModel,
-                            RebarBeamMainBarLevelType.RebarBot,
-                            RebarBeamMainBarGroupType.GroupLevel2,
-                            diameter.ModelBarDiameter / 4);
+                        level = RebarBeamMainBarLevelType.RebarBot;
+                        group = RebarBeamMainBarGroupType.GroupLevel2;
                     }
-                    else if (sectionIndex == 3)
+                    else
                     {
-                        var rebarInfo = _subInstallRebarBeamInModelService.GetRebarBeamGroupInfo(
-                                installRebarBeamV2ViewModel,
-                                RebarBeamSectionType.SectionStart,
-                                RebarBeamMainBarLevelType.RebarBot,
-                                RebarBeamMainBarGroupType.GroupLevel3)
-                            .FirstOrDefault();
-                        var diameter = context.GetBarType(rebarInfo.Diameter);
-
-                        mainRebarReals = _subInstallRebarBeamInModelService.GetMainBarBeamReals(
-                            installRebarBeamV2ViewModel,
-                            RebarBeamMainBarLevelType.RebarBot,
-                            RebarBeamMainBarGroupType.GroupLevel3,
-                            diameter.ModelBarDiameter / 4);
+                        level = RebarBeamMainBarLevelType.RebarBot;
+                        group = RebarBeamMainBarGroupType.GroupLevel3;
                     }
 
-                    if (mainRebarReals == null || !mainRebarReals.Any()) continue;
-
-                    var cb = 0;
-
-                    var curvesInAllBeams = mainRebarReals.Select(x => x.StartPoint.CreateLine(x.EndPoint)).ToList();
-                    foreach (var subBeam in subBeams)
+                    // Consume the canonical plan that created the main bars.
+                    // Re-running legacy geometry here would collapse a Bent/Z
+                    // run back to one unsafe Start-End diagonal.
+                    for (var beamIndex = 0;
+                         beamIndex < subBeams.Count;
+                         beamIndex++)
                     {
+                        var subBeam = subBeams[beamIndex];
+                        var curvesInAllBeams =
+                            MainBarPlanCurveProvider
+                                .GetHorizontalSegments(
+                                    context,
+                                    level,
+                                    group,
+                                    subBeam.Id);
+                        if (curvesInAllBeams.Count == 0)
+                            continue;
                         var spanResultStartIndex = result.Count;
-                        var rebarBeam = rebarBeams[cb];
+                        var rebarBeam = rebarBeams[beamIndex];
                         var beamStressRule = rebarBeam.BeamStressRule;
                         var qbeamStressRule = beamStressRule.Stress.Count;
                         var boxPs = subBeam.BoxElementPoint;
@@ -277,6 +251,15 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                             }
 
                             if (!hasHook) continue;
+                            if (curveInSegment.Count < 2)
+                            {
+                                throw new InvalidOperationException(
+                                    $"Horizontal secondary stirrups require "
+                                    + "at least two main-bar lanes in beam "
+                                    + $"{subBeam.Id}, stage "
+                                    + $"{sectionIndex + 1}; found "
+                                    + $"{curveInSegment.Count}.");
+                            }
 
                             if (segmentType == RebarBeamSectionType.SectionEnd)
                             {
@@ -341,7 +324,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                             }
                         }
 
-                        if (!stirrupStartSegment.Any()) continue;
+                        if (!stirrupStartSegment.Any()
+                            && !stirrupEndSegment.Any())
+                        {
+                            continue;
+                        }
 
                         //rải thép ở segment Start, End trước
                         Tuple<LineHorizontalDto, int> lastPositionStartSegment = null, lastPositionEndSegment = null;
@@ -368,23 +355,42 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
 
                         //biến đổi lại box cua mid segment
 
-                        var startPlane = BPlane.CreateByNormalAndOrigin(vectorX,
-                            lastPositionStartSegment.Item1.Transform.OfPoint(lastPositionStartSegment.Item1.Left));
-                        var endPlane = BPlane.CreateByNormalAndOrigin(vectorX,
-                            lastPositionEndSegment.Item1.Transform.OfPoint(lastPositionEndSegment.Item1.Left));
-
-                        stirrupMidSegment = stirrupMidSegment.Select(x =>
+                        if (stirrupMidSegment.Any()
+                            && (lastPositionStartSegment == null
+                                || lastPositionEndSegment == null))
                         {
-                            x.BoxElementPoint.P1 = x.BoxElementPoint.P1.ProjectOnto(startPlane);
-                            x.BoxElementPoint.P2 = x.BoxElementPoint.P2.ProjectOnto(startPlane);
-                            x.BoxElementPoint.P5 = x.BoxElementPoint.P5.ProjectOnto(startPlane);
-                            x.BoxElementPoint.P6 = x.BoxElementPoint.P6.ProjectOnto(startPlane);
-                            x.BoxElementPoint.P4 = x.BoxElementPoint.P4.ProjectOnto(endPlane);
-                            x.BoxElementPoint.P3 = x.BoxElementPoint.P3.ProjectOnto(endPlane);
-                            x.BoxElementPoint.P8 = x.BoxElementPoint.P8.ProjectOnto(endPlane);
-                            x.BoxElementPoint.P7 = x.BoxElementPoint.P7.ProjectOnto(endPlane);
-                            return x;
-                        }).ToList();
+                            throw new InvalidOperationException(
+                                $"Horizontal secondary stirrups for beam "
+                                + $"{subBeam.Id}, stage {sectionIndex + 1}, "
+                                + "cannot create the mid segment because a "
+                                + "start/end hook reference is missing.");
+                        }
+                        if (stirrupMidSegment.Any())
+                        {
+                            var startPlane = BPlane.CreateByNormalAndOrigin(
+                                vectorX,
+                                lastPositionStartSegment.Item1.Transform
+                                    .OfPoint(
+                                        lastPositionStartSegment.Item1.Left));
+                            var endPlane = BPlane.CreateByNormalAndOrigin(
+                                vectorX,
+                                lastPositionEndSegment.Item1.Transform
+                                    .OfPoint(
+                                        lastPositionEndSegment.Item1.Left));
+
+                            stirrupMidSegment = stirrupMidSegment.Select(x =>
+                            {
+                                x.BoxElementPoint.P1 = x.BoxElementPoint.P1.ProjectOnto(startPlane);
+                                x.BoxElementPoint.P2 = x.BoxElementPoint.P2.ProjectOnto(startPlane);
+                                x.BoxElementPoint.P5 = x.BoxElementPoint.P5.ProjectOnto(startPlane);
+                                x.BoxElementPoint.P6 = x.BoxElementPoint.P6.ProjectOnto(startPlane);
+                                x.BoxElementPoint.P4 = x.BoxElementPoint.P4.ProjectOnto(endPlane);
+                                x.BoxElementPoint.P3 = x.BoxElementPoint.P3.ProjectOnto(endPlane);
+                                x.BoxElementPoint.P8 = x.BoxElementPoint.P8.ProjectOnto(endPlane);
+                                x.BoxElementPoint.P7 = x.BoxElementPoint.P7.ProjectOnto(endPlane);
+                                return x;
+                            }).ToList();
+                        }
 
 
                         foreach (var stirrupMidSegment1 in stirrupMidSegment)
@@ -411,7 +417,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         }
                         foreach (var rebar in result.Skip(spanResultStartIndex))
                             context.RegisterTargetHost(rebar, subBeam.Id);
-                        cb++;
                     }
                 }
 

@@ -67,7 +67,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 }
                 var qRebarsMax = Math.Max(rebarInfos.Max(x => x.Quantity), rqMax);
                 if (qRebarsMax <= 0) return new List<MainBarBeamReal>();
-                var rebarGroupInfo = rebarGroupInfosStart.FirstOrDefault()
+                var rebarGroupInfo = rebarInfos.FirstOrDefault(
+                        info => info.Quantity > 0)
+                    ?? rebarGroupInfosStart.FirstOrDefault()
                     ?? throw new InvalidOperationException("Main-bar configuration is unavailable.");
                 var diameter = installRebarBeamV2ViewModel.ElementInstances
                     .GetRebarBarType(rebarGroupInfo.Diameter);
@@ -351,12 +353,15 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
             var vtz = installRebarBeamV2ViewModel.ElementInstances.Beam.BoxElement.VTZ;
             var fEvelator = new FaceCustom(vty, mainBarBeamReal.StartPoint);
             var fPlan = new FaceCustom(vtz, mainBarBeamReal.StartPoint);
-            var rebarInfo = GetRebarBeamGroupInfo(
-                    installRebarBeamV2ViewModel,
-                    RebarBeamSectionType.SectionStart,
-                    levelType,
-                    groupType)
-                    .FirstOrDefault();
+            var allGroupInfos = GetRebarBeamGroupLevelInfo(
+                installRebarBeamV2ViewModel,
+                levelType,
+                groupType);
+            var rebarInfo = allGroupInfos.FirstOrDefault(info => info.Quantity > 0)
+                ?? allGroupInfos.FirstOrDefault();
+            if (rebarInfo == null)
+                throw new InvalidOperationException(
+                    "Main-bar configuration is unavailable.");
             var diameter = installRebarBeamV2ViewModel.ElementInstances.RebarBarTypeCustoms
                 .FirstOrDefault(x => x.NameStyle == rebarInfo.Diameter);
             var radiusMm = diameter.ModelBarDiameter.FootToMm();

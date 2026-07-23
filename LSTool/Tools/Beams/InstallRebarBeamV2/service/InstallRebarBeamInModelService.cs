@@ -67,6 +67,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
             using (context.Metrics.Measure("stirrup.secondary.horizontal.side"))
             result.SecondaryHorizontalSideStirrups = InstallRebarSubHorizontalStirrupForSideRebar(installRebarBeamV2ViewModel, context);
             result.TargetHostIdsByRebarId = context.TargetHostIdsByRebarId;
+            result.MainBarRunsByRebarId = context.MainBarRunsByRebarId;
 
             return result;
         }
@@ -81,6 +82,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
             MainBarCreationPlan plan;
             using (context.Metrics.Measure($"{stageName}.plan"))
                 plan = _mainBarPlanner.Plan(viewModel, context, level, group);
+            context.RegisterMainBarPlan(level, group, plan);
             using (context.Metrics.Measure($"{stageName}.write"))
                 return _mainBarWriter.Create(plan, context);
         }

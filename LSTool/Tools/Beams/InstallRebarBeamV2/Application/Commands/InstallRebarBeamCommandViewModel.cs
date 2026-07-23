@@ -14,7 +14,10 @@ using LSTool.Tools.Beams.InstallRebarBeamV2.viewModels;
 using LSTool.Tools.Beams.InstallRebarBeamV2.views;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Support.Legacy;
 using LSTool.Tools.Beams.InstallRebarBeamV2.UI.Preview;
+using LSTool.Tools.Beams.InstallRebarBeamV2.Application;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics;
+using LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Plans;
+using LSTool.Tools.Beams.InstallRebarBeamV2.Revit.Writers;
 using RIMT.Utils;
 using RIMT.Utils.canvass;
 using RIMT.Utils.Entities;
@@ -122,18 +125,18 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     using (installResult.Metrics.Measure("metadata.schema"))
                     {
                         var rebarinfos = new List<BeamRebarInfo>();
-                        rebarinfos.AddRange(CreateRebarInfos(installRebarTop1, MetadataRebarBeamType.MainBar, RebarBeamLevel.Top, RebarBeamGroup.Level1));
-                        rebarinfos.AddRange(CreateRebarInfos(installRebarTop2, MetadataRebarBeamType.MainBar, RebarBeamLevel.Top, RebarBeamGroup.Level2));
-                        rebarinfos.AddRange(CreateRebarInfos(installRebarTop3, MetadataRebarBeamType.MainBar, RebarBeamLevel.Top, RebarBeamGroup.Level3));
-                        rebarinfos.AddRange(CreateRebarInfos(installRebarBot1, MetadataRebarBeamType.MainBar, RebarBeamLevel.Bottom, RebarBeamGroup.Level1));
-                        rebarinfos.AddRange(CreateRebarInfos(installRebarBot2, MetadataRebarBeamType.MainBar, RebarBeamLevel.Bottom, RebarBeamGroup.Level2));
-                        rebarinfos.AddRange(CreateRebarInfos(installRebarBot3, MetadataRebarBeamType.MainBar, RebarBeamLevel.Bottom, RebarBeamGroup.Level3));
-                        rebarinfos.AddRange(CreateRebarInfos(installRebarSide, MetadataRebarBeamType.SideBar, RebarBeamLevel.None, RebarBeamGroup.None));
-                        rebarinfos.AddRange(CreateRebarInfos(installRebarDantories, MetadataRebarBeamType.Dantory, RebarBeamLevel.None, RebarBeamGroup.None));
-                        rebarinfos.AddRange(CreateRebarInfos(installRebarStirrup, MetadataRebarBeamType.Stirrup, RebarBeamLevel.None, RebarBeamGroup.None));
-                        rebarinfos.AddRange(CreateRebarInfos(installRebarSubVerticalStirrup, MetadataRebarBeamType.Stirrup, RebarBeamLevel.None, RebarBeamGroup.None));
-                        rebarinfos.AddRange(CreateRebarInfos(installRebarSubHorizontalStirrupForMainRebar, MetadataRebarBeamType.Stirrup, RebarBeamLevel.None, RebarBeamGroup.None));
-                        rebarinfos.AddRange(CreateRebarInfos(installRebarSubHorizontalStirrupForSideRebar, MetadataRebarBeamType.Stirrup, RebarBeamLevel.None, RebarBeamGroup.None));
+                        rebarinfos.AddRange(CreateRebarInfos(installRebarTop1, installResult, MetadataRebarBeamType.MainBar, RebarBeamLevel.Top, RebarBeamGroup.Level1));
+                        rebarinfos.AddRange(CreateRebarInfos(installRebarTop2, installResult, MetadataRebarBeamType.MainBar, RebarBeamLevel.Top, RebarBeamGroup.Level2));
+                        rebarinfos.AddRange(CreateRebarInfos(installRebarTop3, installResult, MetadataRebarBeamType.MainBar, RebarBeamLevel.Top, RebarBeamGroup.Level3));
+                        rebarinfos.AddRange(CreateRebarInfos(installRebarBot1, installResult, MetadataRebarBeamType.MainBar, RebarBeamLevel.Bottom, RebarBeamGroup.Level1));
+                        rebarinfos.AddRange(CreateRebarInfos(installRebarBot2, installResult, MetadataRebarBeamType.MainBar, RebarBeamLevel.Bottom, RebarBeamGroup.Level2));
+                        rebarinfos.AddRange(CreateRebarInfos(installRebarBot3, installResult, MetadataRebarBeamType.MainBar, RebarBeamLevel.Bottom, RebarBeamGroup.Level3));
+                        rebarinfos.AddRange(CreateRebarInfos(installRebarSide, installResult, MetadataRebarBeamType.SideBar, RebarBeamLevel.None, RebarBeamGroup.None));
+                        rebarinfos.AddRange(CreateRebarInfos(installRebarDantories, installResult, MetadataRebarBeamType.Dantory, RebarBeamLevel.None, RebarBeamGroup.None));
+                        rebarinfos.AddRange(CreateRebarInfos(installRebarStirrup, installResult, MetadataRebarBeamType.Stirrup, RebarBeamLevel.None, RebarBeamGroup.None));
+                        rebarinfos.AddRange(CreateRebarInfos(installRebarSubVerticalStirrup, installResult, MetadataRebarBeamType.Stirrup, RebarBeamLevel.None, RebarBeamGroup.None));
+                        rebarinfos.AddRange(CreateRebarInfos(installRebarSubHorizontalStirrupForMainRebar, installResult, MetadataRebarBeamType.Stirrup, RebarBeamLevel.None, RebarBeamGroup.None));
+                        rebarinfos.AddRange(CreateRebarInfos(installRebarSubHorizontalStirrupForSideRebar, installResult, MetadataRebarBeamType.Stirrup, RebarBeamLevel.None, RebarBeamGroup.None));
 
                         var createdRebarsByUniqueId = allCreatedRebars
                             .ToDictionary(rebar => rebar.UniqueId, StringComparer.Ordinal);
@@ -179,10 +182,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                         });
                         foreach (var rebar in allCreatedRebars)
                         {
-                            var targetHostId = installResult.TargetHostIdsByRebarId
-                                .TryGetValue(rebar.Id.Value, out var spanHostId)
-                                ? spanHostId
-                                : installResult.TargetHostId;
+                            var targetHostId = GetRegisteredTargetHostId(
+                                installResult,
+                                rebar);
                             var currentHostId = rebar.GetHostId();
                             var diagnosticGroup = sideRebarIds.Contains(rebar.Id.Value)
                                 ? "side"
@@ -227,6 +229,30 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                                 throw new InvalidOperationException(
                                     $"Failed to reset the host for rebar {rebar.Id.Value}.", ex);
                             }
+                        }
+
+                        AC.Document.Regenerate();
+                        var requiresStrictMainBarValidation =
+                            installResult.MainBarRunsByRebarId.Values.Any(
+                                run =>
+                                    run.RequiresStrictGeometryValidation);
+                        foreach (var pair in
+                                 requiresStrictMainBarValidation
+                                     ? installResult
+                                         .MainBarRunsByRebarId
+                                     : new Dictionary<
+                                         long,
+                                         MainBarRunPlan>())
+                        {
+                            var run = pair.Value;
+                            var rebar = AC.Document.GetElement(
+                                new ElementId(pair.Key)) as Rebar;
+                            MainBarRebarWriter.ValidateActualCenterline(
+                                run,
+                                rebar,
+                                AC.Document,
+                                diagnosticLog,
+                                "after-rehost");
                         }
 
                         var stillTemporaryHosted = allCreatedRebars
@@ -278,10 +304,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                         }
                         foreach (var sideRebar in installRebarSide)
                         {
-                            var targetHostId = installResult.TargetHostIdsByRebarId
-                                .TryGetValue(sideRebar.Id.Value, out var spanHostId)
-                                ? spanHostId
-                                : installResult.TargetHostId;
+                            var targetHostId = GetRegisteredTargetHostId(
+                                installResult,
+                                sideRebar);
                             diagnosticLog.RecordRebar(
                                 "side.rebar.after-cleanup",
                                 sideRebar,
@@ -324,10 +349,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     }
                     foreach (var sideRebar in installRebarSide)
                     {
-                        var targetHostId = installResult.TargetHostIdsByRebarId
-                            .TryGetValue(sideRebar.Id.Value, out var spanHostId)
-                            ? spanHostId
-                            : installResult.TargetHostId;
+                        var targetHostId = GetRegisteredTargetHostId(
+                            installResult,
+                            sideRebar);
                         diagnosticLog.RecordRebar(
                             "side.rebar.before-commit",
                             sideRebar,
@@ -352,10 +376,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     });
                     foreach (var sideRebar in installRebarSide)
                     {
-                        var targetHostId = installResult.TargetHostIdsByRebarId
-                            .TryGetValue(sideRebar.Id.Value, out var spanHostId)
-                            ? spanHostId
-                            : installResult.TargetHostId;
+                        var targetHostId = GetRegisteredTargetHostId(
+                            installResult,
+                            sideRebar);
                         diagnosticLog.RecordRebar(
                             "side.rebar.after-commit",
                             sideRebar,
@@ -412,20 +435,49 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
 
         private static List<BeamRebarInfo> CreateRebarInfos(
             IEnumerable<Rebar> rebars,
+            RebarInstallationResult installResult,
             MetadataRebarBeamType type,
             RebarBeamLevel level,
             RebarBeamGroup group)
         {
-            return rebars.Select(rebar => new BeamRebarInfo
+            return rebars.Select(rebar =>
             {
-                Id = rebar.Id.Value,
-                UniqueId = rebar.UniqueId,
-                Name = rebar.Name,
-                HostId = rebar.GetHostId().Value,
-                RebarBeamType = (int)type,
-                RebarBeamLevel = (int)level,
-                RebarBeamGroup = (int)group
+                var targetHostId = GetRegisteredTargetHostId(
+                    installResult,
+                    rebar);
+
+                return new BeamRebarInfo
+                {
+                    Id = rebar.Id.Value,
+                    UniqueId = rebar.UniqueId,
+                    Name = rebar.Name,
+                    HostId = targetHostId.Value,
+                    RebarBeamType = (int)type,
+                    RebarBeamLevel = (int)level,
+                    RebarBeamGroup = (int)group
+                };
             }).ToList();
+        }
+
+        private static ElementId GetRegisteredTargetHostId(
+            RebarInstallationResult installResult,
+            Rebar rebar)
+        {
+            if (installResult == null)
+                throw new ArgumentNullException(nameof(installResult));
+            if (rebar == null)
+                throw new ArgumentNullException(nameof(rebar));
+            if (!installResult.TargetHostIdsByRebarId.TryGetValue(
+                    rebar.Id.Value,
+                    out var targetHostId)
+                || targetHostId == null
+                || targetHostId.Value == ElementId.InvalidElementId.Value)
+            {
+                throw new InvalidOperationException(
+                    $"No target host was registered for rebar "
+                    + $"{rebar.Id.Value}.");
+            }
+            return targetHostId;
         }
 
         private static string GetDetailedError(Exception exception)

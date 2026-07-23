@@ -3,6 +3,7 @@ using Autodesk.Revit.DB.Structure;
 using HcBimUtils;
 using HcBimUtils.DocumentUtils;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics;
+using LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Plans;
 using LSTool.Tools.Beams.InstallRebarBeamV2.models;
 using LSTool.Tools.Beams.InstallRebarBeamV2.viewModels;
 using RIMT.Utils.RevitElements;
@@ -15,6 +16,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application
         private readonly IReadOnlyDictionary<string, RebarBarTypeCustom> _barTypesByName;
         private readonly IReadOnlyDictionary<long, Element> _beamHostsById;
         private readonly Dictionary<long, ElementId> _targetHostIdsByRebarId = new();
+        private readonly Dictionary<long, MainBarRunPlan>
+            _mainBarRunsByRebarId = new();
+        private readonly Dictionary<string, MainBarCreationPlan> _mainBarPlans =
+            new(StringComparer.Ordinal);
 
         private RebarExecutionContext(
             Document document,
@@ -48,7 +53,58 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application
         public RebarDiagnosticLog DiagnosticLog { get; }
         public IReadOnlyDictionary<long, ElementId> TargetHostIdsByRebarId =>
             _targetHostIdsByRebarId;
+        public IReadOnlyDictionary<long, MainBarRunPlan>
+            MainBarRunsByRebarId => _mainBarRunsByRebarId;
         public RebarExecutionMetrics Metrics { get; }
+
+        public void RegisterMainBarPlan(
+            RebarBeamMainBarLevelType level,
+            RebarBeamMainBarGroupType group,
+            MainBarCreationPlan plan)
+        {
+            if (plan == null) throw new ArgumentNullException(nameof(plan));
+            var key = MainBarPlanKey(level, group);
+            if (_mainBarPlans.ContainsKey(key))
+            {
+                throw new InvalidOperationException(
+                    $"Main-bar plan {key} was registered more than once.");
+            }
+            _mainBarPlans[key] = plan;
+            DiagnosticLog?.Record("main.plan.registered", new
+            {
+                key,
+                plan.StageName,
+                runCount = plan.Runs.Count,
+                bentZRunCount = plan.Runs.Count(
+                    run => run.Kind == MainBarRunKind.BentZTransition),
+                independentStraightRunCount = plan.Runs.Count(
+                    run => run.Kind
+                        == MainBarRunKind
+                            .IndependentStraightThroughAnchor),
+                independentBentRunCount = plan.Runs.Count(
+                    run => run.Kind
+                        == MainBarRunKind.IndependentBentJointAnchor)
+            });
+        }
+
+        public MainBarCreationPlan GetMainBarPlan(
+            RebarBeamMainBarLevelType level,
+            RebarBeamMainBarGroupType group)
+        {
+            var key = MainBarPlanKey(level, group);
+            if (!_mainBarPlans.TryGetValue(key, out var plan))
+            {
+                throw new InvalidOperationException(
+                    $"Main-bar plan {key} is unavailable.");
+            }
+            return plan;
+        }
+
+        public IReadOnlyList<MainBarCreationPlan>
+            GetRegisteredMainBarPlans()
+        {
+            return _mainBarPlans.Values.ToList();
+        }
 
         public static RebarExecutionContext Create(InstallRebarBeamV2ViewModel viewModel)
         {
@@ -67,6 +123,18 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application
                 ?? throw new InvalidOperationException("Rebar bar types have not been initialized.");
             var primaryBeamMember = beam.ElementSubs.FirstOrDefault()
                 ?? throw new InvalidOperationException("The selected beam has no physical members.");
+            foreach (var member in beam.ElementSubs)
+            {
+                if (member?.Element == null
+                    || !member.Element.IsValidObject
+                    || RebarHostData.GetRebarHostData(member.Element) == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Physical beam {member?.Id} is not a legal Revit "
+                        + "rebar host. Enable rebar hosting on the family "
+                        + "before running this command.");
+                }
+            }
             var beamHostsById = beam.ElementSubs.ToDictionary(
                 member => member.Id,
                 member => member.Element);
@@ -131,6 +199,39 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application
                 targetHostId = targetHost.Id.Value,
                 currentHostId = rebar.GetHostId()?.Value
             });
+        }
+
+        public void RegisterMainBarRun(
+            Rebar rebar,
+            MainBarRunPlan run)
+        {
+            if (rebar == null || !rebar.IsValidObject)
+            {
+                throw new ArgumentException(
+                    "A valid created rebar is required.",
+                    nameof(rebar));
+            }
+            if (run == null) throw new ArgumentNullException(nameof(run));
+            if (_mainBarRunsByRebarId.ContainsKey(rebar.Id.Value))
+            {
+                throw new InvalidOperationException(
+                    $"Main-bar rebar {rebar.Id.Value} was registered more "
+                    + "than once.");
+            }
+            _mainBarRunsByRebarId[rebar.Id.Value] = run;
+            DiagnosticLog?.Record("main.run.rebar.registered", new
+            {
+                rebarId = rebar.Id.Value,
+                run.RunId,
+                kind = run.Kind.ToString()
+            });
+        }
+
+        private static string MainBarPlanKey(
+            RebarBeamMainBarLevelType level,
+            RebarBeamMainBarGroupType group)
+        {
+            return $"{(int)level}:{(int)group}";
         }
     }
 }

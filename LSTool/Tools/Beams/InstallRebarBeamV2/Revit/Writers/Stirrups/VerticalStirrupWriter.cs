@@ -21,6 +21,7 @@ using HcBimUtils.DocumentUtils;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Application;
 using System.Diagnostics;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Revit.Writers;
+using LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars;
 
 namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
 {
@@ -50,31 +51,13 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 var host = context.TemporaryHost;
                 var rebarBeams = installRebarBeamV2ViewModel.ElementInstances.RebarBeams;
                 var subBeams = installRebarBeamV2ViewModel.ElementInstances.Beam.ElementSubs;
-                var cb = 0;
-
-                var rebarInfo = _subInstallRebarBeamInModelService.GetRebarBeamGroupInfo(
-                        installRebarBeamV2ViewModel,
-                        RebarBeamSectionType.SectionStart,
-                        RebarBeamMainBarLevelType.RebarTop,
-                        RebarBeamMainBarGroupType.GroupLevel1)
-                    .FirstOrDefault();
-                var diameterTop1 = context.GetBarType(rebarInfo.Diameter);
-
-                var mainRebarReals = _subInstallRebarBeamInModelService.GetMainBarBeamReals(
-                    installRebarBeamV2ViewModel,
-                    RebarBeamMainBarLevelType.RebarTop,
-                    RebarBeamMainBarGroupType.GroupLevel1,
-                    diameterTop1.ModelBarDiameter / 4);
-                var mainRebarRealsBottom = _subInstallRebarBeamInModelService.GetMainBarBeamReals(
-                    installRebarBeamV2ViewModel,
-                    RebarBeamMainBarLevelType.RebarBot,
-                    RebarBeamMainBarGroupType.GroupLevel1,
-                    diameterTop1.ModelBarDiameter / 4);
-                if (mainRebarReals.Count < mainRebarRealsBottom.Count)
+                if (rebarBeams.Count != subBeams.Count)
                 {
-                    mainRebarReals = mainRebarRealsBottom;
+                    throw new InvalidOperationException(
+                        "Beam configuration count does not match the selected "
+                        + "physical span count.");
                 }
-                var curvesInAllBeams = mainRebarReals.Select(x => x.StartPoint.CreateLine(x.EndPoint)).ToList();
+                var cb = 0;
 
                 var vectorX = installRebarBeamV2ViewModel.ElementInstances.Beam.BoxElement.VTX;
                 var vectorY = installRebarBeamV2ViewModel.ElementInstances.Beam.BoxElement.VTY;
@@ -83,6 +66,48 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 {
                     var spanResultStartIndex = result.Count;
                     var rebarBeam = rebarBeams[cb];
+                    var topMainRebarLines = MainBarPlanCurveProvider
+                        .GetLaneReferenceLines(
+                            context,
+                            RebarBeamMainBarLevelType.RebarTop,
+                            RebarBeamMainBarGroupType.GroupLevel1,
+                            subBeam.Id);
+                    var bottomMainRebarLines =
+                        MainBarPlanCurveProvider
+                            .GetLaneReferenceLines(
+                                context,
+                                RebarBeamMainBarLevelType.RebarBot,
+                                RebarBeamMainBarGroupType.GroupLevel1,
+                                subBeam.Id);
+                    var topReferencePlan = context.GetMainBarPlan(
+                        RebarBeamMainBarLevelType.RebarTop,
+                        RebarBeamMainBarGroupType.GroupLevel1);
+                    var bottomReferencePlan = context.GetMainBarPlan(
+                        RebarBeamMainBarLevelType.RebarBot,
+                        RebarBeamMainBarGroupType.GroupLevel1);
+                    var hasIndependentBottomAnchorage =
+                        bottomReferencePlan.Runs.Any(run =>
+                            run.IsIndependentJointAnchorage
+                            && run.TargetHostBeamId == subBeam.Id);
+                    var mainRebarLines = topMainRebarLines;
+                    var referencePlan = topReferencePlan;
+                    if (mainRebarLines.Count
+                        < bottomMainRebarLines.Count)
+                    {
+                        mainRebarLines = bottomMainRebarLines;
+                        referencePlan = bottomReferencePlan;
+                    }
+                    if (mainRebarLines.Count == 0)
+                    {
+                        cb++;
+                        continue;
+                    }
+                    var diameterTop1 = referencePlan.Runs
+                        .FirstOrDefault()?.BarType
+                        ?? throw new InvalidOperationException(
+                            "The vertical secondary stirrup reference plan "
+                            + "has no main-bar type.");
+                    var curvesInAllBeams = mainRebarLines;
                     var beamStressRule = rebarBeam.BeamStressRule;
                     var qbeamStressRule = beamStressRule.Stress.Count;
                     var boxPs = subBeam.BoxElementPoint;
@@ -174,6 +199,12 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                             - installRebarBeamV2ViewModel.ElementInstances.Beam.BoxElement.BoxElementPoint.P2).Normalize();
                         var curveInSegment = curvesInAllBeams.OrderBy(x =>
                                 x.SP().DotProduct(vectorSort)).ToList();
+                        var topCurvesInSegment = topMainRebarLines
+                            .OrderBy(x => x.SP().DotProduct(vectorSort))
+                            .ToList();
+                        var bottomCurvesInSegment = bottomMainRebarLines
+                            .OrderBy(x => x.SP().DotProduct(vectorSort))
+                            .ToList();
 
                         //vectorSort = -vectorSort;
 
@@ -193,6 +224,85 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
 
                         if (hooks == null) continue;
 
+                        var activeHookIndices = hooks
+                            .Where(pair => pair.Value)
+                            .Select(pair => pair.Key)
+                            .OrderBy(index => index)
+                            .ToList();
+                        if (hasIndependentBottomAnchorage
+                            && activeHookIndices.Count > 0)
+                        {
+                            var laneToleranceFt = 0.01.MmToFoot();
+                            var mismatchReason = string.Empty;
+                            if (topCurvesInSegment.Count
+                                != bottomCurvesInSegment.Count)
+                            {
+                                mismatchReason =
+                                    $"top lane count {topCurvesInSegment.Count} "
+                                    + $"does not match bottom lane count "
+                                    + $"{bottomCurvesInSegment.Count}";
+                            }
+                            else
+                            {
+                                foreach (var hookIndex in activeHookIndices)
+                                {
+                                    if (hookIndex < 0
+                                        || hookIndex
+                                        >= topCurvesInSegment.Count)
+                                    {
+                                        mismatchReason =
+                                            $"hook index {hookIndex} is outside "
+                                            + $"the {topCurvesInSegment.Count} "
+                                            + "paired lanes";
+                                        break;
+                                    }
+
+                                    var topLaneY = topCurvesInSegment[
+                                            hookIndex]
+                                        .SP()
+                                        .DotProduct(vectorSort);
+                                    var bottomLaneY =
+                                        bottomCurvesInSegment[hookIndex]
+                                            .SP()
+                                            .DotProduct(vectorSort);
+                                    if (Math.Abs(topLaneY - bottomLaneY)
+                                        <= laneToleranceFt)
+                                    {
+                                        continue;
+                                    }
+
+                                    mismatchReason =
+                                        $"lane {hookIndex + 1} is staggered by "
+                                        + $"{Math.Abs(topLaneY - bottomLaneY).FootToMm():0.###} mm";
+                                    break;
+                                }
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(mismatchReason))
+                            {
+                                context.DiagnosticLog?.Record(
+                                    "secondary.vertical.unsupported",
+                                    new
+                                    {
+                                        beamId = subBeam.Id,
+                                        segmentType =
+                                            segmentType.ToString(),
+                                        code =
+                                            "IndependentStaggeredLaneUnsupported",
+                                        reason = mismatchReason
+                                    });
+                                throw new InvalidOperationException(
+                                    "Vertical secondary stirrups cannot be "
+                                    + "created safely for transversely "
+                                    + "staggered Independent Joint Anchorage "
+                                    + $"lanes on beam {subBeam.Id}: "
+                                    + mismatchReason
+                                    + ". Disable the active vertical secondary "
+                                    + "stirrup hooks for this span until a "
+                                    + "multi-planar secondary shape is supported.");
+                            }
+                        }
+
                         if (segmentType == RebarBeamSectionType.SectionEnd)
                         {
                             (segmentBoxInOneBeam.P1, segmentBoxInOneBeam.P4) =
@@ -205,9 +315,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                                 (segmentBoxInOneBeam.P7, segmentBoxInOneBeam.P6);
                         }
 
-                        for (var j = 0; j < hooks.Count; j++)
+                        foreach (var hook in hooks.OrderBy(pair => pair.Key))
                         {
-                            if (!hooks[j]) continue;
+                            if (!hook.Value) continue;
+                            var j = hook.Key;
+                            if (j < 0 || j >= curveInSegment.Count)
+                            {
+                                throw new InvalidOperationException(
+                                    $"Vertical secondary stirrup hook index "
+                                    + $"{j} exceeds the {curveInSegment.Count} "
+                                    + "planned main-bar lanes.");
+                            }
 
                             var originBottomForPlane = segmentBoxInOneBeam.P1.Add((segmentBoxInOneBeam.P5 -
                                                                                    segmentBoxInOneBeam.P1).Normalize() *
@@ -217,12 +335,20 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                                                                                 segmentBoxInOneBeam.P5).Normalize() *
                                                                                coverFootBeam.TopCover);
 
-                            var bottom = curveInSegment[j].SP()
+                            var topLaneCurve =
+                                hasIndependentBottomAnchorage
+                                    ? topCurvesInSegment[j]
+                                    : curveInSegment[j];
+                            var bottomLaneCurve =
+                                hasIndependentBottomAnchorage
+                                    ? bottomCurvesInSegment[j]
+                                    : curveInSegment[j];
+                            var bottom = bottomLaneCurve.SP()
                                 .ProjectOnto(BPlane.CreateByNormalAndOrigin(
                                     vectorZ,
                                     originBottomForPlane));
 
-                            var top = curveInSegment[j].SP()
+                            var top = topLaneCurve.SP()
                                 .ProjectOnto(BPlane.CreateByNormalAndOrigin(
                                     vectorZ,
                                     originTopForPlane));

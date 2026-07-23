@@ -16,6 +16,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics
     /// </summary>
     public sealed class RebarDiagnosticLog : IDisposable
     {
+        private const string DifferentSectionGeometryRevision =
+            "20260723.8-bentz-envelope-tolerance";
         private readonly object _syncRoot = new();
         private readonly StreamWriter _writer;
         private readonly JsonSerializerSettings _serializerSettings = new()
@@ -57,6 +59,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics
                 AutoFlush = true
             };
             var result = new RebarDiagnosticLog(filePath, writer);
+            var assembly = typeof(RebarDiagnosticLog).Assembly;
+            var assemblyLocation = assembly.Location;
 
             File.WriteAllText(
                 Path.Combine(logDirectory, "latest.txt"),
@@ -67,6 +71,15 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics
             {
                 documentTitle = document.Title,
                 documentPath = document.PathName,
+                assemblyLocation,
+                assemblyVersion = assembly.GetName().Version?.ToString(),
+                assemblyLastWriteTimeUtc =
+                    string.IsNullOrWhiteSpace(assemblyLocation)
+                    || !File.Exists(assemblyLocation)
+                        ? (DateTime?)null
+                        : File.GetLastWriteTimeUtc(assemblyLocation),
+                differentSectionGeometryRevision =
+                    DifferentSectionGeometryRevision,
                 selectedElementId = viewModel.OBJ?.Id.Value,
                 selectedElementName = viewModel.OBJ?.Name,
                 rebarBeamCount = viewModel.ElementInstances?.RebarBeams?.Count ?? 0,

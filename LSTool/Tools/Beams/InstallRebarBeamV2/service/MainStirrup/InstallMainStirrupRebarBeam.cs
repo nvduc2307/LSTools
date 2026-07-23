@@ -21,10 +21,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.MainStirrup
         public Tuple<RectangleDto, int> RunForEndAndStartSegment()
         {
             Tuple<RectangleDto, int> last = null;
-            var diameter = MainStirrupDto.RebarBarTypeCustom.RebarBarType.GetRebarDiameter();
             var length = MainStirrupDto.BoxElementPoint.P4.DotProduct(MainStirrupDto.Direction) - MainStirrupDto.BoxElementPoint.P1.DotProduct(MainStirrupDto.Direction);
+            if (length <= 0.0 || MainStirrupDto.Spacing <= 0.0)
+            {
+                throw new InvalidOperationException(
+                    "Main stirrup segment length and spacing must be "
+                    + "positive.");
+            }
+
             var quantity = length / MainStirrupDto.Spacing;
             var phanDu = quantity - (int)quantity;
+            var remainderLength = phanDu * MainStirrupDto.Spacing;
 
             var topLeft = MainStirrupDto.BoxElementPoint.P6;
             var topRight = MainStirrupDto.BoxElementPoint.P5;
@@ -55,9 +62,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.MainStirrup
                         Transform = transform
                     };
                     PlaceRebar(rectangleDto, chanLe);
-
-                    if (i == (int)quantity)
-                        last = new Tuple<RectangleDto, int>(rectangleDto, chanLe);
+                    last = new Tuple<RectangleDto, int>(
+                        rectangleDto,
+                        chanLe);
                 }
                 catch (Exception ex)
                 {
@@ -66,9 +73,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.MainStirrup
                 }
             }
 
-            if (phanDu > MainStirrupDto.Spacing * 0.5)
+            if (remainderLength > MainStirrupDto.Spacing * 0.5)
             {
-                var transform = Transform.CreateTranslation(((int)quantity + 1) * MainStirrupDto.Direction * MainStirrupDto.Spacing);
+                var transform = Transform.CreateTranslation(
+                    length * MainStirrupDto.Direction);
                 var rectangleDto = new RectangleDto
                 {
                     BottomLeft = bottomLeft,
@@ -85,8 +93,22 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.MainStirrup
 
         public Tuple<RectangleDto, RectangleDto> RunAtMidSegment(RectangleDto limitOfStartSegment, RectangleDto limitOfEndSegment)
         {
+            if (limitOfStartSegment == null || limitOfEndSegment == null)
+            {
+                throw new InvalidOperationException(
+                    "Main stirrup middle zone requires both start and end "
+                    + "boundary references.");
+            }
+
             RectangleDto limitStart = null, limitEnd = null;
             var length = MainStirrupDto.BoxElementPoint.P4.DotProduct(MainStirrupDto.Direction) - MainStirrupDto.BoxElementPoint.P1.DotProduct(MainStirrupDto.Direction);
+            if (length <= 0.0 || MainStirrupDto.Spacing <= 0.0)
+            {
+                throw new InvalidOperationException(
+                    "Main stirrup middle-zone length and spacing must be "
+                    + "positive.");
+            }
+
             var topLeft = MainStirrupDto.BoxElementPoint.P6;
             var topRight = MainStirrupDto.BoxElementPoint.P5;
             var bottomLeft = MainStirrupDto.BoxElementPoint.P2;
@@ -107,10 +129,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.MainStirrup
             var right = center + MainStirrupDto.Spacing;
 
             var tempPositions2 = new List<RectangleDto>();
+            RectangleDto centerRectangle;
             {
                 var transform = Transform.CreateTranslation(center * MainStirrupDto.Direction);
 
-                var rectangleDto = new RectangleDto
+                centerRectangle = new RectangleDto
                 {
                     BottomLeft = bottomLeft,
                     BottomRight = bottomRight,
@@ -118,7 +141,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.MainStirrup
                     TopRight = topRight,
                     Transform = transform
                 };
-                tempPositions2.Add(rectangleDto);
+                tempPositions2.Add(centerRectangle);
                 //PlaceRebar(rectangleDto, chanLe++);
             }
 
@@ -166,12 +189,22 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.MainStirrup
                 }
             }
 
+            limitStart ??= centerRectangle;
+            limitEnd ??= centerRectangle;
             tempPositions2 = tempPositions2.OrderBy(x => x.Transform.OfPoint(x.BottomLeft).DotProduct(MainStirrupDto.Direction)).ToList();
             var dotProductEndOfStartSegment = limitOfStartSegment.Transform.OfPoint(limitOfStartSegment.BottomLeft).DotProduct(MainStirrupDto.Direction);
             var dotProductStartOfMidSegment = limitStart.Transform.OfPoint(limitStart.BottomLeft).DotProduct(MainStirrupDto.Direction);
 
             if (Math.Abs(dotProductEndOfStartSegment - dotProductStartOfMidSegment) < MainStirrupDto.Spacing * 0.5)
             {
+                if (tempPositions2.Count <= 1)
+                {
+                    throw new InvalidOperationException(
+                        "Main stirrup middle zone is too short to place a "
+                        + "bar without violating the minimum boundary "
+                        + "spacing.");
+                }
+
                 var moveTransform =
                     Transform.CreateTranslation(-MainStirrupDto.Direction * MainStirrupDto.Spacing * 0.5);
                 tempPositions2 = tempPositions2.Skip(1).Select(x =>
@@ -187,6 +220,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.MainStirrup
                 PlaceRebar(rectangleDto, chanLe++);
             }
 
+            limitStart = tempPositions2.First();
+            limitEnd = tempPositions2.Last();
             var limitStartAndEnd = new Tuple<RectangleDto, RectangleDto>(limitStart, limitEnd);
             return limitStartAndEnd;
         }

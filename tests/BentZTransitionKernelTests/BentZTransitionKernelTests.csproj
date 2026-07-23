@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\BentZTransitionGeometry.cs"
+             Link="BentZTransitionGeometry.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\BentZColumnEnvelopeRule.cs"
+             Link="BentZColumnEnvelopeRule.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\IndependentJointAnchorageGeometry.cs"
+             Link="IndependentJointAnchorageGeometry.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\IndependentJointLaneStaggerGeometry.cs"
+             Link="IndependentJointLaneStaggerGeometry.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\TemporaryIndependentJointAnchorageRule.cs"
+             Link="TemporaryIndependentJointAnchorageRule.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\TemporaryJointStirrupFallbackRule.cs"
+             Link="TemporaryJointStirrupFallbackRule.cs" />
+  </ItemGroup>
+</Project>
