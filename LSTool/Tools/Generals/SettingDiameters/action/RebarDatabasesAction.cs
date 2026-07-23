@@ -6,7 +6,9 @@ using LSTool.Tools.Generals.SettingDiameters.views;
 using LSTool.Utils;
 using Newtonsoft.Json;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 
 namespace LSTool.Tools.Generals.SettingDiameters.action
 {
@@ -24,11 +26,11 @@ namespace LSTool.Tools.Generals.SettingDiameters.action
             _rebarBarTypeSchema = new RebarBarTypeSchema(RebarBarTypeSchema.GUID, RebarBarTypeSchema.NAME);
             _viewModel = new RebarDatabasesViewModel()
             {
-                RebarBarTypes = new ObservableCollection<RebarBarTypeModel>(GetRebarBarTypes()),
                 OkCommand = new RelayCommand(_OkCommand),
                 ResetCommand = new RelayCommand(_ResetCommand),
                 CancelCommand = new RelayCommand(_CancelCommand),
             };
+            _viewModel.RebarBarTypes = new ObservableCollection<RebarBarTypeModel>(GetRebarBarTypes());
             _view = new RebarDatabasesView() { DataContext = _viewModel };
         }
 
@@ -72,19 +74,12 @@ namespace LSTool.Tools.Generals.SettingDiameters.action
                 try
                 {
                     var typeTarget = rebarBarTypes.FirstOrDefault(x => x.Name == type.NameStyle);
-                    if (typeTarget != null)
-                    {
-                        RebarBarTypeHelper.SetRebarDiameter(typeTarget, type.BarDiameterReal.FromMillimeters());
-                        RebarBarTypeHelper.SetRebarBendDiameter(typeTarget, type.StandardBendDiameter.FromMillimeters());
-                    }
-                    else
-                    {
-                        RebarBarTypeHelper.CreateNewType(
+                    if (typeTarget != null) continue;
+                    RebarBarTypeHelper.CreateNewType(
                                 _document,
                                 type.NameStyle,
                                 type.BarDiameterReal.FromMillimeters(),
                                 type.StandardBendDiameter.FromMillimeters());
-                    }
                 }
                 catch (Exception)
                 {
@@ -97,6 +92,7 @@ namespace LSTool.Tools.Generals.SettingDiameters.action
         {
             var result = new List<RebarBarTypeModel>();
             var pathData = $"{PathHelper.Datas}\\RebarbarTypeData.json";
+            if(!File.Exists(pathData)) return result;
             var dataInModel = _rebarBarTypeSchema.Read(_document.ProjectInformation);
             var data = string.IsNullOrEmpty(dataInModel)
                 ? JsonConvert.DeserializeObject<List<RebarBarTypeModel>>(File.ReadAllText(pathData))

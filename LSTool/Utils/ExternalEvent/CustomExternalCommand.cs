@@ -16,6 +16,7 @@ namespace LSTool.Utils.ExternalEvent
 
             using (var ts = new Transaction(doc, "new transaction"))
             {
+                ts.SkipAllWarnings();
                 ts.Start();
                 Action?.Invoke();
                 ts.Commit();

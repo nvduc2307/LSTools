@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.IO;
+using System.Reflection;
 
 namespace LSTool.Utils
 {
@@ -20,6 +21,7 @@ namespace LSTool.Utils
         {
             get => $"{AssemblyDirectory}\\Resources\\Datas";
         }
+
         public static string AssemblyDirectory
         {
             get
@@ -27,7 +29,7 @@ namespace LSTool.Utils
                 string codeBase = Assembly.GetExecutingAssembly().CodeBase;
                 UriBuilder uri = new UriBuilder(codeBase);
                 string path = Uri.UnescapeDataString(uri.Path);
-                return System.IO.Path.GetDirectoryName(path);
+                return Path.GetDirectoryName(path);
             }
         }
     }
