@@ -58,21 +58,17 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             if (!columnConcreteModel.Ties.Any()) return;
             foreach (var poss in columnConcreteModel.Ties)
             {
-                var possTeis = new List<wd.Point>();
+                var rebars = new List<InstanceInCanvasCircel>();
                 foreach (var pos in poss)
                 {
                     var rb = rbs.FirstOrDefault(x => x.Id == pos.Index && x.HostId == pos.Face);
                     if (rb == null) continue;
-                    possTeis.Add(rb.Point);
+                    rebars.Add(rb);
                 }
-                var qty = possTeis.Count;
+                var qty = rebars.Count;
                 if (qty != 2 && qty != 5) continue;
 
-                var pll = new InstanceInCanvasPolyline(
-                    _canvas,
-                    OptionStyleInstanceInCanvas.OPTION_REBAR_LINE,
-                    possTeis);
-                pll.DrawInCanvas();
+                DrawTieInCanvas(rebars);
             }
         }
         public void CreateTies(ColumnConcreteModel columnConcreteModel, bool isAddData = true)
@@ -85,12 +81,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     throw new Exception("Số điểm của đai phụ trên 1 mặt phẳng không được quá 3 điểm");
                 if (qty == 4)
                     RebarSelected.Add(RebarSelected.First());
-                var ps = RebarSelected.Select(x => x.Point).ToList();
-                var pll = new InstanceInCanvasPolyline(
-                    _canvas,
-                    OptionStyleInstanceInCanvas.OPTION_REBAR_LINE,
-                    ps);
-                pll.DrawInCanvas();
+                DrawTieInCanvas(RebarSelected);
                 if (isAddData)
                     columnConcreteModel.Ties.Add(
                         RebarSelected
@@ -107,6 +98,254 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 item.UpdateStatus();
             }
             RebarSelected = new List<InstanceInCanvasCircel>();
+        }
+        private void DrawTieInCanvas(List<InstanceInCanvasCircel> rebars)
+        {
+            if (rebars.Count == 2)
+            {
+                DrawTwoPointTieInCanvas(rebars);
+                return;
+            }
+
+            var points = GetTiePointsInCanvas(rebars);
+            if (points.Count != 5)
+            {
+                var tie = new InstanceInCanvasPolyline(
+                    _canvas,
+                    OptionStyleInstanceInCanvas.OPTION_REBAR_LINE,
+                    points);
+                tie.DrawInCanvas();
+                return;
+            }
+
+            DrawRoundedTieInCanvas(points);
+        }
+        private void DrawTwoPointTieInCanvas(List<InstanceInCanvasCircel> rebars)
+        {
+            var firstCenter = rebars[0].Point;
+            var secondCenter = rebars[1].Point;
+            var tieDirection = secondCenter - firstCenter;
+            if (tieDirection.Length == 0) return;
+            tieDirection.Normalize();
+
+            var normal = new wd.Vector(-tieDirection.Y, tieDirection.X);
+            var middle = firstCenter.Mid(secondCenter);
+            var outsideDirection = middle - _canvasCenter;
+            foreach (var rebar in rebars)
+            {
+                switch ((ColumnFaceType)rebar.HostId)
+                {
+                    case ColumnFaceType.Left:
+                        outsideDirection -= _canvasVTX;
+                        break;
+                    case ColumnFaceType.Top:
+                        outsideDirection -= _canvasVTY;
+                        break;
+                    case ColumnFaceType.Right:
+                        outsideDirection += _canvasVTX;
+                        break;
+                    case ColumnFaceType.Bottom:
+                        outsideDirection += _canvasVTY;
+                        break;
+                }
+            }
+            if (normal * outsideDirection < 0)
+                normal = -normal;
+
+            var options = OptionStyleInstanceInCanvas.OPTION_REBAR_LINE;
+            var hookRadius =
+                (_dimaterRebarInCanvas + options.Thickness) / 2
+                + options.Thickness;
+            var hookLength = _dimaterRebarInCanvas;
+            var firstTangent = firstCenter + normal * hookRadius;
+            var secondTangent = secondCenter + normal * hookRadius;
+            var firstHookEnd = firstCenter - normal * hookRadius;
+            var secondHookEnd = secondCenter - normal * hookRadius;
+            var firstHookTip = firstHookEnd + tieDirection * hookLength;
+            var secondHookTip = secondHookEnd - tieDirection * hookLength;
+            var hookSweepDirection =
+                tieDirection.X * normal.Y - tieDirection.Y * normal.X < 0
+                ? wd.Media.SweepDirection.Clockwise
+                : wd.Media.SweepDirection.Counterclockwise;
+            var figure = new wd.Media.PathFigure
+            {
+                StartPoint = firstHookTip
+            };
+            figure.Segments.Add(new wd.Media.LineSegment(firstHookEnd, true));
+            figure.Segments.Add(new wd.Media.ArcSegment(
+                firstTangent,
+                new wd.Size(hookRadius, hookRadius),
+                0,
+                false,
+                hookSweepDirection,
+                true));
+            figure.Segments.Add(new wd.Media.LineSegment(secondTangent, true));
+            figure.Segments.Add(new wd.Media.ArcSegment(
+                secondHookEnd,
+                new wd.Size(hookRadius, hookRadius),
+                0,
+                false,
+                hookSweepDirection,
+                true));
+            figure.Segments.Add(new wd.Media.LineSegment(secondHookTip, true));
+
+            var tie = new wd.Shapes.Path
+            {
+                Data = new wd.Media.PathGeometry(new[] { figure }),
+                Stroke = options.ColorBrush,
+                StrokeThickness = options.Thickness,
+                StrokeDashArray = options.LineStyle,
+                StrokeStartLineCap = wd.Media.PenLineCap.Round,
+                StrokeEndLineCap = wd.Media.PenLineCap.Round
+            };
+            _canvas.Children.Add(tie);
+        }
+        private List<wd.Point> GetTiePointsInCanvas(List<InstanceInCanvasCircel> rebars)
+        {
+            var options = OptionStyleInstanceInCanvas.OPTION_REBAR_LINE;
+            var rebarOffset = (_dimaterRebarInCanvas + options.Thickness) / 2;
+            var stirrupGap = options.Thickness * 1.5;
+            var tieRebars = rebars.Count == 5
+                ? rebars.Take(4).ToList()
+                : rebars;
+            var result = tieRebars.Select(x => x.Point).ToList();
+
+            if (_columnConcreteModel != null)
+            {
+                var heightInCanvas = MMToPixel(Math.Abs(
+                    _columnConcreteModel.Height - 2 * _columnConcreteModel.Cover)) * _scale;
+                var widthInCanvas = MMToPixel(Math.Abs(
+                    _columnConcreteModel.Width - 2 * _columnConcreteModel.Cover)) * _scale;
+                for (int i = 0; i < tieRebars.Count; i++)
+                {
+                    var point = result[i];
+                    switch ((ColumnFaceType)tieRebars[i].HostId)
+                    {
+                        case ColumnFaceType.Left:
+                            point.X = _canvasCenter.X - widthInCanvas / 2 - stirrupGap;
+                            break;
+                        case ColumnFaceType.Top:
+                            point.Y = _canvasCenter.Y - heightInCanvas / 2 - stirrupGap;
+                            break;
+                        case ColumnFaceType.Right:
+                            point.X = _canvasCenter.X + widthInCanvas / 2 + stirrupGap;
+                            break;
+                        case ColumnFaceType.Bottom:
+                            point.Y = _canvasCenter.Y + heightInCanvas / 2 + stirrupGap;
+                            break;
+                    }
+                    result[i] = point;
+                }
+            }
+
+            foreach (var group in tieRebars
+                .Select((rebar, index) => new { rebar, index })
+                .GroupBy(x => x.rebar.HostId))
+            {
+                var face = (ColumnFaceType)group.Key;
+                var indexes = face == ColumnFaceType.Top || face == ColumnFaceType.Bottom
+                    ? group.OrderBy(x => x.rebar.Point.X).Select(x => x.index).ToList()
+                    : group.OrderBy(x => x.rebar.Point.Y).Select(x => x.index).ToList();
+                if (indexes.Count < 2) continue;
+
+                var first = result[indexes.First()];
+                var last = result[indexes.Last()];
+                if (face == ColumnFaceType.Top || face == ColumnFaceType.Bottom)
+                {
+                    first.X -= rebarOffset;
+                    last.X += rebarOffset;
+                }
+                else
+                {
+                    first.Y -= rebarOffset;
+                    last.Y += rebarOffset;
+                }
+                result[indexes.First()] = first;
+                result[indexes.Last()] = last;
+            }
+
+            if (result.Count == 4)
+            {
+                var center = new wd.Point(
+                    result.Average(x => x.X),
+                    result.Average(x => x.Y));
+                result = result
+                    .OrderBy(x => Math.Atan2(x.Y - center.Y, x.X - center.X))
+                    .ToList();
+                result.Add(result.First());
+            }
+            return result;
+        }
+        private void DrawRoundedTieInCanvas(List<wd.Point> points)
+        {
+            var corners = points.Take(points.Count - 1).ToList();
+            var cornerStarts = new List<wd.Point>();
+            var cornerEnds = new List<wd.Point>();
+            var cornerRadii = new List<double>();
+            var radius = _dimaterRebarInCanvas * 0.75;
+            for (int i = 0; i < corners.Count; i++)
+            {
+                var previous = corners[(i - 1 + corners.Count) % corners.Count];
+                var current = corners[i];
+                var next = corners[(i + 1) % corners.Count];
+                var cornerOffset = Math.Min(
+                    radius,
+                    Math.Min((current - previous).Length, (next - current).Length) / 2);
+                cornerRadii.Add(cornerOffset);
+                cornerStarts.Add(MovePointTowards(current, previous, cornerOffset));
+                cornerEnds.Add(MovePointTowards(current, next, cornerOffset));
+            }
+
+            var area = 0.0;
+            for (int i = 0; i < corners.Count; i++)
+            {
+                var next = corners[(i + 1) % corners.Count];
+                area += corners[i].X * next.Y - next.X * corners[i].Y;
+            }
+            var sweepDirection = area >= 0
+                ? wd.Media.SweepDirection.Clockwise
+                : wd.Media.SweepDirection.Counterclockwise;
+            var figure = new wd.Media.PathFigure
+            {
+                StartPoint = cornerEnds[0],
+                IsClosed = true
+            };
+            for (int i = 1; i < corners.Count; i++)
+            {
+                figure.Segments.Add(new wd.Media.LineSegment(cornerStarts[i], true));
+                figure.Segments.Add(new wd.Media.ArcSegment(
+                    cornerEnds[i],
+                    new wd.Size(cornerRadii[i], cornerRadii[i]),
+                    0,
+                    false,
+                    sweepDirection,
+                    true));
+            }
+            figure.Segments.Add(new wd.Media.LineSegment(cornerStarts[0], true));
+            figure.Segments.Add(new wd.Media.ArcSegment(
+                cornerEnds[0],
+                new wd.Size(cornerRadii[0], cornerRadii[0]),
+                0,
+                false,
+                sweepDirection,
+                true));
+
+            var options = OptionStyleInstanceInCanvas.OPTION_REBAR_LINE;
+            var tie = new wd.Shapes.Path
+            {
+                Data = new wd.Media.PathGeometry(new[] { figure }),
+                Stroke = options.ColorBrush,
+                StrokeThickness = options.Thickness,
+                StrokeDashArray = options.LineStyle
+            };
+            _canvas.Children.Add(tie);
+        }
+        private wd.Point MovePointTowards(wd.Point start, wd.Point end, double distance)
+        {
+            var direction = end - start;
+            if (direction.Length == 0) return start;
+            direction.Normalize();
+            return start + direction * distance;
         }
         private void DrawSectionConcrete(double height, double width)
         {
@@ -140,32 +379,29 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         {
             var heightInCanvas = MMToPixel(Math.Abs(height - 2 * cover)) * _scale;
             var widthInCanvas = MMToPixel(Math.Abs(width - 2 * cover)) * _scale;
-            var shape = new List<wd.Point>()
+            var cornerRadius = Math.Min(
+                _dimaterRebarInCanvas,
+                Math.Min(heightInCanvas, widthInCanvas) / 2);
+            var options = OptionStyleInstanceInCanvas.OPTION_REBAR_LINE;
+            var stirrup = new System.Windows.Shapes.Rectangle
             {
-                _canvasCenter
-                - _canvasVTY * heightInCanvas/2
-                - _canvasVTX * widthInCanvas/2,
-                _canvasCenter
-                - _canvasVTY * heightInCanvas/2
-                + _canvasVTX * widthInCanvas/2,
-                _canvasCenter
-                + _canvasVTY * heightInCanvas/2
-                + _canvasVTX * widthInCanvas/2,
-                _canvasCenter
-                + _canvasVTY * heightInCanvas/2
-                - _canvasVTX * widthInCanvas/2,
+                Width = widthInCanvas,
+                Height = heightInCanvas,
+                RadiusX = cornerRadius,
+                RadiusY = cornerRadius,
+                Stroke = options.ColorBrush,
+                StrokeThickness = options.Thickness,
+                StrokeDashArray = options.LineStyle
             };
-            var rec = new InstanceInCanvasPolygon(
-                _canvas,
-                OptionStyleInstanceInCanvas.OPTION_REBAR_LINE,
-                shape);
-            rec.DrawInCanvas();
+            Canvas.SetLeft(stirrup, _canvasCenter.X - widthInCanvas / 2);
+            Canvas.SetTop(stirrup, _canvasCenter.Y - heightInCanvas / 2);
+            _canvas.Children.Add(stirrup);
         }
         private List<InstanceInCanvasCircel> DrawRebarMain(double height, double width, double cover, int dx, int dy, int qtyMaxX, int qtyMaxY)
         {
             var result = new List<InstanceInCanvasCircel>();
-            var heightInCanvas = MMToPixel(Math.Abs(height - 2 * cover * 1.5)) * _scale;
-            var widthInCanvas = MMToPixel(Math.Abs(width - 2 * cover * 1.5)) * _scale;
+            var heightInCanvas = MMToPixel(Math.Abs(height - 2 * cover * 1.8)) * _scale;
+            var widthInCanvas = MMToPixel(Math.Abs(width - 2 * cover * 1.8)) * _scale;
 
             var p1 = _canvasCenter
                 - _canvasVTY * heightInCanvas / 2
