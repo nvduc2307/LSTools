@@ -36,12 +36,21 @@ namespace LSTool.Utils
             {
                 cl.Append(c);
             }
+#if REVIT2025 || REVIT2024 || REVIT2023 || REVIT2022 || REVIT2021
+            var rebar = Rebar.CreateFreeForm(
+                document,
+                rebarBarTypes.FirstOrDefault(x => x.Name == rebarName),
+                host,
+                new List<CurveLoop>() { cl },
+                out RebarFreeFormValidationResult validationResult);
+#else
             var rebar = Rebar.CreateFreeForm(
                 document,
                 rebarBarTypes.FirstOrDefault(x => x.Name == rebarName),
                 host,
                 new List<CurveLoop>() { cl },
                 RebarStyle.Standard);
+#endif
         }
         public static void CreateRebarStirrupTie(
             Document document,
@@ -53,6 +62,20 @@ namespace LSTool.Utils
             List<RebarBarType> rebarBarTypes,
             Element host)
         {
+#if REVIT2025 || REVIT2024 || REVIT2023 || REVIT2022 || REVIT2021
+            Rebar.CreateFromCurves(
+                document,
+                RebarStyle.StirrupTie,
+                rebarBarTypes.FirstOrDefault(x => x.Name == rebarName),
+                hookStart,
+                hookend,
+                host,
+                normal,
+                shape,
+                RebarHookOrientation.Right,
+                RebarHookOrientation.Right,
+                true, true);
+#else
             var options = new BarTerminationsData(document);
             options.HookTypeIdAtStart = hookStart.Id;
             options.HookTypeIdAtEnd = hookend.Id;
@@ -65,6 +88,7 @@ namespace LSTool.Utils
                 shape,
                 options,
                 true, true);
+#endif
         }
     }
 }
