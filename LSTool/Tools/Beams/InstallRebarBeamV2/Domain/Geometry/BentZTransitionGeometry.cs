@@ -47,7 +47,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
 
     /// <summary>
     /// Revit-independent inputs used to plan one horizontal-diagonal-horizontal
-    /// Bent/Z centerline through a joint window.
+    /// Bent/Z centerline through a joint. Each bend vertex is embedded in its
+    /// adjacent beam; the diagonal crosses the complete joint/column width.
     /// </summary>
     public sealed class BentZTransitionInput
     {
@@ -57,6 +58,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
         public double RunEndStation { get; }
         public double StartElevation { get; }
         public double EndElevation { get; }
+        /// <summary>
+        /// Positive distance from each joint face into the adjacent beam.
+        /// </summary>
         public double BendInset { get; }
         public double MinimumSegmentLength { get; }
         public double ElevationTolerance { get; }
@@ -344,10 +348,14 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                     "Run and joint stations must be strictly monotonic.");
             }
 
+            // Both bend vertices belong to the participating beams, not to the
+            // column. The first vertex moves backward from the entering column
+            // face; the second moves forward from the leaving column face.
+            // This makes the diagonal cross the complete joint window.
             double entryStation =
-                input.JointStartStation + direction * input.BendInset;
+                input.JointStartStation - direction * input.BendInset;
             double exitStation =
-                input.JointEndStation - direction * input.BendInset;
+                input.JointEndStation + direction * input.BendInset;
 
             double firstRunLength = DirectedDistance(
                 input.RunStartStation,
@@ -367,7 +375,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             {
                 return BentZTransitionResult.Unsupported(
                     BentZTransitionFailure.InsufficientHorizontalRun,
-                    "A horizontal run is shorter than the minimum segment length.");
+                    "A participating beam does not have enough straight length "
+                    + "to place its bend vertex inside the beam and retain the "
+                    + "minimum horizontal segment.");
             }
 
             // A positive station component is intentional: a vertical connector
@@ -376,7 +386,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             {
                 return BentZTransitionResult.Unsupported(
                     BentZTransitionFailure.InsufficientTransitionWindow,
-                    "The joint window is too short after applying bend insets.");
+                    "The cross-joint diagonal is shorter than the minimum "
+                    + "segment length.");
             }
 
             return BentZTransitionResult.Planned(
@@ -495,8 +506,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             {
                 return BentZBendValidationResult.Unsupported(
                     BentZBendValidationFailure.InsufficientFaceInset,
-                    "The bend vertex is too close to the joint face after "
-                    + "applying the actual tangent setback.");
+                    "The bend vertex is not far enough inside the adjacent beam "
+                    + "after applying the actual tangent setback.");
             }
 
             double diagonalLength = Math.Sqrt(

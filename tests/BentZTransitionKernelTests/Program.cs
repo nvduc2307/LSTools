@@ -14,6 +14,8 @@ internal static class Program
             PositiveAndNegativeChangesAreMirrors,
             ReversingTheRunReversesThePoints,
             PlannedShapeHasFourPointsAndThreeSegments,
+            BendVerticesAreInsideAdjacentBeams,
+            Project11BentZPlacementAndRoundedBendsAreValid,
             InsufficientJointWindowIsUnsupported,
             NonFiniteInputIsUnsupported,
             NonMonotonicStationsAreUnsupported,
@@ -373,17 +375,73 @@ internal static class Program
         }
     }
 
+    private static void BendVerticesAreInsideAdjacentBeams()
+    {
+        BentZTransitionResult result = Plan(0.0, 3.0);
+
+        Equal(BentZTransitionStatus.Planned, result.Status, "status");
+        Near(3.25, result.Points[1].Station, "entering-beam bend");
+        Near(8.75, result.Points[2].Station, "leaving-beam bend");
+        if (result.Points[1].Station >= 4.0
+            || result.Points[2].Station <= 8.0)
+        {
+            throw new InvalidOperationException(
+                "Bent/Z vertices must be outside the joint and inside the "
+                + "adjacent beams.");
+        }
+    }
+
+    private static void Project11BentZPlacementAndRoundedBendsAreValid()
+    {
+        BentZTransitionResult result = BentZTransitionGeometry.Plan(
+            new BentZTransitionInput(
+                3215.047,
+                -7743.18,
+                -8343.18,
+                -18288.582,
+                2848.5,
+                2948.5,
+                102.01,
+                21.0,
+                1.0));
+
+        Equal(BentZTransitionStatus.Planned, result.Status, "Project11 plan");
+        Near(-7641.17, result.Points[1].Station, "Project11 entering bend");
+        Near(-8445.19, result.Points[2].Station, "Project11 leaving bend");
+        if (result.Points[1].Station <= -7743.18
+            || result.Points[2].Station >= -8343.18)
+        {
+            throw new InvalidOperationException(
+                "Project11 bend vertices did not move into the two beams.");
+        }
+
+        BentZBendValidationResult validation =
+            BentZTransitionGeometry.ValidateRoundedBends(
+                result.Points,
+                102.01,
+                51.51,
+                50.5,
+                21.0,
+                1.0);
+        Equal(true, validation.IsValid, "Project11 rounded bends");
+        if (validation.RemainingDiagonalStraight <= 0.0)
+        {
+            throw new InvalidOperationException(
+                "Project11 diagonal has no straight portion after bend arcs.");
+        }
+    }
+
     private static void InsufficientJointWindowIsUnsupported()
     {
         BentZTransitionResult result = BentZTransitionGeometry.Plan(
             new BentZTransitionInput(
                 0.0,
                 4.0,
-                5.0,
+                4.1,
                 10.0,
                 0.0,
                 2.0,
-                0.5,
+                0.0,
                 0.25,
                 0.01));
 
@@ -439,12 +497,12 @@ internal static class Program
         BentZTransitionResult result = BentZTransitionGeometry.Plan(
             new BentZTransitionInput(
                 0.0,
-                0.1,
+                0.5,
                 4.0,
                 8.0,
                 0.0,
                 3.0,
-                0.0,
+                0.4,
                 0.25,
                 0.01));
 
@@ -513,7 +571,7 @@ internal static class Program
             throw new InvalidOperationException(
                 "Rounded bend metrics must remain positive.");
         }
-        double expectedAngle = Math.Atan2(3.0, 2.5);
+        double expectedAngle = Math.Atan2(3.0, 5.5);
         Near(expectedAngle, result.AngleRadians, "rounded bend angle");
         Near(
             0.5 * Math.Tan(expectedAngle / 2.0),
@@ -527,7 +585,7 @@ internal static class Program
         BentZBendValidationResult result =
             BentZTransitionGeometry.ValidateRoundedBends(
                 transition.Points,
-                0.4,
+                0.35,
                 0.25,
                 0.5,
                 0.25,

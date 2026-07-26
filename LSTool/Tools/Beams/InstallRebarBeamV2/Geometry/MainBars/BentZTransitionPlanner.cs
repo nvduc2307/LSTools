@@ -275,7 +275,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 rightBeamId = joint.RightBeam.Id,
                 columnStartMm = Math.Round(joint.ColumnStart.FootToMm(), 3),
                 columnEndMm = Math.Round(joint.ColumnEnd.FootToMm(), 3),
-                bendInsetMm = Math.Round(
+                bendPointPlacement = "InsideAdjacentBeams",
+                bendOffsetIntoBeamMm = Math.Round(
                     bendClearance.BendInsetFt.FootToMm(),
                     3),
                 centerlineClearanceMm = Math.Round(
@@ -1421,6 +1422,40 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     $"Bent/Z lane {laneIndex + 1} is unsupported: "
                     + planned.Message);
             }
+            var enteringBeam = direction > 0.0
+                ? joint.LeftBeam
+                : joint.RightBeam;
+            var leavingBeam = direction > 0.0
+                ? joint.RightBeam
+                : joint.LeftBeam;
+            var enteringBendStation = planned.Points[1].Station;
+            var leavingBendStation = planned.Points[2].Station;
+            if (!IsInside(
+                    enteringBendStation,
+                    enteringBeam.MinX,
+                    enteringBeam.MaxX,
+                    toleranceFt)
+                || !IsInside(
+                    leavingBendStation,
+                    leavingBeam.MinX,
+                    leavingBeam.MaxX,
+                    toleranceFt))
+            {
+                throw Unsupported(
+                    context,
+                    stageName,
+                    "BentZBendPointOutsideBeam",
+                    $"Bent/Z lane {laneIndex + 1} cannot place both bend "
+                    + "vertices inside the participating beam solids. "
+                    + $"Entering beam {enteringBeam.Id}: bend "
+                    + $"{enteringBendStation.FootToMm():0.###} mm, envelope "
+                    + $"[{enteringBeam.MinX.FootToMm():0.###}, "
+                    + $"{enteringBeam.MaxX.FootToMm():0.###}] mm. Leaving "
+                    + $"beam {leavingBeam.Id}: bend "
+                    + $"{leavingBendStation.FootToMm():0.###} mm, envelope "
+                    + $"[{leavingBeam.MinX.FootToMm():0.###}, "
+                    + $"{leavingBeam.MaxX.FootToMm():0.###}] mm.");
+            }
             var bendValidation = ValidateBendGeometry(
                 planned.Points,
                 bendInsetFt,
@@ -1481,6 +1516,15 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 runId = $"{stageName}.lane.{laneIndex + 1}",
                 lane = laneIndex + 1,
                 policy = "BentZThroughColumn",
+                bendPointPlacement = "InsideAdjacentBeams",
+                bendOffsetIntoBeamMm =
+                    Math.Round(bendInsetFt.FootToMm(), 3),
+                enteringBeamId = enteringBeam.Id,
+                leavingBeamId = leavingBeam.Id,
+                enteringBendStationMm =
+                    Math.Round(enteringBendStation.FootToMm(), 3),
+                leavingBendStationMm =
+                    Math.Round(leavingBendStation.FootToMm(), 3),
                 deltaZMm = Math.Round(
                     (coreEnd.Z - coreStart.Z)
                     .FootToMm(),
@@ -2874,8 +2918,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
 
             // The actual tangent setback is R * tan(theta / 2). A Bent/Z
             // crank has theta in (0, 90 degrees), so reserving a full R is a
-            // conservative face inset. PlanTransitionRun still validates the
-            // exact angle and remaining tangent lengths for every lane.
+            // conservative offset from each column face into its adjacent
+            // beam. PlanTransitionRun still validates the exact angle and
+            // remaining tangent lengths for every lane.
             var bendInsetFt =
                 centerlineClearanceFt + centerlineBendRadiusFt;
 
