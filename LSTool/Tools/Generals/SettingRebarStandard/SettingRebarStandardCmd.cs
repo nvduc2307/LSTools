@@ -1,16 +1,15 @@
 ﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.UI;
-using LSTool.Tools.Columns.ColumnRebar.actions;
+using LSTool.Tools.Generals.SettingRebarStandard.actions;
 using LSTool.Utils;
 
-namespace LSTool.Tools.Columns.ColumnRebar
+namespace LSTool.Tools.Generals.SettingRebarStandard
 {
     [Transaction(TransactionMode.Manual)]
-    public class ColumnRebarCmd : IExternalCommand
+    public class SettingRebarStandardCmd : IExternalCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
-
             var result = Result.Succeeded;
             var uiDocument = commandData.Application.ActiveUIDocument;
             var document = uiDocument.Document;
@@ -19,7 +18,7 @@ namespace LSTool.Tools.Columns.ColumnRebar
                 tsg.Start();
                 try
                 {
-                    var action = new ColumnRebarAction(uiDocument);
+                    var action = new SettingRebarStandardAction(uiDocument);
                     action.Execute();
                     tsg.Assimilate();
                 }

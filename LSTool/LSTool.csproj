@@ -43,7 +43,26 @@
         <DeployRevitAddin>true</DeployRevitAddin>
     </PropertyGroup>
     <ItemGroup>
+      <None Remove="Resources\Datas\RebarbarTypeData.json" />
+      <None Remove="Resources\Templates\ShareParameterConcreteBeam.txt" />
+      <None Remove="Resources\Templates\ShareParameterConcreteColumn.txt" />
       <None Remove="Tools\Beams\BeamRebar\imgs\Setting_Develop.png" />
+      <None Remove="Tools\Columns\ColumnRebar\imgs\Foundation_Anchol.png" />
+      <None Remove="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Anchol.png" />
+      <None Remove="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Beam_Div.png" />
+      <None Remove="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Col_Div.png" />
+      <None Remove="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Lap.png" />
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include="Resources\Datas\RebarbarTypeData.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Resources\Templates\ShareParameterConcreteBeam.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Resources\Templates\ShareParameterConcreteColumn.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
     <ItemGroup>
@@ -77,6 +96,11 @@
         <Resource Include="Resources\Icons\RibbonIcon32.png" />
         <Resource Include="Tools\Beams\BeamRebar\imgs\Setting_Develop.png" />
         <Resource Include="Tools\Beams\InstallRebarBeamV2\imgs\*.png" />
+        <Resource Include="Tools\Columns\ColumnRebar\imgs\Foundation_Anchol.png" />
+        <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Anchol.png" />
+        <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Beam_Div.png" />
+        <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Col_Div.png" />
+        <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Lap.png" />
     </ItemGroup>
 
     <ItemGroup>
@@ -96,6 +120,6 @@
     </ItemGroup>
     
     <ItemGroup>
-      <Folder Include="Resources\imgs\" />
+      <Folder Include="Resources\Imgs\" />
     </ItemGroup>
 </Project>
