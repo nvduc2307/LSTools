@@ -25,6 +25,7 @@ namespace RIMT.Utils.RevitElements
         public RevElementType RevElementType { get; set; }
         public RevAssemblyType RevAssemblyType { get; set; }
         public List<BoxElement> ElementSubs { get; set; }
+        public IReadOnlyList<Element> SourceElements { get; private set; }
         public FaceCustom FaceAlong { get; set; }
         public FaceCustom FacePlan { get; set; }
         public FaceCustom FaceSection { get; set; }
@@ -32,6 +33,7 @@ namespace RIMT.Utils.RevitElements
         {
             Id = element.Id;
             Element = element;
+            SourceElements = ExpandSourceElements(element);
             BoxElement = new BoxElement(element);
             RevElementType = GetRevElementType();
             ElementSubs = GetElementSubs();
@@ -40,6 +42,44 @@ namespace RIMT.Utils.RevitElements
             FaceAlong = new FaceCustom(BoxElement.VTY, BoxElement.LineBox.Midpoint());
             FacePlan = new FaceCustom(BoxElement.VTZ, BoxElement.LineBox.Midpoint());
             FaceSection = new FaceCustom(BoxElement.VTX, BoxElement.LineBox.Midpoint());
+        }
+
+        public RevElement(IEnumerable<Element> elements)
+        {
+            var sourceElements = elements?
+                .Where(element => element != null)
+                .GroupBy(element => element.Id.Value)
+                .Select(group => group.First())
+                .ToList() ?? new List<Element>();
+            if (sourceElements.Count == 0)
+                throw new ArgumentException(
+                    "At least one source element is required.",
+                    nameof(elements));
+
+            SourceElements = sourceElements;
+            Element = sourceElements[0];
+            Id = Element.Id;
+            BoxElement = new BoxElement(sourceElements);
+            RevElementType = sourceElements.Count == 1
+                ? GetRevElementType()
+                : RevElementType.Assembly;
+            ElementSubs = GetElementSubs();
+            RevAssemblyType = GetRevAssemblyType();
+            GenerateCoordinate();
+            FaceAlong = new FaceCustom(BoxElement.VTY, BoxElement.LineBox.Midpoint());
+            FacePlan = new FaceCustom(BoxElement.VTZ, BoxElement.LineBox.Midpoint());
+            FaceSection = new FaceCustom(BoxElement.VTX, BoxElement.LineBox.Midpoint());
+        }
+
+        private static IReadOnlyList<Element> ExpandSourceElements(Element element)
+        {
+            if (element is not AssemblyInstance assembly)
+                return new[] { element };
+
+            return assembly.GetMemberIds()
+                .Select(element.Document.GetElement)
+                .Where(member => member != null)
+                .ToList();
         }
         private RevElementType GetRevElementType()
         {
@@ -98,13 +138,10 @@ namespace RIMT.Utils.RevitElements
             var elements = new List<BoxElement>();
             try
             {
-                if (Element is AssemblyInstance ass)
-                    elements = ass
-                        .GetMemberIds()
-                        .Select(x => new BoxElement(Element.Document.GetElement(x)))
-                        .OrderBy(x => x.LineBox.Midpoint().DotProduct(BoxElement.VTX))
-                        .ToList();
-                else elements.Add(new BoxElement(Element));
+                elements = SourceElements
+                    .Select(element => new BoxElement(element))
+                    .OrderBy(box => box.LineBox.Midpoint().DotProduct(BoxElement.VTX))
+                    .ToList();
             }
             catch (Exception)
             {

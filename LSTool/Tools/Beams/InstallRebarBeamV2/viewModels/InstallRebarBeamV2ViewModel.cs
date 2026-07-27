@@ -41,6 +41,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
         private IInstallRebarBeamInModelService _installRebarBeamInModelService;
         private readonly PreviewRefreshCoordinator _previewRefreshCoordinator;
         public Element OBJ { get; set; }
+        public IReadOnlyList<Element> SelectedBeams { get; private set; }
         public InstallRebarBeamView MainView { get; set; }
         public SettingRebarSectionView SettingRebarSectionView { get; set; }
         public SettingStirrupRebarSectionView SettingStirrupRebarSectionView { get; set; }
@@ -73,10 +74,19 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
             _installRebarBeamInModelService = installRebarBeamInModelService;
             SettingRebarStandardModel =
                 SettingRebarStandardAction.GetSetting(AC.UiDoc.Document);
-            OBJ = AC.UiDoc.Selection.PickObject(
-                Autodesk.Revit.UI.Selection.ObjectType.Element,
-                new GenericSelectionFilterFromCategory(BuiltInCategory.OST_StructuralFraming)).ToElement();
-            ElementInstances = new LSTool.Tools.Beams.InstallRebarBeamV2.models.ElementInstances(AC.UiDoc, OBJ);
+            SelectedBeams = AC.UiDoc.Selection.PickObjects(
+                    Autodesk.Revit.UI.Selection.ObjectType.Element,
+                    new GenericSelectionFilterFromCategory(BuiltInCategory.OST_StructuralFraming),
+                    "Select one or more beams, then click Finish")
+                .Select(reference => AC.Document.GetElement(reference))
+                .Where(element => element != null)
+                .GroupBy(element => element.Id.Value)
+                .Select(group => group.First())
+                .ToList();
+            OBJ = SelectedBeams.FirstOrDefault();
+            ElementInstances = new LSTool.Tools.Beams.InstallRebarBeamV2.models.ElementInstances(
+                AC.UiDoc,
+                SelectedBeams);
             SettingRebarSectionView = new SettingRebarSectionView() { DataContext = this };
             SettingSubSettingView = new SettingSubSettingView() { DataContext = this };
 
@@ -193,7 +203,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                 ElementInstances.RebarBeamActive.NameType = ElementInstances.RebarBeamTypeSelected.NameType;
                 _rebarBeamTypeService.Save(ElementInstances.RebarBeamTypes, ElementInstances.RebarBeamActive, ElementInstances.PathRebarBeamType);
                 MainView.Close();
-                ElementInstances = new LSTool.Tools.Beams.InstallRebarBeamV2.models.ElementInstances(AC.UiDoc, OBJ);
+                ElementInstances = new LSTool.Tools.Beams.InstallRebarBeamV2.models.ElementInstances(
+                    AC.UiDoc,
+                    SelectedBeams);
                 SettingRebarSectionView = new SettingRebarSectionView() { DataContext = this };
                 SettingSubSettingView = new SettingSubSettingView() { DataContext = this };
 

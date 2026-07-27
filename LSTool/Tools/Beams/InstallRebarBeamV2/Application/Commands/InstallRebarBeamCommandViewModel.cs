@@ -157,7 +157,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     using (installResult.Metrics.Measure("assembly.metadata"))
                     {
                         var assemblyInfoUtils =
-                            new AssemblyInfoUtils(new List<Element>() { ElementInstances.Beam.Element }, AC.Document);
+                            new AssemblyInfoUtils(
+                                ElementInstances.Beam.ElementSubs.Select(member => member.Element),
+                                AC.Document);
                         RebarSharedParameterSupport.SetRequiredStringParameter(
                             rebarBeamAss,
                             BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS,

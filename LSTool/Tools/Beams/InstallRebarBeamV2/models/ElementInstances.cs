@@ -82,7 +82,20 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
         public SchemaInfo RebarBeamSchemal { get; set; }
 
         public ElementInstances(UIDocument uIDocument, Element obj)
+            : this(uIDocument, new[] { obj })
         {
+        }
+
+        public ElementInstances(UIDocument uIDocument, IEnumerable<Element> selectedBeams)
+        {
+            var beamElements = selectedBeams?
+                .Where(element => element != null)
+                .GroupBy(element => element.Id.Value)
+                .Select(group => group.First())
+                .ToList() ?? new List<Element>();
+            if (beamElements.Count == 0)
+                throw new InvalidOperationException("Select at least one structural framing beam.");
+
             PathUtils.MigrateCreateRebarBeamPresets();
             RebarBeamSchemal = new SchemaInfo(
                 LSTool.Properties.Langs.SchemaInfo.REBAR_BEAM_SCHEMAL_INFO_GUID,
@@ -96,15 +109,15 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             RebarBeamTypes = GetRebarBeamTypes();
             RebarBeamTypeSelected = RebarBeamTypes.FirstOrDefault();
 
-            Beam = new RevElement(obj);
+            Beam = new RevElement(beamElements);
             if (Beam.ElementSubs == null || Beam.ElementSubs.Count == 0)
                 throw new InvalidOperationException(
-                    "No structural framing members were found in the selected element.");
+                    "No structural framing members were found in the selection.");
             if (Beam.ElementSubs.Any(member =>
                     member?.Element is not FamilyInstance
                     || member.Element.Category?.Id.Value != (long)BuiltInCategory.OST_StructuralFraming))
                 throw new InvalidOperationException(
-                    "The selected assembly must contain only structural framing family instances.");
+                    "The selection must contain only structural framing family instances.");
             RebarBarTypeCustoms = _document.GetElementsFromClass<RebarBarType>()
                 .Select(x => new RebarBarTypeCustom(x))
                 .Where(x => x.NameStyle.Contains("D") && x.NameStyle.Contains("("))
@@ -657,7 +670,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             catch (Exception ex)
             {
                 throw new InvalidOperationException(
-                    "Failed to generate the coordinate system for the selected beam assembly.", ex);
+                    "Failed to generate the coordinate system for the selected beam run.", ex);
             }
         }
 

@@ -130,17 +130,6 @@ namespace RIMT.Utils.SelectFilters
         public bool AllowElement(Element element)
         {
             if (element == null) return false;
-
-            if (element is AssemblyInstance assembly)
-            {
-                var members = assembly.GetMemberIds()
-                    .Select(element.Document.GetElement)
-                    .Where(member => member != null)
-                    .ToList();
-
-                return members.Count > 0 && members.All(IsRequestedCategory);
-            }
-
             return IsRequestedCategory(element);
         }
 

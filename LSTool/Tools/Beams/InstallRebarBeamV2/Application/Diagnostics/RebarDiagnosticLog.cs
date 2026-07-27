@@ -82,6 +82,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics
                     DifferentSectionGeometryRevision,
                 selectedElementId = viewModel.OBJ?.Id.Value,
                 selectedElementName = viewModel.OBJ?.Name,
+                selectedBeamIds = viewModel.SelectedBeams?
+                    .Select(beam => beam.Id.Value)
+                    .ToList(),
                 rebarBeamCount = viewModel.ElementInstances?.RebarBeams?.Count ?? 0,
                 physicalMemberCount = viewModel.ElementInstances?.Beam?.ElementSubs?.Count ?? 0,
                 axisX = VectorSnapshot(viewModel.ElementInstances?.Beam?.BoxElement?.VTX),

@@ -126,6 +126,8 @@ namespace RIMT.Utils.BoundingBoxs
     }
     public class BoxElement
     {
+        private readonly IReadOnlyList<Element> _sourceElements;
+
         public long Id { get; }
         public string UniqueId { get; }
         public XYZ VTX { get; set; }
@@ -145,6 +147,7 @@ namespace RIMT.Utils.BoundingBoxs
             Element = ele;
             Id = Element.Id.Value;
             UniqueId = ele.UniqueId;
+            _sourceElements = ExpandSourceElements(ele);
             Solids = GetSolids();
             Curves = GetCurves();
             VTX = GetVTX();
@@ -158,13 +161,55 @@ namespace RIMT.Utils.BoundingBoxs
             LineBoxBot = Outline != null ? Line.CreateBound(Outline.MinimumPoint, Outline.MaximumPoint.EditZ(Outline.MinimumPoint.Z)) : null;
             BoxElementPoint = boxElementPoint;
         }
+
+        public BoxElement(IEnumerable<Element> elements)
+        {
+            var sourceElements = elements?
+                .Where(element => element != null)
+                .GroupBy(element => element.Id.Value)
+                .Select(group => group.First())
+                .ToList() ?? new List<Element>();
+            if (sourceElements.Count == 0)
+                throw new ArgumentException(
+                    "At least one source element is required.",
+                    nameof(elements));
+
+            Element = sourceElements[0];
+            Id = Element.Id.Value;
+            UniqueId = Element.UniqueId;
+            _sourceElements = sourceElements;
+            Solids = GetSolids();
+            Curves = GetCurves();
+            VTX = GetVTX();
+            VTY = !VTX.IsParallel(XYZ.BasisZ) ? VTX.CrossProduct(XYZ.BasisZ).Normalize() : VTX.CrossProduct(XYZ.BasisX).Normalize();
+            VTZ = VTX.CrossProduct(VTY).Normalize();
+            Outline = GetOutLine(out BoxElementPoint boxElementPoint);
+            LineBox = Outline != null ? Line.CreateBound(Outline.MinimumPoint, Outline.MaximumPoint) : null;
+            var z = Outline != null ? (Outline.MinimumPoint.Z + Outline.MaximumPoint.Z) / 2 : 0;
+            LineBoxMid = Outline != null ? Line.CreateBound(Outline.MinimumPoint.EditZ(z), Outline.MaximumPoint.EditZ(z)) : null;
+            LineBoxTop = Outline != null ? Line.CreateBound(Outline.MinimumPoint.EditZ(Outline.MaximumPoint.Z), Outline.MaximumPoint) : null;
+            LineBoxBot = Outline != null ? Line.CreateBound(Outline.MinimumPoint, Outline.MaximumPoint.EditZ(Outline.MinimumPoint.Z)) : null;
+            BoxElementPoint = boxElementPoint;
+        }
+
+        private static IReadOnlyList<Element> ExpandSourceElements(Element element)
+        {
+            if (element is not AssemblyInstance assembly)
+                return new[] { element };
+
+            return assembly.GetMemberIds()
+                .Select(element.Document.GetElement)
+                .Where(member => member != null)
+                .ToList();
+        }
+
         private List<Solid> GetSolids()
         {
             var results = new List<Solid>();
             try
             {
-                results = Element.GetSolidsExtensions();
-
+                foreach (var element in _sourceElements)
+                    results.AddRange(element.GetSolidsExtensions());
             }
             catch (Exception)
             {
@@ -232,18 +277,9 @@ namespace RIMT.Utils.BoundingBoxs
             var results = new List<Curve>();
             try
             {
-                if (Element is AssemblyInstance ass)
+                foreach (var element in _sourceElements)
                 {
-                    var eles = ass.GetMemberIds().Select(x => Element.Document.GetElement(x)).ToList();
-                    foreach (var ele in eles)
-                    {
-                        var crs = GetCurvesFromElement(ele);
-                        results.AddRange(crs);
-                    }
-                }
-                else
-                {
-                    var crs = GetCurvesFromElement(Element);
+                    var crs = GetCurvesFromElement(element);
                     results.AddRange(crs);
                 }
             }
