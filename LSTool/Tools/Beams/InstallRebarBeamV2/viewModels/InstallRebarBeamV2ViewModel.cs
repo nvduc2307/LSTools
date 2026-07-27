@@ -15,6 +15,8 @@ using LSTool.Tools.Beams.InstallRebarBeamV2.views;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Support.Legacy;
 using LSTool.Tools.Beams.InstallRebarBeamV2.UI.Preview;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics;
+using LSTool.Tools.Generals.SettingRebarStandard.actions;
+using LSTool.Tools.Generals.SettingRebarStandard.models;
 using RIMT.Utils;
 using RIMT.Utils.canvass;
 using RIMT.Utils.Entities;
@@ -56,6 +58,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
         public CanvasPageBase CanvasPageSectionMid { get; set; }
         public CanvasPageBase CanvasPageSectionEnd { get; set; }
         public SettingStirrupSectionViewModel SettingStirrupSectionViewModel { get; set; }
+        public SettingRebarStandardModelUI SettingRebarStandardModel { get; }
         internal RebarDiagnosticLog DiagnosticLog { get; set; }
 
         public InstallRebarBeamV2ViewModel(
@@ -68,6 +71,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
             _beamStressRuleTypeService = beamStressRuleTypeService;
             _drawRebarBeamInCanvasSerice = drawRebarBeamInCanvas;
             _installRebarBeamInModelService = installRebarBeamInModelService;
+            SettingRebarStandardModel =
+                SettingRebarStandardAction.GetSetting(AC.UiDoc.Document);
             OBJ = AC.UiDoc.Selection.PickObject(
                 Autodesk.Revit.UI.Selection.ObjectType.Element,
                 new GenericSelectionFilterFromCategory(BuiltInCategory.OST_StructuralFraming)).ToElement();

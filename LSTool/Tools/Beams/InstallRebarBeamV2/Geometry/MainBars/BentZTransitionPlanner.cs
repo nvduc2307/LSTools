@@ -25,8 +25,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
     {
         private const double DirectionTolerance = 1e-6;
         private const double RectangularVolumeRelativeTolerance = 1e-6;
-        private const double MaximumBentZElevationChangeMm = 200.0;
-
         private readonly ISubInstallRebarBeamInModelService _geometryService;
 
         public BentZTransitionPlanner(
@@ -85,6 +83,19 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             var geometryToleranceFt = Math.Max(
                 context.Document.Application.ShortCurveTolerance,
                 1.0.MmToFoot());
+            var maximumBentZDeltaMm =
+                viewModel.SettingRebarStandardModel?.EB ?? 0.0;
+            if (double.IsNaN(maximumBentZDeltaMm)
+                || double.IsInfinity(maximumBentZDeltaMm)
+                || maximumBentZDeltaMm <= 0.0)
+            {
+                throw Unsupported(
+                    context,
+                    stageName,
+                    "InvalidRebarStandardEB",
+                    "Rebar standard eB must be greater than zero to "
+                    + "classify the Bent/Z elevation change.");
+            }
             var terminalRuns = legacyGeometry
                 .Select((geometry, index) => new
                 {
@@ -104,7 +115,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                             - item.TerminalPath.CoreStart.Z)
                         .ToList(),
                     geometryToleranceFt,
-                    MaximumBentZElevationChangeMm.MmToFoot());
+                    maximumBentZDeltaMm.MmToFoot());
             context.DiagnosticLog?.Record(
                 "main.transition.policy.classified",
                 new
@@ -119,8 +130,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     alignmentToleranceMm = Math.Round(
                         geometryToleranceFt.FootToMm(),
                         3),
-                    maximumBentZDeltaMm =
-                        MaximumBentZElevationChangeMm,
+                    maximumBentZDeltaMm,
+                    maximumBentZDeltaSource =
+                        "SettingRebarStandardModelUI.EB",
                     minimumLaneDeltaZMm = Math.Round(
                         policyClassification.MinimumDeltaZ.FootToMm(),
                         3),
