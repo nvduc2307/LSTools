@@ -25,6 +25,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
     {
         private const double DirectionTolerance = 1e-6;
         private const double RectangularVolumeRelativeTolerance = 1e-6;
+        private const double MaximumBentZElevationChangeMm = 200.0;
 
         private readonly ISubInstallRebarBeamInModelService _geometryService;
 
@@ -84,7 +85,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             var geometryToleranceFt = Math.Max(
                 context.Document.Application.ShortCurveTolerance,
                 1.0.MmToFoot());
-            var changedRuns = legacyGeometry
+            var terminalRuns = legacyGeometry
                 .Select((geometry, index) => new
                 {
                     Geometry = geometry,
@@ -94,56 +95,66 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         context.XAxis,
                         geometryToleranceFt)
                 })
-                .Where(item =>
-                    Math.Abs(
-                        item.TerminalPath.CoreEnd.Z
-                        - item.TerminalPath.CoreStart.Z)
-                    > geometryToleranceFt)
                 .ToList();
-
-            if (level == RebarBeamMainBarLevelType.RebarBot
-                && HasPhysicalTopAlignedDepthStep(
-                    viewModel,
-                    geometryToleranceFt))
-            {
-                var independentJoint = ResolveJointGeometry(
-                    viewModel,
-                    context,
-                    geometryToleranceFt);
-                return PlanIndependentJointAnchorage(
-                    viewModel,
-                    context,
-                    level,
-                    group,
-                    barType,
-                    legacyGeometry,
+            var policyClassification =
+                MainBarTransitionPolicyClassifier.Classify(
+                    terminalRuns
+                        .Select(item =>
+                            item.TerminalPath.CoreEnd.Z
+                            - item.TerminalPath.CoreStart.Z)
+                        .ToList(),
+                    geometryToleranceFt,
+                    MaximumBentZElevationChangeMm.MmToFoot());
+            context.DiagnosticLog?.Record(
+                "main.transition.policy.classified",
+                new
+                {
                     stageName,
-                    independentJoint,
-                    geometryToleranceFt);
+                    level = level.ToString(),
+                    group = group.ToString(),
+                    isValid = policyClassification.IsValid,
+                    policy = policyClassification.Policy.ToString(),
+                    failure = policyClassification.Failure.ToString(),
+                    source = "BarCenterlineDeltaZ",
+                    alignmentToleranceMm = Math.Round(
+                        geometryToleranceFt.FootToMm(),
+                        3),
+                    maximumBentZDeltaMm =
+                        MaximumBentZElevationChangeMm,
+                    minimumLaneDeltaZMm = Math.Round(
+                        policyClassification.MinimumDeltaZ.FootToMm(),
+                        3),
+                    maximumLaneDeltaZMm = Math.Round(
+                        policyClassification.MaximumDeltaZ.FootToMm(),
+                        3),
+                    laneDeltaZValuesMm = terminalRuns
+                        .Select(item => Math.Round(
+                            Math.Abs(
+                                item.TerminalPath.CoreEnd.Z
+                                - item.TerminalPath.CoreStart.Z)
+                            .FootToMm(),
+                            3))
+                        .ToList()
+                });
+            if (!policyClassification.IsValid)
+            {
+                throw Unsupported(
+                    context,
+                    stageName,
+                    $"TransitionPolicy{policyClassification.Failure}",
+                    policyClassification.Message);
             }
 
-            if (changedRuns.Count == 0)
+            if (policyClassification.Policy
+                == MainBarTransitionPolicy.LegacyAligned)
             {
-                if (HasUnresolvedTransitionIntent(
-                        viewModel,
-                        level,
-                        group,
-                        geometryToleranceFt))
-                {
-                    throw Unsupported(
-                        context,
-                        stageName,
-                        "TransitionIntentLost",
-                        "The active beam lanes have different physical "
-                        + "elevations, but the legacy geometry did not retain "
-                        + "a cross-joint run. The command will not silently "
-                        + "fall back to legacy reinforcement.");
-                }
                 context.DiagnosticLog?.Record("main.transition.classified", new
                 {
                     stageName,
                     policy = "LegacyAligned",
-                    reason = "All run elevations are aligned.",
+                    reason = "All bar-centerline elevation differences are "
+                        + "within the alignment tolerance.",
+                    policySource = "BarCenterlineDeltaZ",
                     runCount = legacyRuns.Count
                 });
                 ValidateMainBarSeparation(
@@ -158,23 +169,19 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 viewModel,
                 context,
                 geometryToleranceFt);
-
-            // This branch should normally have been classified from physical
-            // beam solids before legacy geometry was inspected. Keep the
-            // guard fail-closed in case the physical model changes during
-            // planning.
-            if (Math.Abs(joint.RightBeam.TopZ - joint.LeftBeam.TopZ)
-                <= geometryToleranceFt
-                && Math.Abs(joint.RightBeam.BottomZ - joint.LeftBeam.BottomZ)
-                > geometryToleranceFt)
+            if (policyClassification.Policy
+                == MainBarTransitionPolicy.IndependentAnchorage35D)
             {
-                throw Unsupported(
+                return PlanIndependentJointAnchorage(
+                    viewModel,
                     context,
+                    level,
+                    group,
+                    barType,
+                    legacyGeometry,
                     stageName,
-                    "IndependentJointClassificationChanged",
-                    "The physical joint changed while reinforcement was "
-                    + "being planned. Run the command again against a stable "
-                    + "model.");
+                    joint,
+                    geometryToleranceFt);
             }
 
             var expectedTransitionRunCount = ValidateJointBarCompatibility(
@@ -188,7 +195,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 geometryToleranceFt,
                 0.01.MmToFoot());
             var laneValidation = BentZTransitionGeometry.ValidateLaneSet(
-                changedRuns
+                terminalRuns
                     .Select(item => new BentZLanePair(
                         item.TerminalPath.CoreStart.DotProduct(joint.AxisY),
                         item.TerminalPath.CoreEnd.DotProduct(joint.AxisY)))
@@ -307,38 +314,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             return runs;
         }
 
-        private static bool HasPhysicalTopAlignedDepthStep(
-            InstallRebarBeamV2ViewModel viewModel,
-            double toleranceFt)
-        {
-            var members =
-                viewModel?.ElementInstances?.Beam?.ElementSubs;
-            if (members == null || members.Count != 2)
-                return false;
-
-            var verticalRanges = members
-                .Select(member => GetBoxPoints(member))
-                .Select(points => points.Count == 0
-                    ? null
-                    : new
-                    {
-                        Bottom = points.Min(point => point.Z),
-                        Top = points.Max(point => point.Z)
-                    })
-                .ToList();
-            if (verticalRanges.Any(range => range == null))
-                return false;
-
-            return Math.Abs(
-                       verticalRanges[0].Top
-                       - verticalRanges[1].Top)
-                   <= toleranceFt
-                && Math.Abs(
-                       verticalRanges[0].Bottom
-                       - verticalRanges[1].Bottom)
-                   > toleranceFt;
-        }
-
         private IReadOnlyList<MainBarRunPlan>
             PlanIndependentJointAnchorage(
                 InstallRebarBeamV2ViewModel viewModel,
@@ -351,16 +326,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 BeamJointGeometry joint,
                 double toleranceFt)
         {
-            if (level != RebarBeamMainBarLevelType.RebarBot)
-            {
-                throw Unsupported(
-                    context,
-                    stageName,
-                    "IndependentAnchorBottomOnly",
-                    "Independent Joint Anchorage is only applicable to "
-                    + "bottom reinforcement.");
-            }
-
             var expectedLaneCount = ValidateJointBarCompatibility(
                 viewModel,
                 context,
@@ -376,25 +341,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     "IndependentAnchorLaneCountMismatch",
                     $"The joint requires {expectedLaneCount} source lanes, "
                     + $"but legacy geometry exposed {legacyGeometry.Count}.");
-            }
-
-            var deepBeam =
-                joint.LeftBeam.BottomZ < joint.RightBeam.BottomZ
-                    ? joint.LeftBeam
-                    : joint.RightBeam;
-            var shallowBeam =
-                deepBeam.Id == joint.LeftBeam.Id
-                    ? joint.RightBeam
-                    : joint.LeftBeam;
-            if (shallowBeam.BottomZ - deepBeam.BottomZ
-                <= toleranceFt)
-            {
-                throw Unsupported(
-                    context,
-                    stageName,
-                    "IndependentAnchorDepthStepMissing",
-                    "A unique deep and shallow beam could not be resolved "
-                    + "from the physical bottom faces.");
             }
 
             var nominalBarDiameterFt = barType.BarDiameter;
@@ -439,14 +385,26 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         geometry,
                         index,
                         joint,
-                        deepBeam,
-                        shallowBeam,
+                        level,
                         toleranceFt,
                         context,
                         stageName))
                 .ToList();
+            var bentBeam = lanes[0].BentBeam;
+            var straightBeam = lanes[0].StraightBeam;
+            if (lanes.Any(lane =>
+                    lane.BentBeam.Id != bentBeam.Id
+                    || lane.StraightBeam.Id != straightBeam.Id))
+            {
+                throw Unsupported(
+                    context,
+                    stageName,
+                    "IndependentAnchorLaneRoleMismatch",
+                    "Independent-anchor lanes disagree about which physical "
+                    + "beam owns the bent and straight-through runs.");
+            }
             ValidateIndependentSourceLaneSet(
-                lanes.Select(lane => lane.ShallowLaneY).ToList(),
+                lanes.Select(lane => lane.StraightLaneY).ToList(),
                 expectedLaneCount,
                 modelBarDiameterFt,
                 laneToleranceFt,
@@ -454,7 +412,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 context,
                 stageName);
             ValidateIndependentSourceLaneSet(
-                lanes.Select(lane => lane.DeepLaneY).ToList(),
+                lanes.Select(lane => lane.BentLaneY).ToList(),
                 expectedLaneCount,
                 modelBarDiameterFt,
                 laneToleranceFt,
@@ -462,40 +420,40 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 context,
                 stageName);
 
-            var deepLaneEnvelope = ResolveConfiguredBeamLaneEnvelope(
+            var bentLaneEnvelope = ResolveConfiguredBeamLaneEnvelope(
                 viewModel,
                 context,
                 level,
                 group,
                 barType,
-                deepBeam,
+                bentBeam,
                 joint.AxisY,
                 stageName);
-            var shallowLaneEnvelope = ResolveConfiguredBeamLaneEnvelope(
+            var straightLaneEnvelope = ResolveConfiguredBeamLaneEnvelope(
                 viewModel,
                 context,
                 level,
                 group,
                 barType,
-                shallowBeam,
+                straightBeam,
                 joint.AxisY,
                 stageName);
             var straightMinY = Math.Max(
                 Math.Max(
-                    shallowLaneEnvelope.MinY,
-                    deepLaneEnvelope.MinY),
+                    straightLaneEnvelope.MinY,
+                    bentLaneEnvelope.MinY),
                 joint.ColumnMinY
                     + bendClearance.CenterlineClearanceFt);
             var straightMaxY = Math.Min(
                 Math.Min(
-                    shallowLaneEnvelope.MaxY,
-                    deepLaneEnvelope.MaxY),
+                    straightLaneEnvelope.MaxY,
+                    bentLaneEnvelope.MaxY),
                 joint.ColumnMaxY
                     - bendClearance.CenterlineClearanceFt);
             foreach (var lane in lanes)
             {
                 if (!IsInside(
-                        lane.ShallowLaneY,
+                        lane.StraightLaneY,
                         straightMinY,
                         straightMaxY,
                         laneToleranceFt))
@@ -505,17 +463,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         stageName,
                         "IndependentStraightLaneOutsideEnvelope",
                         $"Straight-through lane {lane.LaneIndex + 1} cannot "
-                        + "remain inside the cover-reduced shallow beam, "
-                    + "column and deep beam envelopes.");
+                        + "remain inside the cover-reduced straight-side beam, "
+                        + "column and bent-side beam envelopes.");
                 }
             }
 
             var bentMinY = Math.Max(
-                deepLaneEnvelope.MinY,
+                bentLaneEnvelope.MinY,
                 joint.ColumnMinY
                     + bendClearance.CenterlineClearanceFt);
             var bentMaxY = Math.Min(
-                deepLaneEnvelope.MaxY,
+                bentLaneEnvelope.MaxY,
                 joint.ColumnMaxY
                     - bendClearance.CenterlineClearanceFt);
             if (lanes.Count > 1)
@@ -526,20 +484,20 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 // a narrower usable interval than the physical beam box.
                 bentMinY = Math.Max(
                     bentMinY,
-                    lanes.Min(lane => lane.DeepLaneY));
+                    lanes.Min(lane => lane.BentLaneY));
                 bentMaxY = Math.Min(
                     bentMaxY,
-                    lanes.Max(lane => lane.DeepLaneY));
+                    lanes.Max(lane => lane.BentLaneY));
             }
             var requiredLaneSeparationFt =
                 modelBarDiameterFt + 0.2.MmToFoot();
             var staggerInput =
                 new IndependentJointLaneStaggerInput(
                     lanes
-                        .Select(lane => lane.DeepLaneY)
+                        .Select(lane => lane.BentLaneY)
                         .ToList(),
                     lanes
-                        .Select(lane => lane.ShallowLaneY)
+                        .Select(lane => lane.StraightLaneY)
                         .ToList(),
                     bentMinY,
                     bentMaxY,
@@ -556,17 +514,21 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     context,
                     stageName,
                     $"IndependentAnchor{staggerPlan.Failure}",
-                    "The deep-beam bent anchors cannot be staggered safely "
+                    "The bent-side anchors cannot be staggered safely "
                     + "from the straight-through anchors: "
                     + staggerPlan.Message);
             }
 
-            var commonTopZ = Math.Min(
-                deepBeam.TopZ,
-                shallowBeam.TopZ);
             var verticalLimitZ =
-                commonTopZ
-                - bendClearance.CenterlineClearanceFt;
+                level == RebarBeamMainBarLevelType.RebarBot
+                    ? Math.Min(
+                          bentBeam.TopZ,
+                          straightBeam.TopZ)
+                      - bendClearance.CenterlineClearanceFt
+                    : Math.Max(
+                          bentBeam.BottomZ,
+                          straightBeam.BottomZ)
+                      + bendClearance.CenterlineClearanceFt;
             var runs = new List<MainBarRunPlan>(
                 lanes.Count * 2);
             var closestModeledClearancesMm =
@@ -580,8 +542,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 var shiftedBentY =
                     staggerPlan.ShiftedBentLaneYs[laneIndex];
                 var direction =
-                    lane.ShallowSide.Station
-                    >= lane.DeepSide.Station
+                    lane.StraightSide.Station
+                    >= lane.BentSide.Station
                         ? 1.0
                         : -1.0;
                 var jointStart = direction > 0.0
@@ -592,12 +554,12 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     : joint.ColumnStart;
                 var input =
                     new IndependentJointAnchorageInput(
-                        lane.DeepSide.Station,
+                        lane.BentSide.Station,
                         jointStart,
                         jointEnd,
-                        lane.ShallowSide.Station,
-                        lane.DeepSide.CorePoint.Z,
-                        lane.ShallowSide.CorePoint.Z,
+                        lane.StraightSide.Station,
+                        lane.BentSide.CorePoint.Z,
+                        lane.StraightSide.CorePoint.Z,
                         verticalLimitZ,
                         requiredAnchorageFt,
                         bendClearance.BendInsetFt,
@@ -621,14 +583,14 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
 
                 var straightOrderedPoints =
                     BuildIndependentOrderedPoints(
-                        lane.ShallowSide,
+                        lane.StraightSide,
                         planned.StraightThroughPoints,
-                        lane.ShallowLaneY,
+                        lane.StraightLaneY,
                         joint,
                         toleranceFt);
                 var bentOrderedPoints =
                     BuildIndependentOrderedPoints(
-                        lane.DeepSide,
+                        lane.BentSide,
                         planned.BentVerticalPoints,
                         shiftedBentY,
                         joint,
@@ -637,13 +599,13 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 ValidateIndependentContainment(
                     lane,
                     planned,
-                    lane.ShallowLaneY,
+                    lane.StraightLaneY,
                     shiftedBentY,
-                    deepBeam,
-                    shallowBeam,
+                    bentBeam,
+                    straightBeam,
                     joint,
-                    deepLaneEnvelope,
-                    shallowLaneEnvelope,
+                    bentLaneEnvelope,
+                    straightLaneEnvelope,
                     bendClearance.CenterlineClearanceFt,
                     toleranceFt,
                     context,
@@ -658,8 +620,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     laneIndex,
                     barType,
                     straightOrderedPoints,
-                    new[] { shallowBeam.Id, deepBeam.Id },
-                    shallowBeam.Id,
+                    new[] { straightBeam.Id, bentBeam.Id },
+                    straightBeam.Id,
                     joint.ColumnId,
                     0.0,
                     bendClearance.CenterlineBendRadiusFt,
@@ -673,8 +635,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     laneIndex,
                     barType,
                     bentOrderedPoints,
-                    new[] { deepBeam.Id },
-                    deepBeam.Id,
+                    new[] { bentBeam.Id },
+                    bentBeam.Id,
                     joint.ColumnId,
                     planned.BentVerticalPoints[
                         planned.BentVerticalPoints.Count - 1]
@@ -716,8 +678,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         lane = laneIndex + 1,
                         straightRunId = straightRun.RunId,
                         bentRunId = bentRun.RunId,
-                        shallowHostBeamId = shallowBeam.Id,
-                        deepHostBeamId = deepBeam.Id,
+                        barLevel = level.ToString(),
+                        straightHostBeamId = straightBeam.Id,
+                        bentHostBeamId = bentBeam.Id,
                         nominalBarDiameterMm = Math.Round(
                             nominalBarDiameterFt.FootToMm(),
                             3),
@@ -736,18 +699,18 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                                 .FootToMm(),
                             3),
                         originalBentLaneYMm = Math.Round(
-                            lane.DeepLaneY.FootToMm(),
+                            lane.BentLaneY.FootToMm(),
                             3),
                         shiftedBentLaneYMm = Math.Round(
                             shiftedBentY.FootToMm(),
                             3),
                         bentLaneShiftMm = Math.Round(
-                            (shiftedBentY - lane.DeepLaneY)
+                            (shiftedBentY - lane.BentLaneY)
                                 .FootToMm(),
                             3),
-                        shiftScope = "EntireDeepBeamRun",
+                        shiftScope = "EntireBentSideRun",
                         straightAnchorageDatum =
-                            "Shallow-side column face to deep-beam tail",
+                            "Straight-side column face to bent-side tail",
                         bentAnchorageDatum =
                             "Sharp bend vertex to vertical tail endpoint"
                     });
@@ -764,9 +727,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 {
                     stageName,
                     policy = "IndependentJointAnchorage35D",
+                    policySource = "BarCenterlineDeltaZ",
+                    barLevel = level.ToString(),
                     jointColumnId = joint.ColumnId,
-                    shallowBeamId = shallowBeam.Id,
-                    deepBeamId = deepBeam.Id,
+                    straightBeamId = straightBeam.Id,
+                    bentBeamId = bentBeam.Id,
                     sourceLaneCount = lanes.Count,
                     createdRunCount = runs.Count,
                     requiredAnchorageMm = Math.Round(
@@ -776,21 +741,21 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         staggerPlan.MaximumAbsoluteDisplacement
                             .FootToMm(),
                         3),
-                    deepBeamLaneMinMm = Math.Round(
-                        deepLaneEnvelope.MinY.FootToMm(),
+                    bentBeamLaneMinMm = Math.Round(
+                        bentLaneEnvelope.MinY.FootToMm(),
                         3),
-                    deepBeamLaneMaxMm = Math.Round(
-                        deepLaneEnvelope.MaxY.FootToMm(),
+                    bentBeamLaneMaxMm = Math.Round(
+                        bentLaneEnvelope.MaxY.FootToMm(),
                         3),
-                    shallowBeamLaneMinMm = Math.Round(
-                        shallowLaneEnvelope.MinY.FootToMm(),
+                    straightBeamLaneMinMm = Math.Round(
+                        straightLaneEnvelope.MinY.FootToMm(),
                         3),
-                    shallowBeamLaneMaxMm = Math.Round(
-                        shallowLaneEnvelope.MaxY.FootToMm(),
+                    straightBeamLaneMaxMm = Math.Round(
+                        straightLaneEnvelope.MaxY.FootToMm(),
                         3),
-                    laneShiftScope = "EntireDeepBeamRun",
+                    laneShiftScope = "EntireBentSideRun",
                     straightAnchorageDatum =
-                        "Shallow-side column face to deep-beam tail",
+                        "Straight-side column face to bent-side tail",
                     bentAnchorageDatum =
                         "Sharp bend vertex to vertical tail endpoint",
                     columnCoverMm = Math.Round(
@@ -905,8 +870,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             MainBarBeamReal geometry,
             int laneIndex,
             BeamJointGeometry joint,
-            BeamEnvelope deepBeam,
-            BeamEnvelope shallowBeam,
+            RebarBeamMainBarLevelType level,
             double toleranceFt,
             RebarExecutionContext context,
             string stageName)
@@ -959,32 +923,59 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     + "each physical side of the joint.");
             }
 
-            var deepSide =
-                deepBeam.Id == joint.LeftBeam.Id
-                    ? leftSide
-                    : rightSide;
-            var shallowSide =
-                shallowBeam.Id == joint.LeftBeam.Id
-                    ? leftSide
-                    : rightSide;
-            if (shallowSide.CorePoint.Z
-                    - deepSide.CorePoint.Z
-                <= toleranceFt)
+            var elevationDelta =
+                rightSide.CorePoint.Z - leftSide.CorePoint.Z;
+            if (Math.Abs(elevationDelta) <= toleranceFt)
             {
                 throw Unsupported(
                     context,
                     stageName,
                     "IndependentAnchorElevationMappingFailed",
-                    $"Lane {laneIndex + 1} does not retain a lower deep-beam "
-                    + "bottom bar and a higher shallow-beam bottom bar.");
+                    $"Lane {laneIndex + 1} does not retain two distinct "
+                    + "bar-centerline elevations for independent anchorage.");
             }
 
+            TerminalSide bentSide;
+            if (level == RebarBeamMainBarLevelType.RebarBot)
+            {
+                // Bottom reinforcement: the lower bar bends upward.
+                bentSide = leftSide.CorePoint.Z < rightSide.CorePoint.Z
+                    ? leftSide
+                    : rightSide;
+            }
+            else if (level == RebarBeamMainBarLevelType.RebarTop)
+            {
+                // Top reinforcement is the vertical mirror: the higher bar
+                // bends downward.
+                bentSide = leftSide.CorePoint.Z > rightSide.CorePoint.Z
+                    ? leftSide
+                    : rightSide;
+            }
+            else
+            {
+                throw Unsupported(
+                    context,
+                    stageName,
+                    "IndependentAnchorLevelUnsupported",
+                    $"Independent anchorage does not support level '{level}'.");
+            }
+            var straightSide = ReferenceEquals(bentSide, leftSide)
+                ? rightSide
+                : leftSide;
+            var bentBeam = ReferenceEquals(bentSide, leftSide)
+                ? joint.LeftBeam
+                : joint.RightBeam;
+            var straightBeam = bentBeam.Id == joint.LeftBeam.Id
+                ? joint.RightBeam
+                : joint.LeftBeam;
             return new IndependentLane(
                 laneIndex,
-                deepSide,
-                shallowSide,
-                deepSide.CorePoint.DotProduct(joint.AxisY),
-                shallowSide.CorePoint.DotProduct(joint.AxisY));
+                bentSide,
+                straightSide,
+                bentBeam,
+                straightBeam,
+                bentSide.CorePoint.DotProduct(joint.AxisY),
+                straightSide.CorePoint.DotProduct(joint.AxisY));
         }
 
         private static void ValidateIndependentSourceLaneSet(
@@ -1072,22 +1063,22 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             IndependentJointAnchorageResult planned,
             double straightLaneY,
             double bentLaneY,
-            BeamEnvelope deepBeam,
-            BeamEnvelope shallowBeam,
+            BeamEnvelope bentBeam,
+            BeamEnvelope straightBeam,
             BeamJointGeometry joint,
-            BeamLaneEnvelope deepLaneEnvelope,
-            BeamLaneEnvelope shallowLaneEnvelope,
+            BeamLaneEnvelope bentLaneEnvelope,
+            BeamLaneEnvelope straightLaneEnvelope,
             double centerlineClearanceFt,
             double toleranceFt,
             RebarExecutionContext context,
             string stageName)
         {
-            var deepZ = lane.DeepSide.CorePoint.Z;
-            var shallowZ = lane.ShallowSide.CorePoint.Z;
+            var bentZ = lane.BentSide.CorePoint.Z;
+            var straightZ = lane.StraightSide.CorePoint.Z;
             foreach (var envelope in new[]
                      {
-                         shallowLaneEnvelope,
-                         deepLaneEnvelope
+                         straightLaneEnvelope,
+                         bentLaneEnvelope
                      })
             {
                 if (!IsInside(
@@ -1120,8 +1111,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             }
             if (!IsInside(
                     bentLaneY,
-                    deepLaneEnvelope.MinY,
-                    deepLaneEnvelope.MaxY,
+                    bentLaneEnvelope.MinY,
+                    bentLaneEnvelope.MaxY,
                     toleranceFt)
                 || !IsInside(
                     bentLaneY,
@@ -1134,23 +1125,23 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     stageName,
                     "IndependentBentOutsideTransverseCover",
                     $"Bent lane {lane.LaneIndex + 1} leaves the "
-                    + "cover-reduced deep-beam or column envelope.");
+                    + "cover-reduced bent-side beam or column envelope.");
             }
 
             if (!IsInside(
-                    deepZ,
-                    deepBeam.BottomZ + centerlineClearanceFt,
-                    deepBeam.TopZ - centerlineClearanceFt,
+                    bentZ,
+                    bentBeam.BottomZ + centerlineClearanceFt,
+                    bentBeam.TopZ - centerlineClearanceFt,
                     toleranceFt)
                 || !IsInside(
-                    shallowZ,
-                    shallowBeam.BottomZ + centerlineClearanceFt,
-                    shallowBeam.TopZ - centerlineClearanceFt,
+                    straightZ,
+                    straightBeam.BottomZ + centerlineClearanceFt,
+                    straightBeam.TopZ - centerlineClearanceFt,
                     toleranceFt)
                 || !IsInside(
-                    shallowZ,
-                    deepBeam.BottomZ + centerlineClearanceFt,
-                    deepBeam.TopZ - centerlineClearanceFt,
+                    straightZ,
+                    bentBeam.BottomZ + centerlineClearanceFt,
+                    bentBeam.TopZ - centerlineClearanceFt,
                     toleranceFt))
             {
                 throw Unsupported(
@@ -1166,30 +1157,31 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     planned.StraightThroughPoints.Count - 1];
             if (!IsInside(
                     straightEnd.Station,
-                    deepBeam.MinX,
-                    deepBeam.MaxX,
+                    bentBeam.MinX,
+                    bentBeam.MaxX,
                     toleranceFt))
             {
                 throw Unsupported(
                     context,
                     stageName,
-                    "IndependentStraightAnchorOutsideDeepBeam",
+                    "IndependentStraightAnchorOutsideBentSideBeam",
                     $"Straight-through lane {lane.LaneIndex + 1} cannot "
-                    + "place its required anchorage inside the deep beam.");
+                    + "place its required anchorage inside the bent-side "
+                    + "beam.");
             }
 
             var bentEnd =
                 planned.BentVerticalPoints[
                     planned.BentVerticalPoints.Count - 1];
             if (!IsInside(
-                    deepZ,
+                    bentZ,
                     joint.ColumnBottomZ
                         + centerlineClearanceFt,
                     joint.ColumnTopZ
                         - centerlineClearanceFt,
                     toleranceFt)
                 || !IsInside(
-                    shallowZ,
+                    straightZ,
                     joint.ColumnBottomZ
                         + centerlineClearanceFt,
                     joint.ColumnTopZ
@@ -1197,12 +1189,18 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     toleranceFt)
                 || !IsInside(
                     bentEnd.Elevation,
-                    joint.ColumnBottomZ
-                        + centerlineClearanceFt,
+                    Math.Max(
+                        joint.ColumnBottomZ,
+                        Math.Max(
+                            bentBeam.BottomZ,
+                            straightBeam.BottomZ))
+                    + centerlineClearanceFt,
                     Math.Min(
-                        deepBeam.TopZ,
-                        shallowBeam.TopZ)
-                        - centerlineClearanceFt,
+                        joint.ColumnTopZ,
+                        Math.Min(
+                            bentBeam.TopZ,
+                            straightBeam.TopZ))
+                    - centerlineClearanceFt,
                     toleranceFt))
             {
                 throw Unsupported(
@@ -1223,32 +1221,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             return maximum >= minimum
                 && value >= minimum - tolerance
                 && value <= maximum + tolerance;
-        }
-
-        private bool HasUnresolvedTransitionIntent(
-            InstallRebarBeamV2ViewModel viewModel,
-            RebarBeamMainBarLevelType level,
-            RebarBeamMainBarGroupType group,
-            double toleranceFt)
-        {
-            var activeHostIds = new HashSet<long>(
-                _geometryService
-                    .GetRebarBeamGroupLevelInfo(viewModel, level, group)
-                    .Where(bar => bar.Quantity > 0)
-                    .Select(bar => bar.HostId));
-            var elevations = new List<double>();
-            foreach (var member in viewModel.ElementInstances.Beam.ElementSubs)
-            {
-                if (!activeHostIds.Contains(member.Id)) continue;
-                var points = GetBoxPoints(member);
-                if (points.Count == 0) continue;
-                elevations.Add(
-                    level == RebarBeamMainBarLevelType.RebarTop
-                        ? points.Max(point => point.Z)
-                        : points.Min(point => point.Z));
-            }
-            return elevations.Count >= 2
-                && elevations.Max() - elevations.Min() > toleranceFt;
         }
 
         private MainBarRunPlan PlanTransitionRun(
@@ -3464,25 +3436,33 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
         private sealed class IndependentLane
         {
             public int LaneIndex { get; }
-            public TerminalSide DeepSide { get; }
-            public TerminalSide ShallowSide { get; }
-            public double DeepLaneY { get; }
-            public double ShallowLaneY { get; }
+            public TerminalSide BentSide { get; }
+            public TerminalSide StraightSide { get; }
+            public BeamEnvelope BentBeam { get; }
+            public BeamEnvelope StraightBeam { get; }
+            public double BentLaneY { get; }
+            public double StraightLaneY { get; }
 
             public IndependentLane(
                 int laneIndex,
-                TerminalSide deepSide,
-                TerminalSide shallowSide,
-                double deepLaneY,
-                double shallowLaneY)
+                TerminalSide bentSide,
+                TerminalSide straightSide,
+                BeamEnvelope bentBeam,
+                BeamEnvelope straightBeam,
+                double bentLaneY,
+                double straightLaneY)
             {
                 LaneIndex = laneIndex;
-                DeepSide = deepSide
-                    ?? throw new ArgumentNullException(nameof(deepSide));
-                ShallowSide = shallowSide
-                    ?? throw new ArgumentNullException(nameof(shallowSide));
-                DeepLaneY = deepLaneY;
-                ShallowLaneY = shallowLaneY;
+                BentSide = bentSide
+                    ?? throw new ArgumentNullException(nameof(bentSide));
+                StraightSide = straightSide
+                    ?? throw new ArgumentNullException(nameof(straightSide));
+                BentBeam = bentBeam
+                    ?? throw new ArgumentNullException(nameof(bentBeam));
+                StraightBeam = straightBeam
+                    ?? throw new ArgumentNullException(nameof(straightBeam));
+                BentLaneY = bentLaneY;
+                StraightLaneY = straightLaneY;
             }
         }
 

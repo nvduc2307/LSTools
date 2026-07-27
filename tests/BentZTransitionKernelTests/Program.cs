@@ -33,6 +33,12 @@ internal static class Program
             LaneSetRejectsMissingLane,
             LaneSetRejectsTransverseDrift,
             LaneSetRejectsInsufficientBarSpacing,
+            TransitionPolicyTreatsAlignedDeltaAsLegacy,
+            TransitionPolicyUsesBentZAtTwoHundredMillimeters,
+            TransitionPolicyUsesIndependentAboveTwoHundredMillimeters,
+            TransitionPolicyUsesAbsoluteDelta,
+            TransitionPolicyRejectsMixedLanePolicies,
+            TransitionPolicyRejectsInvalidThreshold,
             TemporaryRuleReturnsThirtyFiveDiameters,
             TemporaryRuleRejectsInvalidDiameter,
             TemporaryClearanceUsesModeledValueFirst,
@@ -87,6 +93,103 @@ internal static class Program
             Console.Error.WriteLine("FAIL " + exception.Message);
             return 1;
         }
+    }
+
+    private static void TransitionPolicyTreatsAlignedDeltaAsLegacy()
+    {
+        MainBarTransitionClassification result =
+            MainBarTransitionPolicyClassifier.Classify(
+                new[] { -1.0, 0.0, 1.0 },
+                1.0,
+                200.0);
+
+        Equal(true, result.IsValid, "aligned policy validity");
+        Equal(
+            MainBarTransitionPolicy.LegacyAligned,
+            result.Policy,
+            "aligned policy");
+    }
+
+    private static void TransitionPolicyUsesBentZAtTwoHundredMillimeters()
+    {
+        MainBarTransitionClassification result =
+            MainBarTransitionPolicyClassifier.Classify(
+                new[] { 200.0, 200.0 },
+                1.0,
+                200.0);
+
+        Equal(true, result.IsValid, "200 mm policy validity");
+        Equal(
+            MainBarTransitionPolicy.BentZContinuous,
+            result.Policy,
+            "200 mm policy");
+    }
+
+    private static void TransitionPolicyUsesIndependentAboveTwoHundredMillimeters()
+    {
+        MainBarTransitionClassification result =
+            MainBarTransitionPolicyClassifier.Classify(
+                new[] { 200.001, 200.001 },
+                1.0,
+                200.0);
+
+        Equal(true, result.IsValid, "above 200 mm policy validity");
+        Equal(
+            MainBarTransitionPolicy.IndependentAnchorage35D,
+            result.Policy,
+            "above 200 mm policy");
+    }
+
+    private static void TransitionPolicyUsesAbsoluteDelta()
+    {
+        MainBarTransitionClassification positive =
+            MainBarTransitionPolicyClassifier.Classify(
+                new[] { 125.0 },
+                1.0,
+                200.0);
+        MainBarTransitionClassification negative =
+            MainBarTransitionPolicyClassifier.Classify(
+                new[] { -125.0 },
+                1.0,
+                200.0);
+
+        Equal(true, positive.IsValid, "positive delta validity");
+        Equal(true, negative.IsValid, "negative delta validity");
+        Equal(positive.Policy, negative.Policy, "signed delta policy");
+        Equal(
+            MainBarTransitionPolicy.BentZContinuous,
+            negative.Policy,
+            "negative Bent/Z policy");
+    }
+
+    private static void TransitionPolicyRejectsMixedLanePolicies()
+    {
+        MainBarTransitionClassification result =
+            MainBarTransitionPolicyClassifier.Classify(
+                new[] { 100.0, 250.0 },
+                1.0,
+                200.0);
+
+        Equal(false, result.IsValid, "mixed lane policy validity");
+        Equal(
+            MainBarTransitionClassificationFailure.InconsistentLanePolicy,
+            result.Failure,
+            "mixed lane failure");
+    }
+
+    private static void TransitionPolicyRejectsInvalidThreshold()
+    {
+        MainBarTransitionClassification result =
+            MainBarTransitionPolicyClassifier.Classify(
+                new[] { 100.0 },
+                200.0,
+                200.0);
+
+        Equal(false, result.IsValid, "invalid threshold validity");
+        Equal(
+            MainBarTransitionClassificationFailure.InvalidThreshold,
+            result.Failure,
+            "invalid threshold failure");
     }
 
     private static void TemporaryRuleReturnsThirtyFiveDiameters()

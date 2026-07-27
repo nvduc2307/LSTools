@@ -5,8 +5,8 @@ using System.Linq;
 namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
 {
     /// <summary>
-    /// Describes whether two independent bottom-bar anchors can be planned at
-    /// a top-aligned joint between beams of different depths.
+    /// Describes whether two independent main-bar anchors can be planned
+    /// across a joint between bars at different centerline elevations.
     /// </summary>
     public enum IndependentJointAnchorageStatus
     {
@@ -39,13 +39,14 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
     }
 
     /// <summary>
-    /// Revit-independent inputs for the two bottom-bar runs.
+    /// Revit-independent inputs for the two main-bar runs.
     ///
-    /// Stations are ordered from the deep beam to the shallow beam. They may
-    /// increase or decrease, which makes the same policy work when the beam
-    /// order is mirrored. RequiredAnchorageLength is a design-rule input; the
-    /// temporary 35-diameter rule belongs to the caller rather than this
-    /// geometry kernel.
+    /// Stations are ordered from the bent-side beam to the straight-side
+    /// beam. They may increase or decrease, which makes the same policy work
+    /// when the beam order is mirrored. The historical Deep/Shallow property
+    /// names now represent bent/straight source elevations respectively.
+    /// RequiredAnchorageLength is a design-rule input; the temporary
+    /// 35-diameter rule belongs to the caller rather than this geometry kernel.
     /// </summary>
     public sealed class IndependentJointAnchorageInput
     {
@@ -96,9 +97,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
 
     /// <summary>
     /// Immutable geometry and measured lengths for one successful policy plan.
-    /// StraightThroughPoints are ordered from the shallow beam towards the deep
-    /// beam. BentVerticalPoints are ordered from the deep beam towards the
-    /// joint and then towards the common top face.
+    /// StraightThroughPoints are ordered from the straight-side beam towards
+    /// the bent-side beam. BentVerticalPoints are ordered from the bent-side
+    /// beam towards the joint and then vertically towards the straight run.
     /// </summary>
     public sealed class IndependentJointAnchorageResult
     {
@@ -236,11 +237,14 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
     }
 
     /// <summary>
-    /// Pure geometry policy for a top-aligned depth step:
-    /// 1) the shallow-beam bottom bar remains horizontal and is extended from
-    ///    the shallow joint face, through the joint, into the deep beam;
-    /// 2) the deep-beam bottom bar enters the joint and turns vertically
-    ///    towards the common top face.
+    /// Pure geometry policy for two main bars at different elevations:
+    /// 1) the straight-side bar remains horizontal and is extended from its
+    ///    joint face, through the joint, into the bent-side beam;
+    /// 2) the bent-side bar enters the joint and turns vertically towards the
+    ///    straight-side bar elevation.
+    ///
+    /// The vertical direction may be positive or negative, so the same kernel
+    /// supports bottom reinforcement and its mirrored top-reinforcement case.
     ///
     /// The two outputs are independent runs. This class never joins them and
     /// never substitutes a Bent/Z transition.
@@ -276,7 +280,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 return IndependentJointAnchorageResult.Unsupported(
                     IndependentJointAnchorageFailure
                         .InsufficientStraightAnchorAvailability,
-                    "The deep-side concrete envelope is shorter than the "
+                    "The bent-side concrete envelope is shorter than the "
                     + "required straight-through anchorage.");
             }
             if (input.RequiredAnchorageLength <=
@@ -286,7 +290,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                     IndependentJointAnchorageFailure
                         .StraightAnchorDoesNotCrossJoint,
                     "The required straight anchorage does not cross the full "
-                    + "joint and enter the deep beam.");
+                    + "joint and enter the bent-side beam.");
             }
 
             double availableVertical = (
@@ -473,7 +477,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 return IndependentJointAnchorageValidationResult.Unsupported(
                     IndependentJointAnchorageFailure.InvalidPointChain,
                     "The straight-through run must remain horizontal and be "
-                    + "ordered from the shallow beam towards the deep beam.");
+                    + "ordered from the straight-side beam towards the "
+                    + "bent-side beam.");
             }
 
             double straightProvided = DirectedDistance(
@@ -497,7 +502,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 return IndependentJointAnchorageValidationResult.Unsupported(
                     IndependentJointAnchorageFailure
                         .StraightAnchorDoesNotCrossJoint,
-                    "The straight-through run does not enter the deep beam.");
+                    "The straight-through run does not enter the bent-side "
+                    + "beam.");
             }
             if (DirectedDistance(
                     input.RunStartStation,
@@ -507,7 +513,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 return IndependentJointAnchorageValidationResult.Unsupported(
                     IndependentJointAnchorageFailure
                         .InsufficientStraightAnchorAvailability,
-                    "The straight-through run leaves the available deep-side "
+                    "The straight-through run leaves the available bent-side "
                     + "concrete envelope.");
             }
 
@@ -540,7 +546,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 return IndependentJointAnchorageValidationResult.Unsupported(
                     IndependentJointAnchorageFailure.InvalidPointChain,
                     "The bent run must be horizontal into the joint and then "
-                    + "vertical towards the common top face.");
+                    + "vertical towards the straight-side elevation.");
             }
 
             double bendFromDeepFace = DirectedDistance(
@@ -655,13 +661,13 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                     "Centerline bend radius must be greater than zero.");
             }
 
-            double depthStep =
+            double elevationStep =
                 input.ShallowBarElevation - input.DeepBarElevation;
-            if (Math.Abs(depthStep) <= input.Tolerance)
+            if (Math.Abs(elevationStep) <= input.Tolerance)
             {
                 return IndependentJointAnchorageResult.Unsupported(
                     IndependentJointAnchorageFailure.NoDepthStep,
-                    "Independent anchorage requires different bottom-bar "
+                    "Independent anchorage requires different main-bar "
                     + "elevations.");
             }
 
@@ -693,10 +699,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 return IndependentJointAnchorageResult.Unsupported(
                     IndependentJointAnchorageFailure.NonMonotonicStations,
                     "Run and joint stations must be strictly monotonic from "
-                    + "the deep beam to the shallow beam.");
+                    + "the bent-side beam to the straight-side beam.");
             }
 
-            double verticalDirection = Math.Sign(depthStep);
+            double verticalDirection = Math.Sign(elevationStep);
             double verticalAvailability = (
                 input.BentVerticalLimitElevation
                 - input.DeepBarElevation) * verticalDirection;
@@ -705,8 +711,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 return IndependentJointAnchorageResult.Unsupported(
                     IndependentJointAnchorageFailure
                         .InsufficientBentAnchorAvailability,
-                    "The bent-anchor limit must lie towards the common top "
-                    + "face from the deep bottom bar.");
+                    "The bent-anchor limit must lie from the bent-side bar "
+                    + "towards the straight-side elevation.");
             }
 
             return null;

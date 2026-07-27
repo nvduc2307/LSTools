@@ -12,6 +12,8 @@
              Link="BentZTransitionGeometry.cs" />
     <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\BentZColumnEnvelopeRule.cs"
              Link="BentZColumnEnvelopeRule.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\MainBarTransitionPolicyClassifier.cs"
+             Link="MainBarTransitionPolicyClassifier.cs" />
     <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\IndependentJointAnchorageGeometry.cs"
              Link="IndependentJointAnchorageGeometry.cs" />
     <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\IndependentJointLaneStaggerGeometry.cs"

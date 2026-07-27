@@ -17,7 +17,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics
     public sealed class RebarDiagnosticLog : IDisposable
     {
         private const string DifferentSectionGeometryRevision =
-            "20260726.9-bentz-bends-in-beams";
+            "20260727.10-centerline-deltaz-200-policy";
         private readonly object _syncRoot = new();
         private readonly StreamWriter _writer;
         private readonly JsonSerializerSettings _serializerSettings = new()
