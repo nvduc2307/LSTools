@@ -61,6 +61,13 @@ namespace LSTool.Tools.Generals.SettingRebarStandard.actions
         }
         public SettingRebarStandardModelUI GetSetting()
         {
+            return GetSetting(_document, _LCAction);
+        }
+
+        public static SettingRebarStandardModelUI GetSetting(
+            Document document,
+            Action<SettingRebarStandardModelUI>? lcAction = null)
+        {
             var result = new SettingRebarStandardModelUI()
             {
                 L1 = 40,
@@ -71,11 +78,15 @@ namespace LSTool.Tools.Generals.SettingRebarStandard.actions
                 EC = 100,
                 EB = 100,
                 CoverC = 30,
-                LCAction = _LCAction
+                LCAction = lcAction
             };
             try
             {
-                var content = _settingRebarSchema.Read(_document.ProjectInformation);
+                var settingRebarSchema = new SettingRebarStandardSchema(
+                    SettingRebarStandardSchema.GUID,
+                    SettingRebarStandardSchema.NAME);
+                var content = settingRebarSchema.Read(
+                    document.ProjectInformation);
                 if (string.IsNullOrEmpty(content)) return result;
                 var obj = JsonConvert.DeserializeObject<SettingRebarStandardModel>(content);
                 if (obj == null) return result;

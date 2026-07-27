@@ -16,14 +16,17 @@
     <PropertyGroup Condition="$(Configuration.Contains('R24'))">
         <RevitVersion>2024</RevitVersion>
         <TargetFramework>net48</TargetFramework>
+        <DefineConstants>$(DefineConstants);R24</DefineConstants>
     </PropertyGroup>
     <PropertyGroup Condition="$(Configuration.Contains('R25'))">
         <RevitVersion>2025</RevitVersion>
         <TargetFramework>net8.0-windows</TargetFramework>
+        <DefineConstants>$(DefineConstants);R25</DefineConstants>
     </PropertyGroup>
     <PropertyGroup Condition="$(Configuration.Contains('R26'))">
         <RevitVersion>2026</RevitVersion>
         <TargetFramework>net8.0-windows</TargetFramework>
+        <DefineConstants>$(DefineConstants);R26</DefineConstants>
     </PropertyGroup>
 
     <!-- Launch configuration -->
@@ -71,6 +74,7 @@
         <PackageReference Include="Nice3point.Revit.Extensions" Version="$(RevitVersion).*" />
         <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="$(RevitVersion).*" />
         <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="$(RevitVersion).*" />
+        <PackageReference Include="HcBimUtils" Version="$(RevitVersion).*" />
 
         <!-- MVVM -->
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
@@ -91,11 +95,28 @@
         <Resource Include="Resources\Icons\RibbonIcon16.png" />
         <Resource Include="Resources\Icons\RibbonIcon32.png" />
         <Resource Include="Tools\Beams\BeamRebar\imgs\Setting_Develop.png" />
+        <Resource Include="Tools\Beams\InstallRebarBeamV2\imgs\*.png" />
         <Resource Include="Tools\Columns\ColumnRebar\imgs\Foundation_Anchol.png" />
         <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Anchol.png" />
         <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Beam_Div.png" />
         <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Col_Div.png" />
         <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Lap.png" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Tools\Beams\InstallRebarBeamV2\imgs\*.png" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="Resources\RebarShape\**\*.rfa">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Resources\ShareParameters\RTOOL_SHARE_PARAMETER_REBAR_SCHEDULE.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Resources\Data\DataRebarLenght.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
     
     <ItemGroup>

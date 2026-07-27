@@ -1,0 +1,1794 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>InstallRebarBeamV2 — Báo cáo tổng hợp audit, tối ưu và dầm khác tiết diện</title>
+  <style>
+    :root {
+      --ink: #17262f;
+      --muted: #60737e;
+      --line: #d9e4e3;
+      --paper: #ffffff;
+      --canvas: #f3f7f6;
+      --navy: #132a35;
+      --teal: #00a884;
+      --teal-dark: #087760;
+      --teal-soft: #e6f6f1;
+      --amber: #d88a13;
+      --amber-soft: #fff5df;
+      --red: #d74848;
+      --red-soft: #fff0ef;
+      --blue: #3278c8;
+      --blue-soft: #edf5ff;
+      --shadow: 0 16px 45px rgba(26, 53, 62, .10);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: "Segoe UI", Inter, Arial, sans-serif;
+      line-height: 1.58;
+    }
+    a { color: var(--teal-dark); }
+    code, pre { font-family: Consolas, "SFMono-Regular", monospace; }
+    code {
+      padding: 2px 6px;
+      border: 1px solid #dce7e5;
+      border-radius: 6px;
+      background: #f5f9f8;
+      color: #19483e;
+      font-size: .92em;
+    }
+    pre {
+      margin: 14px 0 0;
+      padding: 18px;
+      overflow: auto;
+      border: 1px solid #d7e4e2;
+      border-radius: 12px;
+      background: #11252e;
+      color: #e8f5f1;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background:
+        radial-gradient(circle at 86% 18%, rgba(0, 196, 151, .25), transparent 27%),
+        linear-gradient(125deg, #102a35 0%, #173c47 58%, #0f6658 100%);
+      border-bottom: 4px solid var(--teal);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      right: -120px;
+      bottom: -300px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 50%;
+      box-shadow: 0 0 0 55px rgba(255,255,255,.025), 0 0 0 110px rgba(255,255,255,.02);
+    }
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      width: min(1180px, calc(100% - 40px));
+      margin: auto;
+      padding: 58px 0 54px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 14px;
+      padding: 6px 10px;
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      color: #bfeee2;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #24dab0;
+      content: "";
+    }
+    h1 {
+      max-width: 900px;
+      margin: 0;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 1.08;
+      letter-spacing: -.035em;
+    }
+    .hero p {
+      max-width: 840px;
+      margin: 20px 0 0;
+      color: #d5e8e8;
+      font-size: 18px;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+    .meta span {
+      padding: 8px 12px;
+      border: 1px solid rgba(255,255,255,.17);
+      border-radius: 9px;
+      background: rgba(2, 22, 28, .22);
+      color: #d7eeee;
+      font-size: 13px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      gap: 26px;
+      width: min(1240px, calc(100% - 36px));
+      margin: 30px auto 72px;
+      align-items: start;
+    }
+    .toc {
+      position: sticky;
+      top: 18px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(255,255,255,.92);
+      box-shadow: 0 8px 24px rgba(28, 55, 64, .07);
+      backdrop-filter: blur(10px);
+    }
+    .toc strong {
+      display: block;
+      margin-bottom: 10px;
+      color: #789098;
+      font-size: 11px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .toc a {
+      display: block;
+      margin: 3px 0;
+      padding: 8px 10px;
+      border-left: 3px solid transparent;
+      border-radius: 0 8px 8px 0;
+      color: #3a525c;
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .toc a:hover {
+      border-left-color: var(--teal);
+      background: var(--teal-soft);
+      color: #075c4b;
+    }
+    .toc-group {
+      display: block;
+      margin: 15px 10px 5px;
+      color: var(--teal-dark);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    main { min-width: 0; }
+    section {
+      scroll-margin-top: 24px;
+      margin-bottom: 24px;
+      padding: 30px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+    section > :first-child { margin-top: 0; }
+    section > :last-child { margin-bottom: 0; }
+    .section-kicker {
+      margin-bottom: 6px;
+      color: var(--teal-dark);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    h2 {
+      margin: 0 0 10px;
+      color: var(--navy);
+      font-size: 29px;
+      line-height: 1.2;
+      letter-spacing: -.02em;
+    }
+    h3 {
+      margin: 24px 0 8px;
+      color: #1d3d47;
+      font-size: 19px;
+    }
+    p { margin: 10px 0; }
+    .lead { color: #4e646d; font-size: 16px; }
+    .muted { color: var(--muted); }
+
+    .grid-2, .grid-3, .grid-4 {
+      display: grid;
+      gap: 16px;
+      margin-top: 18px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card {
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #fbfdfc;
+    }
+    .card h3, .card h4 { margin: 0 0 7px; }
+    .card p { margin: 5px 0; color: #536972; font-size: 14px; }
+    .metric {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--teal-dark);
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .status.ok { color: #06604d; background: var(--teal-soft); }
+    .status.warn { color: #8c5700; background: var(--amber-soft); }
+    .status.bad { color: #9c2e2e; background: var(--red-soft); }
+    .status.info { color: #275b95; background: var(--blue-soft); }
+
+    .callout {
+      margin: 18px 0;
+      padding: 16px 18px;
+      border-left: 4px solid var(--teal);
+      border-radius: 10px;
+      background: var(--teal-soft);
+    }
+    .callout.warning { border-left-color: var(--amber); background: var(--amber-soft); }
+    .callout.danger { border-left-color: var(--red); background: var(--red-soft); }
+    .callout strong { color: var(--navy); }
+
+    .diagram {
+      margin-top: 18px;
+      padding: 14px;
+      overflow-x: auto;
+      border: 1px solid #d4e2e0;
+      border-radius: 15px;
+      background: linear-gradient(180deg, #fbfefd 0%, #f3f8f7 100%);
+    }
+    .diagram svg {
+      display: block;
+      width: 100%;
+      min-width: 700px;
+      height: auto;
+    }
+    .caption {
+      margin: 10px 3px 0;
+      color: #60737e;
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 16px;
+      border-collapse: separate;
+      border-spacing: 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px 13px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    th:last-child, td:last-child { border-right: 0; }
+    tr:last-child td { border-bottom: 0; }
+    th {
+      color: #e9f4f2;
+      background: #1b3a44;
+      font-size: 12px;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+    tbody tr:nth-child(even) td { background: #f8fbfa; }
+
+    ul, ol { padding-left: 22px; }
+    li { margin: 6px 0; }
+    .clean-list { padding: 0; list-style: none; }
+    .clean-list li {
+      position: relative;
+      padding-left: 25px;
+    }
+    .clean-list li::before {
+      position: absolute;
+      left: 0;
+      top: 3px;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: var(--teal-soft);
+      color: var(--teal-dark);
+      content: "✓";
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 17px;
+      text-align: center;
+    }
+    .phase {
+      display: grid;
+      grid-template-columns: 70px 1fr;
+      gap: 18px;
+      margin-top: 18px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fcfefd;
+    }
+    .phase-no {
+      display: grid;
+      place-items: center;
+      width: 54px;
+      height: 54px;
+      border-radius: 15px;
+      background: var(--navy);
+      color: white;
+      font-size: 23px;
+      font-weight: 800;
+      box-shadow: inset 0 -4px 0 rgba(0,0,0,.12);
+    }
+    .phase h3 { margin: 1px 0 4px; }
+    .phase p { margin: 4px 0; }
+    .deliverables {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .deliverables span {
+      padding: 5px 8px;
+      border: 1px solid #d5e6e1;
+      border-radius: 7px;
+      background: var(--teal-soft);
+      color: #1c6556;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .decision {
+      border: 2px solid #7fd8c2;
+      background: linear-gradient(135deg, #effbf7, #ffffff 62%);
+    }
+    .decision h2::after {
+      display: inline-block;
+      margin-left: 10px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--teal);
+      color: white;
+      content: "KHUYẾN NGHỊ";
+      font-size: 10px;
+      letter-spacing: .06em;
+      vertical-align: middle;
+    }
+
+    footer {
+      padding: 26px 20px 44px;
+      color: #6f838b;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .toc { position: static; }
+      .toc a { display: inline-block; margin-right: 5px; }
+      .grid-3, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 680px) {
+      .hero-inner { width: min(100% - 28px, 1180px); padding: 40px 0; }
+      .layout { width: min(100% - 20px, 1240px); }
+      section { padding: 21px; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .phase { grid-template-columns: 1fr; }
+      h2 { font-size: 24px; }
+    }
+    @media print {
+      body { background: white; }
+      .hero { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .layout { display: block; width: 100%; margin: 0; }
+      .toc { display: none; }
+      section { break-inside: avoid; box-shadow: none; }
+      .diagram { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="eyebrow">InstallRebarBeamV2 · Unified Engineering Report</div>
+      <h1>Audit, tối ưu và lộ trình dầm khác tiết diện</h1>
+      <p>
+        Một báo cáo tổng hợp duy nhất cho trạng thái port từ RimT, các thay đổi tối ưu/refactor đã thực hiện
+        và kế hoạch tiếp theo để bố trí thép an toàn qua các span khác <strong>b × h</strong>.
+      </p>
+      <div class="meta">
+        <span>Repository: E:\OvertimeWork\LSTools</span>
+        <span>Branch: codex/port-install-rebar-beam-v2</span>
+        <span>Nguồn audit/refactor: 18/07/2026</span>
+        <span>Cập nhật master report: 23/07/2026</span>
+        <span>Trạng thái: code hiện có + roadmap chưa triển khai</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-label="Mục lục">
+      <strong>Master report</strong>
+      <span class="toc-group">Phần I · Hiện trạng</span>
+      <a href="#delivery-status">1. Port audit &amp; release status</a>
+      <a href="#optimization">2. Kiến trúc &amp; tối ưu</a>
+      <span class="toc-group">Phần II · Different sections</span>
+      <a href="#summary">3. Tóm tắt dễ hiểu</a>
+      <a href="#problem">4. Vấn đề hiện tại</a>
+      <a href="#scope">5. Phạm vi hỗ trợ</a>
+      <a href="#decision">6. Neo độc lập &amp; chuyển tiếp Z</a>
+      <a href="#architecture">7. Kiến trúc mục tiêu</a>
+      <a href="#roadmap">8. Lộ trình triển khai</a>
+      <a href="#files">9. File và class</a>
+      <a href="#tests">10. Kịch bản kiểm thử</a>
+      <a href="#risks">11. Rủi ro</a>
+      <a href="#done">12. Definition of Done</a>
+    </nav>
+
+    <main>
+      <section id="delivery-status">
+        <div class="section-kicker">01 · Port audit and delivery status</div>
+        <h2>Phần đã port và mức sẵn sàng phát hành</h2>
+        <p class="lead">
+          Chương này hợp nhất báo cáo audit/port parity ngày 18/07/2026. Các blocker tĩnh quan trọng đã
+          được sửa, gồm lỗi chỉ xử lý một đoạn dầm, contract shared parameter, cache theo document và
+          transaction atomic. Tuy nhiên, compile thành công chưa thay thế được kiểm thử trên mô hình Revit thật.
+        </p>
+
+        <div class="callout warning">
+          <strong>Kết luận release:</strong> phần port đã vượt qua audit tĩnh tại snapshot tương ứng nhưng
+          <strong>chưa được xem là production-ready</strong> cho đến khi hoàn tất ma trận runtime:
+          assembly nhiều đoạn, opening, project trắng, multi-document và rollback có chủ đích.
+        </div>
+
+        <h3>Cách đọc trạng thái trong master report</h3>
+        <div class="grid-4">
+          <div class="card"><span class="status ok">Implemented</span><p>Có thay đổi tương ứng trong code.</p></div>
+          <div class="card"><span class="status info">Build snapshot</span><p>Từng compile tại commit được nêu.</p></div>
+          <div class="card"><span class="status warn">Runtime pending</span><p>Chưa đủ bằng chứng trong Revit.</p></div>
+          <div class="card"><span class="status bad">Planned</span><p>Chưa triển khai code.</p></div>
+        </div>
+
+        <h3>Dòng thời gian code liên quan</h3>
+        <table>
+          <thead><tr><th>Commit</th><th>Mốc</th><th>Vai trò trong báo cáo</th></tr></thead>
+          <tbody>
+            <tr><td><code>f4a8841</code></td><td>Port command ban đầu</td><td>Baseline trước vòng audit parity</td></tr>
+            <tr><td><code>7885971</code></td><td>Hoàn thiện port parity</td><td>Snapshot chính của báo cáo audit</td></tr>
+            <tr><td><code>4113b4c</code></td><td>Refactor</td><td>Snapshot chính của báo cáo optimization</td></tr>
+            <tr><td><code>8440697</code></td><td>Hardening multi-span</td><td>Bổ sung độ an toàn workflow sau refactor</td></tr>
+            <tr><td><code>424f75b</code></td><td>UI workspace</td><td>Bố cục và luồng cấu hình mới</td></tr>
+            <tr><td><code>a2ce062</code></td><td>Fukashi = 0</td><td>Trạng thái nghiệp vụ hiện tại theo yêu cầu khách hàng</td></tr>
+            <tr><td><code>3f090d7</code></td><td>Khôi phục preset shape đai chính</td><td>HEAD tại thời điểm hợp nhất báo cáo</td></tr>
+          </tbody>
+        </table>
+
+        <div class="grid-4">
+          <div class="card">
+            <span class="metric">P0</span>
+            <strong>Assembly scope đã sửa</strong>
+            <p>Selection filter không còn loại <code>AssemblyInstance</code> hợp lệ.</p>
+          </div>
+          <div class="card">
+            <span class="metric">10</span>
+            <strong>Finding đã phân loại</strong>
+            <p>Chín finding được xử lý; middleware P3 được giữ ngoài scope vì không có call site.</p>
+          </div>
+          <div class="card">
+            <span class="metric">3</span>
+            <strong>Compile target tại snapshot</strong>
+            <p>Debug R24, R25 và R26 từng build pass với deploy bị tắt.</p>
+          </div>
+          <div class="card">
+            <span class="metric">Mở</span>
+            <strong>Runtime release gate</strong>
+            <p>Chưa có đủ bằng chứng model-level cho HEAD hiện tại.</p>
+          </div>
+        </div>
+
+        <h3>Tám nhóm thay đổi đã triển khai</h3>
+        <table>
+          <thead><tr><th>Nhóm</th><th>Thay đổi chính</th><th>Ý nghĩa</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>1 · Assembly scope</td>
+              <td>Chấp nhận assembly có member và toàn bộ member là <code>OST_StructuralFraming</code>; vẫn hỗ trợ beam đơn; guard input trước khi tạo thép.</td>
+              <td>Khắc phục nguyên nhân trực tiếp khiến bản port chỉ chạy một đoạn dầm.</td>
+            </tr>
+            <tr>
+              <td>2 · Shared parameters</td>
+              <td>Port file parameter, bind idempotent và kiểm tra GUID, binding, storage, read-only cho <code>REBAR_TYPE</code>, shape và các segment.</td>
+              <td>Không còn silently no-op khi metadata bắt buộc sai contract.</td>
+            </tr>
+            <tr>
+              <td>3 · ElementId</td>
+              <td>Đường ID của feature chuyển từ <code>int</code> sang <code>long</code>/<code>ElementId.Value</code>; bổ sung symbol R24/R25.</td>
+              <td>Phù hợp Revit 2024+ và tránh overflow ID lớn.</td>
+            </tr>
+            <tr>
+              <td>4 · Shape cache</td>
+              <td>Bảy cache <code>RebarShape</code> xác nhận shape thuộc đúng active document trước khi dùng lại.</td>
+              <td>Giảm rủi ro chạy A → B → A trong cùng phiên Revit.</td>
+            </tr>
+            <tr>
+              <td>5 · Atomic transaction</td>
+              <td>Lỗi từ các nhóm rebar, schema, assembly, opening và rehost được đẩy lên transaction ngoài.</td>
+              <td>Fail-and-rollback toàn bộ thay vì để lại model tạo dở.</td>
+            </tr>
+            <tr>
+              <td>6 · Opening &amp; corrected length</td>
+              <td>Port 33 rule từ <code>DataRebarLenght.json</code>, phục hồi phân tích segment/bend/hook và cập nhật metadata khi copy stirrup.</td>
+              <td>Khôi phục parity với nguồn cho chiều dài hiệu chỉnh và xử lý lỗ mở.</td>
+            </tr>
+            <tr>
+              <td>7 · Diameter setting</td>
+              <td>Schema hỏng/thiếu bị fail rõ ràng; project chưa có schema dùng fallback từ <code>RebarBarType</code> với điều kiện tối thiểu.</td>
+              <td>Hỗ trợ project trắng nhưng vẫn cần xác nhận rule phân nhóm bằng dữ liệu thực.</td>
+            </tr>
+            <tr>
+              <td>8 · Top3</td>
+              <td>Sửa helper bị thêm <code>Top2</code> hai lần và bỏ <code>Top3</code> tại Start/Middle/End.</td>
+              <td>Ngăn tính sai lượng thép lớn nhất khi Top3 khác Top2.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Finding register hợp nhất</h3>
+        <table>
+          <thead><tr><th>ID</th><th>Mức</th><th>Trạng thái code</th><th>Bằng chứng còn thiếu</th></tr></thead>
+          <tbody>
+            <tr><td>IRBV2-001 · Assembly filter</td><td><span class="status bad">P0</span></td><td>Đã sửa</td><td>Smoke test assembly 2/3/nhiều đoạn</td></tr>
+            <tr><td>IRBV2-002 · Shared parameter/resource</td><td><span class="status warn">P1</span></td><td>Đã bổ sung và strict write</td><td>Project trắng + parameter conflict</td></tr>
+            <tr><td>IRBV2-003 · ElementId bị ép int</td><td><span class="status warn">P1</span></td><td>Đã chuyển sang long/.Value</td><td>Model có ID vượt 2,147,483,647</td></tr>
+            <tr><td>IRBV2-004 · Cache cross-document</td><td><span class="status warn">P1</span></td><td>Đã kiểm tra document</td><td>Chạy A → B → A</td></tr>
+            <tr><td>IRBV2-005 · Commit thiếu khi lỗi con</td><td><span class="status warn">P1/P2</span></td><td>Đã siết mutation path</td><td>Forced-failure rollback</td></tr>
+            <tr><td>IRBV2-006 · Symbol R24/R25</td><td><span class="status info">P2</span></td><td>Đã bổ sung</td><td>Load/chạy từng bản Revit</td></tr>
+            <tr><td>IRBV2-007 · Diameter fallback</td><td><span class="status info">P2</span></td><td>Đã validate nghiêm</td><td>Bộ type đường kính dự án thật</td></tr>
+            <tr><td>IRBV2-008 · Opening length</td><td><span class="status info">P2</span></td><td>Đã port dataset/classifier</td><td>Một/nhiều lỗ và sát vùng đổi đai</td></tr>
+            <tr><td>IRBV2-009 · Middleware</td><td><span class="status info">P3</span></td><td>Không port; dead code</td><td>Chỉ xem lại nếu xuất hiện call site</td></tr>
+            <tr><td>IRBV2-010 · Top3 bị bỏ</td><td><span class="status warn">P1</span></td><td>Đã sửa ba section</td><td>Case Top3 có quantity lớn nhất</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Build và resource evidence tại snapshot 18/07/2026</h3>
+        <table>
+          <thead><tr><th>Kiểm tra</th><th>Kết quả đã ghi nhận</th><th>Giới hạn diễn giải</th></tr></thead>
+          <tbody>
+            <tr><td>Shared parameter</td><td>Output R26 có 37 definition</td><td>Snapshot của đợt port parity</td></tr>
+            <tr><td>Corrected-length dataset</td><td>33 rule; 0 dòng khác biệt với RimT khi đọc UTF-8</td><td>Chứng minh parity dữ liệu, không chứng minh runtime</td></tr>
+            <tr><td>Debug R24</td><td>Pass · 202 warnings · 0 errors</td><td>Build với <code>DeployRevitAddin=false</code></td></tr>
+            <tr><td>Debug R25</td><td>Pass · 250 warnings · 0 errors</td><td>Build với <code>DeployRevitAddin=false</code></td></tr>
+            <tr><td>Debug R26</td><td>Pass · 249 warnings · 0 errors</td><td>Build với <code>DeployRevitAddin=false</code></td></tr>
+            <tr><td>Feature-filtered R26</td><td>0 warning · 0 error trong đường feature</td><td>Warning toàn project chủ yếu nằm ngoài feature</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout">
+          <strong>Đọc đúng mốc thời gian:</strong> hai báo cáo nguồn mô tả các đợt thay đổi quanh
+          <code>7885971</code>, <code>4113b4c</code> và phần hardening tiếp theo <code>8440697</code>.
+          HEAD khi hợp nhất báo cáo là <code>3f090d7</code>. Vì vậy các con số build phía trên là
+          <strong>bằng chứng lịch sử</strong>, không phải kết quả rebuild HEAD trong lượt lập báo cáo này.
+          Dòng “chưa commit/chưa push” của báo cáo audit cũ đã được loại bỏ vì không còn đúng.
+        </div>
+      </section>
+
+      <section id="optimization">
+        <div class="section-kicker">02 · Optimization and refactoring</div>
+        <h2>Kiến trúc và tối ưu đã triển khai</h2>
+        <p class="lead">
+          Đợt refactor giữ nguyên contract tạo thép và transaction atomic, đồng thời giảm số lần truy cập
+          Revit API, tránh redraw preview lặp và tách các file chứa quá nhiều trách nhiệm. Nội dung dưới đây
+          là trạng thái code đã triển khai, không phải thiết kế tương lai.
+        </p>
+
+        <pre><span style="color:#7fd8c2">InstallRebarBeamV2/</span>
+├─ Application/
+│  ├─ Commands/                  transaction + post-processing pipeline
+│  ├─ RebarExecutionContext      document, axes, host, bar-type cache
+│  ├─ RebarExecutionMetrics      timing theo stage
+│  └─ RebarInstallationResult    typed output cho các nhóm rebar
+├─ Domain/Plans/
+│  └─ MainBarCreationPlan
+├─ Geometry/
+│  ├─ MainBars/
+│  └─ Auxiliary/
+├─ Revit/Writers/
+│  ├─ MainBarRebarWriter
+│  └─ Stirrups/
+├─ UI/Preview/
+│  ├─ PreviewRefreshCoordinator
+│  ├─ InstallRebarBeamPreviewViewModel
+│  └─ Canvas/
+└─ Support/Legacy/               compatibility helpers từ RimT</pre>
+
+        <div class="grid-4">
+          <div class="card">
+            <span class="metric">1×</span>
+            <strong>Execution context</strong>
+            <p>Một context và một temporary host dùng lại trong mỗi lần chạy.</p>
+          </div>
+          <div class="card">
+            <span class="metric">O(1)</span>
+            <strong>Type/ID lookup</strong>
+            <p>Bar types và beam/sub-beam dùng dictionary thay cho tìm tuyến tính lặp lại.</p>
+          </div>
+          <div class="card">
+            <span class="metric">100 ms</span>
+            <strong>Preview debounce</strong>
+            <p>Rapid quantity edits được coalesced về lần redraw cuối.</p>
+          </div>
+          <div class="card">
+            <span class="metric">Atomic</span>
+            <strong>Cleanup &amp; rollback</strong>
+            <p>Xác nhận host và không cascade-delete rebar khi dọn temporary host.</p>
+          </div>
+        </div>
+
+        <h3>Các tối ưu ở mức code và độ tin cậy</h3>
+        <p class="muted">
+          Đây là các thay đổi giúp giảm công việc lặp theo cấu trúc code. Chưa có benchmark trước/sau,
+          vì vậy báo cáo không quy đổi chúng thành phần trăm tăng tốc.
+        </p>
+        <table>
+          <thead><tr><th>Khu vực</th><th>Đã thay đổi</th><th>Tác động mong đợi</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Creation pipeline</td>
+              <td><code>Planner → MainBarCreationPlan → Writer</code>; materialize danh sách rebar một lần; resolve target host một lần.</td>
+              <td>Giảm tính lại hình học và lookup sau khi tạo.</td>
+            </tr>
+            <tr>
+              <td>Span-local ownership</td>
+              <td>Side bar, dantory và stirrup giữ <code>SourceBeamId</code> rồi rehost về physical span.</td>
+              <td>Host/metadata đúng hơn cho output cục bộ.</td>
+            </tr>
+            <tr>
+              <td>Geometry &amp; openings</td>
+              <td>Cache control points/box; prefilter stirrup; group source một lần; cache corrected length/schema; deduplicate delete; validate <code>QuantitySide × 2</code> và số cao độ side bar.</td>
+              <td>Giảm quét model và tránh xử lý một element nhiều lần.</td>
+            </tr>
+            <tr>
+              <td>Parameters</td>
+              <td>Scan binding một lần; ghi metadata trực tiếp lên <code>Rebar</code> đã tạo; gom helper type/beam info.</td>
+              <td>Ít truy cập document và bớt code lặp.</td>
+            </tr>
+            <tr>
+              <td>Preview</td>
+              <td>Main/side preview invalidation độc lập; debounce thay đổi nhanh; initial render vẫn synchronous.</td>
+              <td>UI phản hồi tốt hơn mà không mở dialog với preview trễ.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Tách trách nhiệm khỏi các file lớn</h3>
+        <table>
+          <thead><tr><th>Thành phần</th><th>Snapshot trước</th><th>Sau refactor được ghi nhận</th></tr></thead>
+          <tbody>
+            <tr><td><code>InstallRebarBeamInModelService.cs</code></td><td>Khoảng 1.646 dòng</td><td>Giữ orchestration/auxiliary; main và stirrup writer tách riêng</td></tr>
+            <tr><td><code>DrawRebarBeamInCanvasService.cs</code></td><td>2.831 dòng</td><td>248 dòng orchestration + 4 partial renderer theo trách nhiệm</td></tr>
+            <tr><td><code>InstallRebarBeamV2ViewModel.cs</code></td><td>828 dòng</td><td>256 dòng + partial cho command và preview wiring</td></tr>
+            <tr><td><code>SubInstallRebarBeamInModelService.cs</code></td><td>Khoảng 1.311 dòng</td><td>594 dòng; main/auxiliary geometry tách file</td></tr>
+          </tbody>
+        </table>
+        <p class="muted">
+          Partial class được dùng như compatibility seam để giữ XAML binding, generated relay command,
+          dependency-injection registration và public service contract trong thời gian tách file.
+        </p>
+
+        <h3>Instrumentation hiện có</h3>
+        <p>Mỗi lần chạy ghi một timing summary sau post-processing, gồm các stage:</p>
+        <div class="deliverables">
+          <span>main.top.1.plan / write</span>
+          <span>side</span>
+          <span>dantory</span>
+          <span>stirrup.main + secondary</span>
+          <span>metadata.type / schema</span>
+          <span>assembly.create / metadata</span>
+          <span>rehost</span>
+          <span>opening</span>
+          <span>segments</span>
+        </div>
+
+        <div class="callout warning">
+          <strong>Điểm nối sang phần dầm khác tiết diện:</strong> refactor hiện tại vẫn mô tả main bar liên tục
+          theo primary host của assembly. Roadmap phía sau phải nâng <code>MainBarCreationPlan</code> thành nhiều
+          <code>MainBarRunPlan</code>, mỗi run mang role, bar type và target host riêng. Đây là bước mở rộng có chủ đích,
+          không được coi là hành vi đã có.
+        </div>
+
+        <h3>Chủ đích chưa làm trong đợt tối ưu</h3>
+        <ul>
+          <li>Không thêm multithreading mang tính suy đoán; Revit document/element API vẫn chạy trên Revit API thread.</li>
+          <li>Immutable plan đầy đủ cho mọi stirrup subtype được hoãn tới khi có runtime fixture đáng tin cậy.</li>
+          <li>Thuật toán canvas mới chỉ được tổ chức lại và debounce, chưa viết lại toán học; cần snapshot visual trước.</li>
+        </ul>
+      </section>
+
+      <section id="summary">
+        <div class="section-kicker">03 · Different sections executive summary</div>
+        <h2>Tóm tắt theo cách dễ hiểu nhất</h2>
+        <div class="callout danger">
+          <strong>Trạng thái feature:</strong> base port, hardening và refactor ở hai chương trên đã có trong code;
+          riêng thuật toán dầm khác tiết diện từ chương này trở đi là <strong>kế hoạch chưa triển khai</strong>.
+        </div>
+        <p class="lead">
+          Tool đã nhận ra mỗi span có kích thước riêng, nhưng khi tính vị trí thép chủ lại dùng một
+          “thước đo chung” cho toàn bộ cụm dầm. Vì vậy một thanh đúng cover ở span rộng có thể sai
+          cover hoặc ra ngoài bê tông khi đi sang span hẹp/thấp hơn.
+        </p>
+
+        <div class="grid-4">
+          <div class="card">
+            <span class="metric">Có</span>
+            <strong>Kích thước từng span</strong>
+            <p><code>BeamWidthMm</code> và <code>BeamHeightMm</code> đã tồn tại.</p>
+          </div>
+          <div class="card">
+            <span class="metric">Sai</span>
+            <strong>Chia vị trí thép chủ</strong>
+            <p>Đang dựa trên bề rộng chung của assembly.</p>
+          </div>
+          <div class="card">
+            <span class="metric">Thiếu</span>
+            <strong>Quy tắc tại nút giật cấp</strong>
+            <p>Phải phân biệt neo độc lập với thanh Bent/Z liên tục đổi cao độ.</p>
+          </div>
+          <div class="card">
+            <span class="metric">Cần</span>
+            <strong>Planner theo span + joint</strong>
+            <p>Mỗi run có policy, polycurve, lane và host rõ ràng.</p>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>Kết luận:</strong> đây là thay đổi ở lõi hình học và cách tạo Rebar, không phải chỉ
+          thêm một combobox hoặc chỉnh UI. Cần làm theo từng lớp để không phá trường hợp dầm cùng tiết diện đang chạy.
+        </div>
+      </section>
+
+      <section id="problem">
+        <div class="section-kicker">04 · Different sections current behavior</div>
+        <h2>Thuật toán hiện tại sai ở đâu?</h2>
+        <p class="lead">
+          Ví dụ hai span đồng trục: Span 1 là <strong>400 × 800 mm</strong>, Span 2 là
+          <strong>600 × 600 mm</strong>. Ba thanh được chia đều theo bề rộng toàn cụm thay vì theo
+          miền cover của từng span.
+        </p>
+
+        <div class="diagram">
+          <svg viewBox="0 0 1040 500" role="img" aria-labelledby="current-title current-desc">
+            <title id="current-title">Minh họa lỗi dùng một bề rộng chung cho hai tiết diện khác nhau</title>
+            <desc id="current-desc">Hai mặt cắt 400x800 và 600x600 với vị trí thép lấy theo một lưới chung gây sai cover.</desc>
+            <defs>
+              <marker id="arrow-red" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#d74848"/>
+              </marker>
+              <marker id="arrow-green" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#087760"/>
+              </marker>
+            </defs>
+
+            <text x="40" y="36" font-size="18" font-weight="700" fill="#18323c">CÁCH HIỆN TẠI: dùng một lưới ngang chung</text>
+            <text x="40" y="61" font-size="13" fill="#60737e">Thanh có cùng offset tuyệt đối khi đi qua các span khác bề rộng / chiều cao.</text>
+
+            <g transform="translate(95 105)">
+              <text x="100" y="-18" text-anchor="middle" font-size="15" font-weight="700" fill="#1d3d47">Span 1 · 400 × 800</text>
+              <rect x="0" y="0" width="200" height="300" rx="3" fill="#dfe5e4" stroke="#213b45" stroke-width="3"/>
+              <rect x="20" y="20" width="160" height="260" fill="none" stroke="#00a884" stroke-width="2" stroke-dasharray="7 5"/>
+              <circle cx="20" cy="42" r="8" fill="#d74848"/>
+              <circle cx="100" cy="42" r="8" fill="#d74848"/>
+              <circle cx="180" cy="42" r="8" fill="#d74848"/>
+              <circle cx="20" cy="258" r="8" fill="#d74848"/>
+              <circle cx="100" cy="258" r="8" fill="#d74848"/>
+              <circle cx="180" cy="258" r="8" fill="#d74848"/>
+              <text x="100" y="328" text-anchor="middle" font-size="12" fill="#60737e">Hai thanh biên sát/đè lên miền cover</text>
+            </g>
+
+            <g transform="translate(430 143)">
+              <text x="150" y="-18" text-anchor="middle" font-size="15" font-weight="700" fill="#1d3d47">Span 2 · 600 × 600</text>
+              <rect x="0" y="0" width="300" height="225" rx="3" fill="#dfe5e4" stroke="#213b45" stroke-width="3"/>
+              <rect x="20" y="20" width="260" height="185" fill="none" stroke="#00a884" stroke-width="2" stroke-dasharray="7 5"/>
+              <circle cx="20" cy="42" r="8" fill="#d74848"/>
+              <circle cx="100" cy="42" r="8" fill="#d74848"/>
+              <circle cx="180" cy="42" r="8" fill="#d74848"/>
+              <circle cx="20" cy="183" r="8" fill="#d74848"/>
+              <circle cx="100" cy="183" r="8" fill="#d74848"/>
+              <circle cx="180" cy="183" r="8" fill="#d74848"/>
+              <path d="M188 42 C230 28, 270 22, 318 22" fill="none" stroke="#d74848" stroke-width="2" marker-end="url(#arrow-red)"/>
+              <text x="323" y="18" font-size="12" fill="#b33636">Không phân bố hết bề rộng</text>
+              <text x="150" y="253" text-anchor="middle" font-size="12" fill="#60737e">Lưới của span trước bị mang sang span sau</text>
+            </g>
+
+            <g transform="translate(820 128)">
+              <rect x="0" y="0" width="175" height="220" rx="13" fill="#fff0ef" stroke="#e2a4a0"/>
+              <text x="18" y="29" font-size="13" font-weight="700" fill="#9c2e2e">HỆ QUẢ</text>
+              <text x="18" y="58" font-size="12" fill="#5d4e4e">• Sai cover</text>
+              <text x="18" y="84" font-size="12" fill="#5d4e4e">• Khoảng cách không đều</text>
+              <text x="18" y="110" font-size="12" fill="#5d4e4e">• Thanh có thể ra ngoài dầm</text>
+              <text x="18" y="136" font-size="12" fill="#5d4e4e">• Host không đúng span</text>
+              <text x="18" y="162" font-size="12" fill="#5d4e4e">• Đai phụ chọn sai vị trí</text>
+              <text x="18" y="188" font-size="12" fill="#5d4e4e">• Khó truy vết khi lỗi</text>
+            </g>
+
+            <line x1="318" y1="255" x2="408" y2="255" stroke="#d74848" stroke-width="3" stroke-dasharray="6 5" marker-end="url(#arrow-red)"/>
+            <text x="362" y="239" text-anchor="middle" font-size="11" fill="#9c2e2e">offset cũ</text>
+          </svg>
+          <p class="caption">
+            Đường xanh nét đứt là miền hợp lệ sau khi trừ cover. Điểm đỏ là vị trí thép theo thuật toán hiện tại.
+          </p>
+        </div>
+
+        <h3>Bốn giả định cần loại bỏ</h3>
+        <table>
+          <thead>
+            <tr><th>Giả định hiện tại</th><th>Biểu hiện trong code</th><th>Rủi ro</th><th>Cần thay bằng</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Mọi span có cùng bề rộng hữu dụng</td>
+              <td><code>lengArr</code> và <code>spacing</code> lấy từ box toàn assembly</td>
+              <td>Sai vị trí ngang khi b thay đổi</td>
+              <td>Bar lane tính riêng từ envelope từng span</td>
+            </tr>
+            <tr>
+              <td>Thanh chỉ cần điểm đầu và cuối</td>
+              <td><code>GetMainBarBeamReals</code> lấy hai điểm cực trị; <code>GenerateRebarDeverlop</code> tiếp tục ghi đè <code>MainPoints</code></td>
+              <td>Mất cao độ trung gian; thép đáy có thể thành một đường chéo toàn cục</td>
+              <td>Planner giữ ordered polycurve. Chỉ policy Z mới được tạo đoạn xiên và đoạn này phải bị giới hạn trong joint</td>
+            </tr>
+            <tr>
+              <td>Thông số span đầu dùng được cho tất cả</td>
+              <td><code>MainBarCreationPlanner</code> lấy config <code>SectionStart.FirstOrDefault()</code> và một <code>BarType</code> cho toàn plan</td>
+              <td>Sai đường kính, shape hoặc offset</td>
+              <td>Mỗi run tự mang <code>BarTypeName</code> và settings resolve theo <code>BeamId</code></td>
+            </tr>
+            <tr>
+              <td>Một thanh liên span có thể dùng host mặc định</td>
+              <td><code>MainBarRebarWriter</code> tạo trên temporary host nhưng không gọi <code>RegisterTargetHost</code></td>
+              <td>Khi rehost, main bar rơi về dầm vật lý đầu tiên</td>
+              <td>Mỗi run có <code>TargetHostBeamId</code>; writer bắt buộc register host đã được planner quyết định</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Dấu vết chính xác trong code hiện tại</h3>
+        <ol>
+          <li><code>Geometry/MainBars/MainBarCreationPlanner.cs:28–42</code> lấy cấu hình Start đầu tiên và một BarType cho toàn bộ plan.</li>
+          <li><code>Geometry/MainBars/MainBarGeometryService.cs:255–262</code> sắp xếp tất cả điểm rồi chỉ giữ StartPoint/EndPoint toàn cục.</li>
+          <li><code>MainBarGeometryService.cs:449, 557–568</code> ghi đè MainPoints thành đường đầu–cuối cộng terminal hook; vì vậy không thể giữ hai run đáy độc lập tại joint.</li>
+          <li><code>Revit/Writers/MainBarRebarWriter.cs:20–29</code> tạo main bar trên temporary host nhưng không đăng ký target host cho từng run.</li>
+          <li><code>Application/Commands/InstallRebarBeamCommandViewModel.cs:180–185</code> fallback thanh không có mapping về dầm vật lý đầu tiên.</li>
+        </ol>
+        <div class="callout">
+          <strong>Khả thi về API, chưa khả thi trong pipeline hiện tại:</strong>
+          <code>MainBarRebarWriter</code> có thể truyền nhiều curve liên tục vào đường tạo Rebar, nên hình
+          ngang–xiên–ngang có thể được biểu diễn như một Rebar phẳng. Blocker là planner hiện làm mất hai
+          vertex tại cột, thiếu joint geometry/validation và chưa có owner host rõ ràng.
+        </div>
+        <div class="callout warning">
+          <strong>Ảnh hưởng dây chuyền:</strong> <code>VerticalStirrupWriter</code> và
+          <code>HorizontalMainStirrupWriter</code> cũng đang gọi lại <code>GetMainBarBeamReals</code>.
+          Khi thay planner thép chủ phải tách một envelope provider ổn định và chạy regression cho đai phụ.
+        </div>
+      </section>
+
+      <section id="scope">
+        <div class="section-kicker">05 · Different sections scope boundary</div>
+        <h2>Phạm vi nên triển khai trước</h2>
+        <p class="lead">
+          Chia phạm vi giúp lõi hình học ổn định trước khi xử lý các family phức tạp. Giai đoạn đầu tập trung vào tình huống khách hàng gặp nhiều nhất.
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <span class="status ok">Trong phạm vi</span>
+            <h3>Phase 1</h3>
+            <ul class="clean-list">
+              <li>Các span dầm thẳng, đồng trục và có chung cột đỡ tại nút</li>
+              <li>Mỗi span có tiết diện chữ nhật không đổi; không phải dầm tapered/haunch</li>
+              <li><strong>Chi tiết 1:</strong> hai dầm mặt trên bằng nhau, thép đáy neo độc lập tại nút</li>
+              <li><strong>Chi tiết 2:</strong> hai dầm/lane thép lệch cao độ, một thanh liên tục ngang–xiên–ngang qua cột</li>
+              <li>Chi tiết 2 hỗ trợ cả chiều hạ xuống và nâng lên, không phụ thuộc thứ tự người dùng pick</li>
+              <li>Đổi bề rộng chỉ chạy khi lane hai phía ánh xạ tương thích</li>
+              <li>Khác số lượng/đường kính chỉ được hỗ trợ sau khi kỹ sư duyệt rule mapping và cách tách run</li>
+              <li>Hai hoặc nhiều lần đổi tiết diện</li>
+              <li>Neo độc lập hoặc chuyển tiếp Z theo policy và thông số đã được kỹ sư duyệt</li>
+            </ul>
+          </div>
+          <div class="card">
+            <span class="status warn">Để giai đoạn sau</span>
+            <h3>Phase 2+</h3>
+            <ul>
+              <li>Dầm haunch/tapered trong cùng một FamilyInstance</li>
+              <li>Assembly có các span không đồng trục</li>
+              <li>Nút không có cột hoặc tiết diện lệch tâm theo phương ngang</li>
+              <li>Chuyển tiếp Z có nhiều hơn một đoạn xiên hoặc đổi cao độ ngoài vùng cột</li>
+              <li>Tiết diện không chữ nhật hoặc family hình học bất quy tắc</li>
+              <li>Coupler, đầu neo cơ khí hoặc quy tắc địa chấn đặc biệt</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout warning">
+          <strong>Giả định của Phase 1:</strong> hai dầm vật lý thẳng, đồng trục và giao tại một cột mà tool
+          nhận diện được. Mặt trên bằng nhau đi theo <em>Independent Joint Anchorage</em>; cao độ bar lane
+          hai phía khác nhau chỉ đi theo <em>Bent/Z Transition</em> khi vùng cột đủ chỗ cho hai bend.
+          Thiếu policy hoặc không đủ hình học phải trả <code>Unsupported</code>, không tự chọn chi tiết thay thế.
+        </div>
+      </section>
+
+      <section id="decision" class="decision">
+        <div class="section-kicker">06 · Confirmed detail interpretation</div>
+        <h2>Hai chi tiết riêng: neo độc lập và chuyển tiếp Z</h2>
+        <p class="lead">
+          Báo cáo phải phân biệt hai policy kết cấu. Khi mặt trên hai dầm bằng nhau, thép đáy có thể dùng
+          <strong>các run neo độc lập</strong> như chi tiết đã phân tích. Khi cao độ thiết kế của bar lane hai
+          phía khác nhau, hình mới mô tả <strong>một thanh liên tục ngang–xiên–ngang</strong> với hai bend nằm
+          trong vùng cột. Hai policy này không được tự động thay thế cho nhau.
+        </p>
+
+        <div class="callout danger">
+          <strong>Không có nối chồng trong cả hai hình:</strong> ở policy neo độc lập, các thanh kết thúc bằng
+          đường neo riêng; ở policy Z, ba đoạn nhìn thấy là <strong>một đường tâm thanh liên tục</strong>,
+          không phải ba thanh chạm nhau và cũng không có “connector đứng” trung gian.
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <span class="status info">Policy 1</span>
+            <h3>Independent Joint Anchorage</h3>
+            <p>Mặt trên bằng nhau; hai thanh đáy là hai run riêng. Case 1A/1B chỉ đảo vai trò dầm cao và dầm thấp.</p>
+          </div>
+          <div class="card">
+            <span class="status info">Policy 2 · Ảnh mới</span>
+            <h3>Bent/Z Through-Column Transition</h3>
+            <p>Bar lane hai phía lệch cao độ; một run liên tục có hai bend và một đoạn xiên nằm trong joint.</p>
+          </div>
+        </div>
+        <div class="callout">
+          <strong>Rule phân loại:</strong> planner phải nhận policy đã được duyệt và geometry thật tại hai mặt cột.
+          Không được thấy chênh cao rồi tự chuyển từ neo độc lập sang Z, hoặc ngược lại. Dấu của
+          <code>ΔZ</code> chỉ quyết định thanh đi lên hay đi xuống; không tạo thêm policy thứ ba.
+        </div>
+
+        <h3>Chi tiết 1A — Independent anchorage, H2 &gt; H1</h3>
+        <div class="diagram">
+          <svg viewBox="0 0 1040 610" role="img" aria-labelledby="joint-anchor-title joint-anchor-desc">
+            <title id="joint-anchor-title">Trường hợp A, Dầm 2 cao hơn Dầm 1</title>
+            <desc id="joint-anchor-desc">Dầm cao bên trái, dầm thấp bên phải và cột ở giữa. Thép trên chạy liên tục, thép đáy dầm thấp kéo xuyên qua cột, thép đáy dầm cao bẻ neo đứng trong nút.</desc>
+            <defs>
+              <marker id="dim-arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto-start-reverse">
+                <path d="M0,0 L8,4 L0,8 z" fill="#536b75"/>
+              </marker>
+            </defs>
+
+            <text x="45" y="38" font-size="19" font-weight="800" fill="#17343e">CHI TIẾT 1A — H2 &gt; H1, MẶT TRÊN BẰNG NHAU</text>
+            <text x="45" y="64" font-size="13" fill="#60737e">Màu sắc dùng để phân biệt bar run; khi tạo thực tế mỗi run vẫn có lane ngang, cover và host riêng.</text>
+
+            <rect x="465" y="82" width="145" height="400" rx="4" fill="#e9eef0" stroke="#82959c" stroke-width="2"/>
+            <text x="537" y="466" text-anchor="middle" font-size="14" font-weight="800" fill="#425862">CỘT / VÙNG NÚT</text>
+
+            <rect x="75" y="120" width="390" height="285" fill="#f1f5f4" stroke="#2d4650" stroke-width="2"/>
+            <rect x="610" y="120" width="355" height="180" fill="#f1f5f4" stroke="#2d4650" stroke-width="2"/>
+            <text x="245" y="175" text-anchor="middle" font-size="17" font-weight="800" fill="#2d4650">DẦM 2 · DẦM CAO · H2</text>
+            <text x="788" y="175" text-anchor="middle" font-size="17" font-weight="800" fill="#2d4650">DẦM 1 · DẦM THẤP · H1</text>
+
+            <line x1="95" y1="145" x2="945" y2="145" stroke="#087760" stroke-width="8" stroke-linecap="round"/>
+            <text x="520" y="108" text-anchor="middle" font-size="14" font-weight="800" fill="#087760">1 · THÉP TRÊN LIÊN TỤC KHI CAO ĐỘ, LANE VÀ BAR TYPE TƯƠNG THÍCH</text>
+
+            <line x1="300" y1="268" x2="945" y2="268" stroke="#3278c8" stroke-width="8" stroke-linecap="round"/>
+            <text x="706" y="247" font-size="13" font-weight="800" fill="#275b95">2 · Thép đáy Dầm 1 kéo xuyên cột và neo vào Dầm 2</text>
+
+            <path d="M95 372 H525 Q548 372 548 349 V292 M548 244 V166" fill="none" stroke="#d88a13" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M548 292 C568 286 568 250 548 244" fill="none" stroke="#d88a13" stroke-width="8" stroke-linecap="round"/>
+            <text x="105" y="352" font-size="13" font-weight="800" fill="#8c5700">3 · Thép đáy Dầm 2 bẻ neo đứng trong vùng nút/cột</text>
+
+            <line x1="300" y1="215" x2="610" y2="215" stroke="#536b75" stroke-width="1.6" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)"/>
+            <line x1="300" y1="205" x2="300" y2="229" stroke="#536b75" stroke-width="1.5"/>
+            <line x1="610" y1="205" x2="610" y2="229" stroke="#536b75" stroke-width="1.5"/>
+            <text x="455" y="205" text-anchor="middle" font-size="13" font-weight="700" fill="#425862">Lneo,thẳng ≥ Lyêu cầu</text>
+
+            <line x1="635" y1="166" x2="635" y2="372" stroke="#536b75" stroke-width="1.6" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)"/>
+            <line x1="622" y1="166" x2="648" y2="166" stroke="#536b75" stroke-width="1.5"/>
+            <line x1="622" y1="372" x2="648" y2="372" stroke="#536b75" stroke-width="1.5"/>
+            <text x="654" y="274" font-size="13" font-weight="700" fill="#425862">Lneo,bẻ ≥ Lyêu cầu</text>
+
+            <rect x="710" y="332" width="265" height="105" rx="12" fill="#fff0ef" stroke="#e2aaa5"/>
+            <text x="728" y="358" font-size="12" font-weight="800" fill="#9c2e2e">KHÔNG ĐƯỢC HIỂU LÀ ĐIỂM NỐI</text>
+            <text x="728" y="382" font-size="12" fill="#625050">Hai đường có thể giao nhau trên hình chiếu,</text>
+            <text x="728" y="402" font-size="12" fill="#625050">nhưng là hai bar run độc lập ở các lane khác nhau.</text>
+            <text x="728" y="422" font-size="12" fill="#625050">Không tạo weld/coupler/vertical connector tại giao điểm.</text>
+
+            <rect x="45" y="515" width="950" height="62" rx="14" fill="#fff5df" stroke="#e5c173"/>
+            <text x="65" y="540" font-size="13" font-weight="800" fill="#8c5700">VỀ CON SỐ 35Ø TRONG ẢNH:</text>
+            <text x="65" y="562" font-size="12" fill="#655b44">Báo cáo chỉ coi đây là ví dụ minh họa. Tool phải nhận Lyêu cầu, đường kính uốn và điều kiện neo từ rule dự án đã được kỹ sư duyệt; không hard-code 35Ø.</text>
+          </svg>
+          <p class="caption">
+            Sơ đồ diễn giải lại ảnh tham chiếu, không phải bản vẽ thi công. Vị trí lane theo bề rộng,
+            bán kính uốn, lớp bảo vệ, chiều dài neo và cấu tạo cốt thép vùng nút vẫn phải được kiểm tra trên mô hình thật.
+          </p>
+        </div>
+
+        <h3>Chi tiết 1B — Independent anchorage, H1 &gt; H2</h3>
+        <div class="diagram">
+          <svg viewBox="0 0 1040 610" role="img" aria-labelledby="joint-anchor-reverse-title joint-anchor-reverse-desc">
+            <title id="joint-anchor-reverse-title">Trường hợp B, Dầm 1 cao hơn Dầm 2</title>
+            <desc id="joint-anchor-reverse-desc">Dầm thấp bên trái, dầm cao bên phải và cột ở giữa. Thép trên chạy liên tục, thép đáy Dầm 2 kéo xuyên qua cột, thép đáy Dầm 1 bẻ neo đứng trong nút.</desc>
+            <defs>
+              <marker id="dim-arrow-reverse" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto-start-reverse">
+                <path d="M0,0 L8,4 L0,8 z" fill="#536b75"/>
+              </marker>
+            </defs>
+
+            <text x="45" y="38" font-size="19" font-weight="800" fill="#17343e">CHI TIẾT 1B — H1 &gt; H2, MẶT TRÊN BẰNG NHAU</text>
+            <text x="45" y="64" font-size="13" fill="#60737e">Hình học được đảo vai trò; thuật toán và điều kiện kiểm tra giữ nguyên.</text>
+
+            <rect x="465" y="82" width="145" height="400" rx="4" fill="#e9eef0" stroke="#82959c" stroke-width="2"/>
+            <text x="537" y="466" text-anchor="middle" font-size="14" font-weight="800" fill="#425862">CỘT / VÙNG NÚT</text>
+
+            <rect x="75" y="120" width="390" height="180" fill="#f1f5f4" stroke="#2d4650" stroke-width="2"/>
+            <rect x="610" y="120" width="355" height="285" fill="#f1f5f4" stroke="#2d4650" stroke-width="2"/>
+            <text x="245" y="175" text-anchor="middle" font-size="17" font-weight="800" fill="#2d4650">DẦM 2 · DẦM THẤP · H2</text>
+            <text x="788" y="175" text-anchor="middle" font-size="17" font-weight="800" fill="#2d4650">DẦM 1 · DẦM CAO · H1</text>
+
+            <line x1="95" y1="145" x2="945" y2="145" stroke="#087760" stroke-width="8" stroke-linecap="round"/>
+            <text x="520" y="108" text-anchor="middle" font-size="14" font-weight="800" fill="#087760">1 · THÉP TRÊN LIÊN TỤC KHI CAO ĐỘ, LANE VÀ BAR TYPE TƯƠNG THÍCH</text>
+
+            <line x1="95" y1="268" x2="760" y2="268" stroke="#3278c8" stroke-width="8" stroke-linecap="round"/>
+            <text x="92" y="247" font-size="13" font-weight="800" fill="#275b95">2 · Thép đáy Dầm 2 kéo xuyên cột và neo vào Dầm 1</text>
+
+            <path d="M945 372 H585 Q562 372 562 349 V292 M562 244 V166" fill="none" stroke="#d88a13" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M562 292 C542 286 542 250 562 244" fill="none" stroke="#d88a13" stroke-width="8" stroke-linecap="round"/>
+            <text x="665" y="352" font-size="13" font-weight="800" fill="#8c5700">3 · Thép đáy Dầm 1 bẻ neo đứng trong vùng nút/cột</text>
+
+            <line x1="465" y1="215" x2="760" y2="215" stroke="#536b75" stroke-width="1.6" marker-start="url(#dim-arrow-reverse)" marker-end="url(#dim-arrow-reverse)"/>
+            <line x1="465" y1="205" x2="465" y2="229" stroke="#536b75" stroke-width="1.5"/>
+            <line x1="760" y1="205" x2="760" y2="229" stroke="#536b75" stroke-width="1.5"/>
+            <text x="612" y="205" text-anchor="middle" font-size="13" font-weight="700" fill="#425862">Lneo,thẳng ≥ Lyêu cầu</text>
+
+            <line x1="430" y1="166" x2="430" y2="372" stroke="#536b75" stroke-width="1.6" marker-start="url(#dim-arrow-reverse)" marker-end="url(#dim-arrow-reverse)"/>
+            <line x1="417" y1="166" x2="443" y2="166" stroke="#536b75" stroke-width="1.5"/>
+            <line x1="417" y1="372" x2="443" y2="372" stroke="#536b75" stroke-width="1.5"/>
+            <text x="210" y="389" font-size="13" font-weight="700" fill="#425862">Lneo,bẻ ≥ Lyêu cầu</text>
+
+            <rect x="65" y="332" width="280" height="105" rx="12" fill="#fff0ef" stroke="#e2aaa5"/>
+            <text x="83" y="358" font-size="12" font-weight="800" fill="#9c2e2e">KHÔNG ĐƯỢC HIỂU LÀ ĐIỂM NỐI</text>
+            <text x="83" y="382" font-size="12" fill="#625050">Hai đường chỉ giao nhau trên hình chiếu.</text>
+            <text x="83" y="402" font-size="12" fill="#625050">Đây vẫn là hai bar run độc lập.</text>
+            <text x="83" y="422" font-size="12" fill="#625050">Không tạo connector tại giao điểm.</text>
+
+            <rect x="45" y="515" width="950" height="62" rx="14" fill="#fff5df" stroke="#e5c173"/>
+            <text x="65" y="540" font-size="13" font-weight="800" fill="#8c5700">CÙNG MỘT RULE — KHÔNG TẠO THÊM POLICY RIÊNG:</text>
+            <text x="65" y="562" font-size="12" fill="#655b44">Chỉ hoán đổi DeepSpanId/ShallowSpanId. Chiều dài neo và bend vẫn lấy từ rule dự án đã được duyệt.</text>
+          </svg>
+          <p class="caption">
+            Chi tiết 1B là ảnh gương về vai trò kết cấu, không phải một policy khác. Kết quả phải giống nhau
+            khi người dùng đảo thứ tự chọn hai dầm.
+          </p>
+        </div>
+
+        <h3>Chi tiết 2 — Bent/Z transition qua cột</h3>
+        <div class="diagram">
+          <svg viewBox="0 0 1040 590" role="img" aria-labelledby="z-transition-title z-transition-desc">
+            <title id="z-transition-title">Một thanh thép liên tục đổi cao độ bằng đoạn xiên trong vùng cột</title>
+            <desc id="z-transition-desc">Dầm trái ở cao độ cao hơn dầm phải. Một thanh liên tục chạy ngang trong dầm trái, uốn xiên xuống trong cột rồi chạy ngang trong dầm phải.</desc>
+            <defs>
+              <marker id="z-dim-arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto-start-reverse">
+                <path d="M0,0 L8,4 L0,8 z" fill="#536b75"/>
+              </marker>
+            </defs>
+
+            <text x="45" y="38" font-size="19" font-weight="800" fill="#17343e">CHI TIẾT 2 — BENT/Z THROUGH-COLUMN TRANSITION</text>
+            <text x="45" y="64" font-size="13" fill="#60737e">Một bar run liên tục: ngang trái → bend 1 → xiên trong joint → bend 2 → ngang phải.</text>
+
+            <rect x="445" y="88" width="170" height="382" rx="4" fill="#e9eef0" stroke="#82959c" stroke-width="2"/>
+            <rect x="462" y="106" width="136" height="346" rx="3" fill="none" stroke="#00a884" stroke-width="1.5" stroke-dasharray="7 5"/>
+            <text x="530" y="451" text-anchor="middle" font-size="13" font-weight="800" fill="#425862">CỘT / JOINT ENVELOPE</text>
+
+            <rect x="70" y="122" width="375" height="188" fill="#f1f5f4" stroke="#2d4650" stroke-width="2"/>
+            <rect x="615" y="246" width="350" height="188" fill="#f1f5f4" stroke="#2d4650" stroke-width="2"/>
+            <rect x="90" y="142" width="355" height="148" fill="none" stroke="#77bba9" stroke-width="1.5" stroke-dasharray="7 5"/>
+            <rect x="615" y="266" width="330" height="148" fill="none" stroke="#77bba9" stroke-width="1.5" stroke-dasharray="7 5"/>
+
+            <text x="245" y="164" text-anchor="middle" font-size="16" font-weight="800" fill="#2d4650">DẦM TRÁI · BAR ELEVATION z₁</text>
+            <text x="790" y="288" text-anchor="middle" font-size="16" font-weight="800" fill="#2d4650">DẦM PHẢI · BAR ELEVATION z₂</text>
+
+            <path d="M105 228 H470 Q481 228 490 238 L570 340 Q579 352 594 352 H930"
+                  fill="none" stroke="#087760" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="477" cy="230" r="7" fill="#fff" stroke="#d88a13" stroke-width="3"/>
+            <circle cx="584" cy="351" r="7" fill="#fff" stroke="#d88a13" stroke-width="3"/>
+
+            <text x="185" y="210" font-size="13" font-weight="800" fill="#087760">1 · Đoạn ngang theo lane dầm trái</text>
+            <text x="515" y="278" text-anchor="middle" font-size="13" font-weight="800" fill="#8c5700" transform="rotate(48 515 278)">2 · Đoạn xiên trong joint</text>
+            <text x="700" y="336" font-size="13" font-weight="800" fill="#087760">3 · Đoạn ngang theo lane dầm phải</text>
+            <text x="426" y="211" font-size="11" font-weight="800" fill="#8c5700">BEND 1</text>
+            <text x="594" y="385" font-size="11" font-weight="800" fill="#8c5700">BEND 2</text>
+
+            <line x1="650" y1="228" x2="650" y2="352" stroke="#536b75" stroke-width="1.6"
+                  marker-start="url(#z-dim-arrow)" marker-end="url(#z-dim-arrow)"/>
+            <line x1="638" y1="228" x2="666" y2="228" stroke="#536b75" stroke-width="1.4"/>
+            <line x1="638" y1="352" x2="666" y2="352" stroke="#536b75" stroke-width="1.4"/>
+            <text x="670" y="294" font-size="13" font-weight="800" fill="#425862">ΔZ = z₂ − z₁</text>
+
+            <line x1="445" y1="104" x2="615" y2="104" stroke="#536b75" stroke-width="1.6"
+                  marker-start="url(#z-dim-arrow)" marker-end="url(#z-dim-arrow)"/>
+            <text x="530" y="96" text-anchor="middle" font-size="12" font-weight="700" fill="#425862">Joint clear width</text>
+
+            <rect x="55" y="492" width="450" height="66" rx="13" fill="#e6f6f1" stroke="#88cfbd"/>
+            <text x="75" y="518" font-size="12" font-weight="800" fill="#087760">MỘT REBAR / MỘT RUN — KHÔNG CÓ SPLICE</text>
+            <text x="75" y="540" font-size="12" fill="#425862">Hai dấu tròn là vùng bend/tangent, không phải đầu thanh hay coupler.</text>
+
+            <rect x="530" y="492" width="455" height="66" rx="13" fill="#fff0ef" stroke="#e2aaa5"/>
+            <text x="550" y="518" font-size="12" font-weight="800" fill="#9c2e2e">FAIL NẾU JOINT KHÔNG ĐỦ CHỖ</text>
+            <text x="550" y="540" font-size="12" fill="#625050">Không giảm bend, đổi góc hoặc fallback sang neo độc lập một cách âm thầm.</text>
+          </svg>
+          <p class="caption">
+            Sơ đồ tái dựng đúng ý ảnh người dùng cung cấp. Đường thực tế phải dùng cung uốn hợp lệ thay cho
+            góc gãy lý tưởng; vị trí tangent, bán kính uốn, góc xiên và khoảng trống không được hard-code.
+            Chiều đi lên là ảnh gương theo dấu <code>ΔZ</code> của cùng một policy.
+          </p>
+        </div>
+
+        <h3>Rule riêng của Bent/Z transition</h3>
+        <table>
+          <thead><tr><th>Bước</th><th>Dữ liệu/điều kiện</th><th>Kết quả planner</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Ghép lane</td>
+              <td>Một-một giữa hai bar lane có cùng role, bar type/đường kính và layer được phép liên tục; thanh dư không được ghép tùy ý.</td>
+              <td><code>MatchedBarLanePair</code></td>
+            </tr>
+            <tr>
+              <td>Tính đường chuyển</td>
+              <td>Lấy cao độ bar thật tại hai mặt cột, <code>ΔZ</code>, joint clear width, cover envelope và rule bend.</td>
+              <td><code>Horizontal → Bend → Diagonal → Bend → Horizontal</code></td>
+            </tr>
+            <tr>
+              <td>Validate hình học</td>
+              <td>Hai bend không chồng nhau; đoạn xiên có chiều dài dương; swept bar nằm trong concrete/cover envelope và không đụng thép cột/đai nút.</td>
+              <td><code>ZTransitionContinuous</code></td>
+            </tr>
+            <tr>
+              <td>Không đủ điều kiện</td>
+              <td>Cột quá hẹp, chênh cao quá lớn, lane/type không tương thích, dầm lệch trục hoặc không resolve được host.</td>
+              <td><code>Unsupported</code> trước transaction; không tự fallback policy</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Báo cáo này bao phủ đến đâu?</h3>
+        <table>
+          <thead><tr><th>Tình huống hình học</th><th>Trạng thái trong plan</th><th>Rule chính</th></tr></thead>
+          <tbody>
+            <tr><td>H2 &gt; H1, mặt trên bằng nhau, có cột</td><td><span class="status ok">Có — Chi tiết 1A</span></td><td>Dầm 2 bẻ neo; Dầm 1 neo thẳng xuyên nút</td></tr>
+            <tr><td>H1 &gt; H2, mặt trên bằng nhau, có cột</td><td><span class="status ok">Có — Chi tiết 1B</span></td><td>Dầm 1 bẻ neo; Dầm 2 neo thẳng xuyên nút</td></tr>
+            <tr><td>Bar elevation trái cao hơn phải, có transition window</td><td><span class="status ok">Có điều kiện — Chi tiết 2</span></td><td>Một run Bent/Z liên tục đi xuống qua cột</td></tr>
+            <tr><td>Bar elevation phải cao hơn trái, có transition window</td><td><span class="status ok">Có điều kiện — Chi tiết 2 đảo chiều</span></td><td>Cùng policy; dấu <code>ΔZ</code> đổi và đường chạy được mirror</td></tr>
+            <tr><td>H1 = H2 nhưng bề rộng khác nhau</td><td><span class="status ok">Có trong kiến trúc/lane mapping</span></td><td>Map lane theo từng section; chỉ liên tục các lane tương thích</td></tr>
+            <tr><td>Cả chiều rộng, chiều sâu và bar elevation đều khác</td><td><span class="status warn">Có điều kiện</span></td><td>Classifier chọn một policy rõ ràng; lane, cover, bend và bar type đều phải pass</td></tr>
+            <tr><td>Không có cột, thiếu transition window, dầm lệch tim hoặc tapered</td><td><span class="status info">Unsupported</span></td><td>Không tự suy đoán hoặc fallback sang policy khác</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Rule của Policy 1 — Independent Joint Anchorage</h3>
+        <table>
+          <thead><tr><th>Nhóm thép</th><th>Đường chạy đề xuất</th><th>Điều kiện bắt buộc</th><th>Kết quả planner</th></tr></thead>
+          <tbody>
+            <tr><td>Thép trên</td><td>Chạy liên tục qua hai dầm và cột</td><td>Cùng cao độ, lane, đường kính/type và đủ cover</td><td><code>AlignedContinuous</code></td></tr>
+            <tr><td>Thép đáy dầm thấp</td><td>Kéo thẳng xuyên qua cột, đi vào dầm cao</td><td>Chiều dài thực ≥ chiều dài neo yêu cầu; toàn bộ curve nằm trong concrete envelope hợp lệ</td><td><code>StraightThroughAnchor</code></td></tr>
+            <tr><td>Thép đáy dầm cao</td><td>Đi vào vùng nút rồi bẻ đứng</td><td>Đủ đoạn neo, bán kính uốn, cover và khoảng trống trong cột</td><td><code>BentJointAnchor</code></td></tr>
+            <tr><td>Không đủ điều kiện</td><td>Không tự rút ngắn hoặc đổi sang nối chồng</td><td>Thiếu cột, thiếu chiều dài, không tạo được bend hoặc host không hợp lệ</td><td><code>Unsupported</code> + cảnh báo trước transaction</td></tr>
+          </tbody>
+        </table>
+
+        <div class="grid-3">
+          <div class="card">
+            <span class="status ok">Policy 1 đã hiểu</span>
+            <h3>Neo độc lập</h3>
+            <ul class="clean-list">
+              <li>Ba bar intent độc lập, không có lap splice giữa hai thanh đáy.</li>
+              <li>Nhánh đứng là phần liên tục của thanh đáy dầm cao.</li>
+              <li>Thanh đáy dầm thấp đi xuyên cột để lấy chiều dài neo.</li>
+              <li>Dấu V màu đỏ trong ảnh nguồn chỉ là dấu kiểm, không phải cốt thép.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <span class="status ok">Policy 2 đã hiểu</span>
+            <h3>Thanh Bent/Z liên tục</h3>
+            <ul class="clean-list">
+              <li>Mỗi lane tương thích tạo đúng một bar run liên tục.</li>
+              <li>Đoạn xiên và hai bend đều nằm trong vùng cột.</li>
+              <li>Không có đầu thanh, lap hoặc coupler tại hai điểm đổi hướng.</li>
+              <li>Chiều nâng/hạ chỉ phụ thuộc dấu <code>ΔZ</code>.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <span class="status warn">Cần kỹ sư dự án chốt</span>
+            <h3>Thông số thiết kế</h3>
+            <ul>
+              <li><code>RequiredAnchorageLength</code> và điểm bắt đầu đo.</li>
+              <li>Kiểu crank, góc/bán kính uốn, entry/exit và đoạn thẳng tối thiểu giữa hai bend.</li>
+              <li>Lane/layer tránh va chạm giữa nhánh đứng, thanh xuyên nút và thép cột.</li>
+              <li>Owner host của run xuyên nhiều cấu kiện và cách xử lý khi bar type/số lượng khác nhau.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="architecture">
+        <div class="section-kicker">07 · Different sections target architecture</div>
+        <h2>Kiến trúc mới: tính cục bộ, quyết định rõ ràng</h2>
+        <p class="lead">
+          Dữ liệu UI không được đi thẳng vào writer. Trước tiên cần tạo snapshot hình học từng span và vùng nút,
+          phân loại policy, lập kế hoạch lane + joint transition, validate, sau đó writer chỉ làm nhiệm vụ gọi Revit API.
+        </p>
+
+        <div class="diagram">
+          <svg viewBox="0 0 1120 500" role="img" aria-labelledby="arch-title arch-desc">
+            <title id="arch-title">Luồng kiến trúc đề xuất cho bố trí thép khác tiết diện</title>
+            <desc id="arch-desc">Dữ liệu Revit và UI đi qua geometry provider, planners, validator, writer và diagnostics.</desc>
+            <defs>
+              <marker id="arch-arrow" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L9,3 z" fill="#53717b"/>
+              </marker>
+              <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#16323c" flood-opacity=".12"/>
+              </filter>
+            </defs>
+
+            <rect x="18" y="22" width="1084" height="110" rx="16" fill="#edf5ff" stroke="#a9c9eb"/>
+            <text x="40" y="50" font-size="12" font-weight="800" fill="#3278c8">INPUT LAYER</text>
+            <g filter="url(#soft-shadow)">
+              <rect x="65" y="70" width="220" height="43" rx="9" fill="#fff" stroke="#9abce2"/>
+              <text x="175" y="96" text-anchor="middle" font-size="13" font-weight="700" fill="#254a70">Revit physical spans</text>
+              <rect x="330" y="70" width="220" height="43" rx="9" fill="#fff" stroke="#9abce2"/>
+              <text x="440" y="96" text-anchor="middle" font-size="13" font-weight="700" fill="#254a70">Per-span settings</text>
+              <rect x="595" y="70" width="220" height="43" rx="9" fill="#fff" stroke="#9abce2"/>
+              <text x="705" y="96" text-anchor="middle" font-size="13" font-weight="700" fill="#254a70">Cover + bar types</text>
+              <rect x="860" y="70" width="195" height="43" rx="9" fill="#fff" stroke="#9abce2"/>
+              <text x="957" y="96" text-anchor="middle" font-size="13" font-weight="700" fill="#254a70">Joint transition policy</text>
+            </g>
+
+            <rect x="18" y="158" width="1084" height="192" rx="16" fill="#effaf7" stroke="#93d3c2"/>
+            <text x="40" y="187" font-size="12" font-weight="800" fill="#087760">DOMAIN + GEOMETRY</text>
+            <g filter="url(#soft-shadow)">
+              <rect x="55" y="214" width="220" height="90" rx="11" fill="#fff" stroke="#75c8b3"/>
+              <text x="165" y="243" text-anchor="middle" font-size="13" font-weight="800" fill="#174b40">Span + Joint Geometry</text>
+              <text x="165" y="267" text-anchor="middle" font-size="11" fill="#60736d">section · column · bar elevation</text>
+              <text x="165" y="285" text-anchor="middle" font-size="11" fill="#60736d">entry/exit · ΔZ · transition window</text>
+
+              <rect x="315" y="214" width="220" height="90" rx="11" fill="#fff" stroke="#75c8b3"/>
+              <text x="425" y="243" text-anchor="middle" font-size="13" font-weight="800" fill="#174b40">MainBarLanePlanner</text>
+              <text x="425" y="267" text-anchor="middle" font-size="11" fill="#60736d">normalized lanes</text>
+              <text x="425" y="285" text-anchor="middle" font-size="11" fill="#60736d">quantity mapping</text>
+
+              <rect x="575" y="214" width="220" height="90" rx="11" fill="#fff" stroke="#75c8b3"/>
+              <text x="685" y="243" text-anchor="middle" font-size="13" font-weight="800" fill="#174b40">JointRebarTransitionPlanner</text>
+              <text x="685" y="267" text-anchor="middle" font-size="11" fill="#60736d">independent anchor · bent/Z</text>
+              <text x="685" y="285" text-anchor="middle" font-size="11" fill="#60736d">ordered run · bend · required/provided</text>
+
+              <rect x="835" y="214" width="220" height="90" rx="11" fill="#fff" stroke="#75c8b3"/>
+              <text x="945" y="243" text-anchor="middle" font-size="13" font-weight="800" fill="#174b40">RebarPlanValidator</text>
+              <text x="945" y="267" text-anchor="middle" font-size="11" fill="#60736d">cover · spacing · continuity · bends</text>
+              <text x="945" y="285" text-anchor="middle" font-size="11" fill="#60736d">joint containment · host · clashes</text>
+            </g>
+
+            <line x1="275" y1="259" x2="305" y2="259" stroke="#53717b" stroke-width="2" marker-end="url(#arch-arrow)"/>
+            <line x1="535" y1="259" x2="565" y2="259" stroke="#53717b" stroke-width="2" marker-end="url(#arch-arrow)"/>
+            <line x1="795" y1="259" x2="825" y2="259" stroke="#53717b" stroke-width="2" marker-end="url(#arch-arrow)"/>
+
+            <rect x="18" y="376" width="1084" height="102" rx="16" fill="#fff5df" stroke="#e2c170"/>
+            <text x="40" y="404" font-size="12" font-weight="800" fill="#8c5700">OUTPUT + REVIT</text>
+            <g filter="url(#soft-shadow)">
+              <rect x="75" y="418" width="210" height="43" rx="9" fill="#fff" stroke="#d8b75f"/>
+              <text x="180" y="444" text-anchor="middle" font-size="13" font-weight="700" fill="#674d16">MainBarRunPlan[]</text>
+              <rect x="335" y="418" width="210" height="43" rx="9" fill="#fff" stroke="#d8b75f"/>
+              <text x="440" y="444" text-anchor="middle" font-size="13" font-weight="700" fill="#674d16">StirrupSpanPlan[]</text>
+              <rect x="595" y="418" width="210" height="43" rx="9" fill="#fff" stroke="#d8b75f"/>
+              <text x="700" y="444" text-anchor="middle" font-size="13" font-weight="700" fill="#674d16">Revit Writers</text>
+              <rect x="855" y="418" width="190" height="43" rx="9" fill="#fff" stroke="#d8b75f"/>
+              <text x="950" y="444" text-anchor="middle" font-size="13" font-weight="700" fill="#674d16">Diagnostic Log</text>
+            </g>
+            <line x1="285" y1="439" x2="325" y2="439" stroke="#8c6d2f" stroke-width="2" marker-end="url(#arch-arrow)"/>
+            <line x1="545" y1="439" x2="585" y2="439" stroke="#8c6d2f" stroke-width="2" marker-end="url(#arch-arrow)"/>
+            <line x1="805" y1="439" x2="845" y2="439" stroke="#8c6d2f" stroke-width="2" marker-end="url(#arch-arrow)"/>
+
+            <path d="M540 132 V170 H165 V204" fill="none" stroke="#53717b" stroke-width="2" marker-end="url(#arch-arrow)"/>
+            <path d="M685 304 V360 H180 V408" fill="none" stroke="#53717b" stroke-width="2" marker-end="url(#arch-arrow)"/>
+            <path d="M945 304 V360 H440 V408" fill="none" stroke="#53717b" stroke-width="2" marker-end="url(#arch-arrow)"/>
+          </svg>
+          <p class="caption">Writer không tự chọn Independent hay Bent/Z. Policy, ordered centerline, bend, target host và required/provided phải tồn tại trong plan rồi được validator kiểm tra trước transaction.</p>
+        </div>
+
+        <h3>Planner điều phối theo policy</h3>
+        <table>
+          <thead><tr><th>Thành phần</th><th>Trách nhiệm</th><th>Không được làm</th></tr></thead>
+          <tbody>
+            <tr><td><code>JointTransitionClassifier</code></td><td>Phân loại Same, WidthStep, DepthStepTopAligned, ElevationOffset, CombinedOffset hoặc Unsupported</td><td>Không tự chọn policy khi thiếu geometry/design input</td></tr>
+            <tr><td><code>IndependentJointAnchoragePlanner</code></td><td>Tạo straight-through anchor và bent joint anchor cho Chi tiết 1A/1B</td><td>Không tạo đoạn xiên nối hai thanh đáy</td></tr>
+            <tr><td><code>BentZTransitionPlanner</code></td><td>Ghép lane một-một và tạo đúng một ordered continuous run qua hai bend</td><td>Không fallback sang neo độc lập khi transition window thiếu</td></tr>
+            <tr><td><code>RebarPlanValidator</code></td><td>Kiểm continuity, hai bend, đoạn thẳng tối thiểu, cover, containment, clash và host</td><td>Không sửa hình học planner để “cố tạo” Rebar</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Bar lane thay cho offset tuyệt đối</h3>
+        <p>
+          Mỗi thanh được nhận diện bằng lane chuẩn hóa từ 0 đến 1. Lane 0 là biên trái miền cover,
+          lane 1 là biên phải. Nhờ vậy cùng ba thanh sẽ được phân bố đúng trên cả dầm rộng và dầm hẹp.
+        </p>
+        <div class="diagram">
+          <svg viewBox="0 0 1040 380" role="img" aria-labelledby="lane-title lane-desc">
+            <title id="lane-title">Ánh xạ bar lane chuẩn hóa lên hai tiết diện khác bề rộng</title>
+            <desc id="lane-desc">Ba lane 0, 0.5 và 1 được ánh xạ độc lập vào miền cover của từng tiết diện.</desc>
+            <g transform="translate(70 80)">
+              <text x="180" y="-25" text-anchor="middle" font-size="15" font-weight="800" fill="#1d3d47">Span A · clear width 320 mm</text>
+              <rect width="360" height="210" rx="4" fill="#dfe5e4" stroke="#243e47" stroke-width="3"/>
+              <rect x="30" y="25" width="300" height="160" fill="none" stroke="#00a884" stroke-width="2" stroke-dasharray="7 5"/>
+              <line x1="30" y1="75" x2="330" y2="75" stroke="#6e878e" stroke-width="1" stroke-dasharray="3 4"/>
+              <circle cx="30" cy="75" r="9" fill="#087760"/>
+              <circle cx="180" cy="75" r="9" fill="#087760"/>
+              <circle cx="330" cy="75" r="9" fill="#087760"/>
+              <text x="30" y="112" text-anchor="middle" font-size="12" fill="#087760">0.0</text>
+              <text x="180" y="112" text-anchor="middle" font-size="12" fill="#087760">0.5</text>
+              <text x="330" y="112" text-anchor="middle" font-size="12" fill="#087760">1.0</text>
+            </g>
+            <g transform="translate(590 105)">
+              <text x="150" y="-25" text-anchor="middle" font-size="15" font-weight="800" fill="#1d3d47">Span B · clear width 520 mm</text>
+              <rect width="300" height="160" rx="4" fill="#dfe5e4" stroke="#243e47" stroke-width="3"/>
+              <rect x="25" y="20" width="250" height="120" fill="none" stroke="#00a884" stroke-width="2" stroke-dasharray="7 5"/>
+              <line x1="25" y1="60" x2="275" y2="60" stroke="#6e878e" stroke-width="1" stroke-dasharray="3 4"/>
+              <circle cx="25" cy="60" r="9" fill="#087760"/>
+              <circle cx="150" cy="60" r="9" fill="#087760"/>
+              <circle cx="275" cy="60" r="9" fill="#087760"/>
+              <text x="25" y="97" text-anchor="middle" font-size="12" fill="#087760">0.0</text>
+              <text x="150" y="97" text-anchor="middle" font-size="12" fill="#087760">0.5</text>
+              <text x="275" y="97" text-anchor="middle" font-size="12" fill="#087760">1.0</text>
+            </g>
+            <path d="M405 181 C470 181, 500 165, 565 165" fill="none" stroke="#087760" stroke-width="2" stroke-dasharray="7 5"/>
+            <text x="487" y="145" text-anchor="middle" font-size="12" fill="#087760">cùng lane, tọa độ khác</text>
+            <rect x="330" y="327" width="380" height="35" rx="17" fill="#e6f6f1"/>
+            <text x="520" y="350" text-anchor="middle" font-size="13" font-weight="700" fill="#087760">tọa độ = leftCoverPoint + lane × clearWidth × localY</text>
+          </svg>
+        </div>
+      </section>
+
+      <section id="roadmap">
+        <div class="section-kicker">08 · Different sections delivery roadmap</div>
+        <h2>Lộ trình triển khai theo sáu giai đoạn</h2>
+        <p class="lead">Mỗi giai đoạn có đầu ra có thể review và kiểm chứng độc lập trước khi chuyển sang bước tiếp theo.</p>
+
+        <div class="phase">
+          <div class="phase-no">1</div>
+          <div>
+            <h3>Chốt quy tắc kỹ thuật và baseline</h3>
+            <p>Đóng băng output hiện tại và đặc tả riêng hai policy <strong>Independent Joint Anchorage</strong> và <strong>Bent/Z Through-Column Transition</strong>.</p>
+            <ul>
+              <li>Chốt phạm vi dầm thẳng, đồng trục, cùng mặt phẳng và có chung cột đỡ.</li>
+              <li>Ghi baseline số lượng, hình học, host và cover của case đang chạy đúng.</li>
+              <li>Định nghĩa thế nào là “cùng tiết diện” theo tolerance, không so sánh tên type.</li>
+              <li>Chốt nguồn <code>RequiredAnchorageLength</code>, đường kính uốn và điểm bắt đầu đo; không hard-code 35Ø.</li>
+              <li>Riêng Bent/Z: chốt kiểu crank, góc/bán kính, entry/exit, khoảng thẳng tối thiểu giữa hai bend và owner host.</li>
+            </ul>
+            <div class="deliverables"><span>Baseline log</span><span>2 approved policies</span><span>Bent/Z design inputs</span><span>Acceptance tolerance</span></div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-no">2</div>
+          <div>
+            <h3>Tạo mô hình hình học từng span</h3>
+            <p>Tách dữ liệu hình học khỏi ViewModel và legacy <code>BoxElement</code>, tạo snapshot không phụ thuộc UI.</p>
+            <ul>
+              <li><code>BeamSpanGeometry</code>: BeamId, local axes, station đầu/cuối.</li>
+              <li><code>SectionEnvelope</code>: biên bê tông và miền hữu dụng sau cover.</li>
+              <li><code>BeamJointGeometry</code>: ColumnId, hai mặt cột, bar elevation hai phía, <code>ΔZ</code>, entry/exit và transition window.</li>
+              <li><code>SectionTransition</code>: Same, WidthStep, DepthStepTopAligned, ElevationOffset, CombinedOffset, Unsupported.</li>
+              <li>Validate span mapping 1–1 giữa physical beam và settings.</li>
+            </ul>
+            <div class="deliverables"><span>Domain records</span><span>Geometry provider</span><span>Pure validation</span></div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-no">3</div>
+          <div>
+            <h3>Viết lại planner thép chủ</h3>
+            <p>Đây là phần quan trọng nhất. Thuật toán mới tạo lane cục bộ, phân loại policy và sinh ordered bar run tại từng nút.</p>
+            <ul>
+              <li>Không dùng <code>lengArr</code> của toàn assembly để chia thanh.</li>
+              <li>Map số lượng thanh theo lane chuẩn hóa của từng section.</li>
+              <li>Thép trên liên tục chỉ khi lane, cao độ và bar type tương thích.</li>
+              <li>Thép đáy dầm thấp tạo <code>StraightThroughAnchor</code>; thép đáy dầm cao tạo <code>BentJointAnchor</code>.</li>
+              <li>Policy Z tạo đúng một <code>ZTransitionContinuous</code> cho mỗi lane ghép được, giữ đủ hai điểm chuyển tiếp.</li>
+              <li>Terminal anchorage chạy sau joint transition và không được ghi đè các vertex trong cột.</li>
+              <li>Tách bar run khi đổi số lượng/đường kính; không ghép tùy ý các thanh dư.</li>
+              <li>Tính/lưu required–provided, bend data, participating BeamIds và một target host rõ ràng.</li>
+              <li>Thiếu điều kiện phải trả Unsupported; cấm fallback âm thầm giữa hai policy.</li>
+            </ul>
+            <div class="deliverables"><span>MainBarLanePlanner</span><span>Independent planner</span><span>Bent/Z planner</span><span>MainBarRunPlan</span></div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-no">4</div>
+          <div>
+            <h3>Chuẩn hóa đai và thép phụ theo từng span</h3>
+            <p>Giữ phần đã đúng là box từng span, loại bỏ các chỗ còn dùng dữ liệu span đầu hoặc active span toàn cục.</p>
+            <ul>
+              <li>Main stirrup: shape, diameter và offset lấy theo <code>rebarBeam</code> hiện tại.</li>
+              <li>Vertical/horizontal secondary stirrup dùng main-bar plan cục bộ.</li>
+              <li>Side bar và dantory được kiểm tra lại clear height/clear width.</li>
+              <li>Gom logic chia Start/Middle/End vào <code>SpanSegmentGeometryFactory</code>.</li>
+              <li>Tách <code>MainBarEnvelopeProvider</code> để đai phụ không rút run Z về đường Start–End.</li>
+              <li>Kiểm tra clash đoạn xiên/hai bend với thép dọc cột và đai nút.</li>
+            </ul>
+            <div class="deliverables"><span>StirrupSpanPlan</span><span>Segment factory</span><span>Per-span writers</span></div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-no">5</div>
+          <div>
+            <h3>UI, preset và diagnostic log</h3>
+            <p>UI chỉ hiển thị quyết định và cảnh báo; không chứa logic hình học.</p>
+            <ul>
+              <li>Badge “Section change” tại span có thay đổi b × h.</li>
+              <li>Beam Rules hiển thị rõ <code>Independent Joint Anchorage</code> hoặc <code>Bent/Z Transition</code>.</li>
+              <li>Hiển thị read-only required/provided, <code>ΔZ</code>, entry/exit, bend radius và transition window.</li>
+              <li>Preset có schema version; không lưu kích thước hình học từ Revit.</li>
+              <li>Log policy, envelope, lane pair, joint, ordered points/curves, bend, host và cover check.</li>
+            </ul>
+            <div class="deliverables"><span>UI indicator</span><span>Preset migration</span><span>Structured logs</span></div>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-no">6</div>
+          <div>
+            <h3>Regression, build và kiểm tra trong Revit</h3>
+            <p>Build chỉ chứng minh code biên dịch; nghiệm thu cuối phải dựa trên hình học và host thật sau transaction.</p>
+            <ul>
+              <li>Pure geometry tests chạy không cần Revit UI.</li>
+              <li>Regression case cùng tiết diện không đổi quá tolerance.</li>
+              <li>Test Bent/Z theo cả dấu <code>ΔZ</code>, đảo thứ tự pick và transition window vừa đủ/không đủ.</li>
+              <li>Build Debug R24/R25/R26 với <code>DeployRevitAddin=false</code>.</li>
+              <li>Reload add-in, xác nhận đúng một Rebar/lane, ba segment logic, hai bend, ảnh mặt cắt và 3D.</li>
+              <li>Đo cover/clearance và kiểm tra centerline, shape, <code>GetHostId()</code> sau commit.</li>
+            </ul>
+            <div class="deliverables"><span>Test matrix</span><span>3 builds</span><span>Revit evidence</span><span>Final report</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="files">
+        <div class="section-kicker">09 · Different sections code organization</div>
+        <h2>File và class dự kiến thay đổi</h2>
+        <table>
+          <thead><tr><th>Khu vực</th><th>Hiện tại</th><th>Đề xuất</th><th>Trách nhiệm sau refactor</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Domain</td>
+              <td><code>MainBarCreationPlan</code> giữ một BarType và danh sách <code>MainBarBeamReal</code> mutable</td>
+              <td>Mở rộng <code>MainBarCreationPlan</code>; thêm <code>MainBarRunPlan</code>, <code>JointTransitionPolicy</code>, <code>AnchorageRequirement</code>, <code>BentZRequirement</code></td>
+              <td>Mỗi run bất biến tự mang policy, role, bar type, lane, ordered centerline, bend data, participating spans và target host</td>
+            </tr>
+            <tr>
+              <td>Main bar planning</td>
+              <td><code>MainBarGeometryService.GetMainBarBeamReals</code> + <code>GenerateRebarDeverlop</code> vừa suy luận vừa sửa points</td>
+              <td><code>MainBarLanePlanner</code><br><code>JointTransitionClassifier</code><br><code>IndependentJointAnchoragePlanner</code><br><code>BentZTransitionPlanner</code></td>
+              <td>Tách rõ lane, policy neo độc lập, policy Z và neo ở hai đầu assembly</td>
+            </tr>
+            <tr>
+              <td>Geometry extraction</td>
+              <td><code>BoxElement</code> + logic rải rác</td>
+              <td><code>BeamSpanGeometryProvider.cs</code><br><code>BeamJointGeometryProvider.cs</code></td>
+              <td>Snapshot dầm/cột, bar elevation tại hai mặt cột, <code>ΔZ</code>, entry/exit station và transition window</td>
+            </tr>
+            <tr>
+              <td>Span segments</td>
+              <td>Start/Mid/End bị lặp trong nhiều writer</td>
+              <td><code>SpanSegmentGeometryFactory.cs</code></td>
+              <td>Tạo ba vùng ứng suất từ một span geometry</td>
+            </tr>
+            <tr>
+              <td>Revit writer</td>
+              <td><code>MainBarRebarWriter</code> dùng một BarType, tạo trên temporary host và chưa register target host</td>
+              <td>Writer lặp theo <code>MainBarRunPlan</code>, resolve type theo run và gọi <code>RegisterTargetHost</code></td>
+              <td>Tạo một Rebar từ ordered curves, giữ đủ vertex/bend; không tự quyết định policy, geometry hay owner host</td>
+            </tr>
+            <tr>
+              <td>Dependent consumers</td>
+              <td><code>VerticalStirrupWriter</code> và <code>HorizontalMainStirrupWriter</code> gọi lại <code>GetMainBarBeamReals</code></td>
+              <td><code>MainBarEnvelopeProvider</code> chỉ cung cấp envelope cần cho đai phụ</td>
+              <td>Tránh việc tách main-bar planner làm thay đổi hình học đai ngoài ý muốn</td>
+            </tr>
+            <tr>
+              <td>Validation</td>
+              <td>Exception phát sinh muộn trong transaction</td>
+              <td><code>RebarPlanValidator.cs</code><br><code>AnchorageRuleProvider.cs</code><br><code>BentZRuleProvider.cs</code></td>
+              <td>So sánh required/provided; kiểm continuity, đúng hai bend, separation, containment, cover, clash và host trước transaction</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><span style="color:#7fd8c2">InstallRebarBeamV2/</span>
+├─ Domain/
+│  ├─ Geometry/
+│  │  ├─ BeamSpanGeometry.cs
+│  │  ├─ BeamJointGeometry.cs
+│  │  ├─ SectionEnvelope.cs
+│  │  ├─ SectionTransition.cs
+│  │  └─ JointTransitionWindow.cs
+│  └─ Plans/
+│     ├─ BarLane.cs
+│     ├─ MainBarCreationPlan.cs        (mở rộng file hiện có)
+│     ├─ MainBarRunPlan.cs
+│     ├─ MainBarRunRole.cs
+│     ├─ JointTransitionPolicy.cs
+│     ├─ AnchorageRequirement.cs
+│     ├─ BentZRequirement.cs
+│     └─ StirrupSpanPlan.cs
+├─ Geometry/
+│  ├─ Spans/BeamSpanGeometryProvider.cs
+│  ├─ Joints/BeamJointGeometryProvider.cs
+│  ├─ Joints/JointTransitionClassifier.cs
+│  ├─ MainBars/MainBarLanePlanner.cs
+│  ├─ MainBars/IndependentJointAnchoragePlanner.cs
+│  ├─ MainBars/BentZTransitionPlanner.cs
+│  ├─ MainBars/TerminalAnchoragePlanner.cs
+│  ├─ MainBars/MainBarEnvelopeProvider.cs
+│  └─ Segments/SpanSegmentGeometryFactory.cs
+├─ Application/Rules/AnchorageRuleProvider.cs
+├─ Application/Rules/BentZRuleProvider.cs
+├─ Application/Validation/RebarPlanValidator.cs
+└─ Revit/Writers/...</pre>
+
+        <h3>Chuỗi commit đề xuất</h3>
+        <ol>
+          <li><code>refactor: introduce per-span section geometry model</code></li>
+          <li><code>feat: model stepped beam-column joint geometry</code></li>
+          <li><code>feat: plan independent anchors at stepped joints</code></li>
+          <li><code>feat: plan continuous bent-z transitions through joints</code></li>
+          <li><code>refactor: generate stirrups from per-span geometry</code></li>
+          <li><code>feat: validate anchorage, two-bend transitions and hosts</code></li>
+        </ol>
+      </section>
+
+      <section id="tests">
+        <div class="section-kicker">10 · Unified verification matrix</div>
+        <h2>Ma trận kiểm thử hợp nhất trước release</h2>
+        <p class="lead">
+          Một ledger duy nhất bao phủ cả phần port/refactor đã triển khai và feature dầm khác tiết diện
+          đang lập kế hoạch. Mỗi case hình học phải kiểm tra đồng thời số lượng, curve, cover, spacing,
+          bar type, host, assembly, parameter và schema sau commit.
+        </p>
+
+        <h3>A. Runtime regression cho phần đã triển khai</h3>
+        <table>
+          <thead><tr><th>ID</th><th>Nhóm kiểm tra</th><th>Case bắt buộc</th><th>Tiêu chí chính</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>RTA1</td>
+              <td>Selection &amp; topology</td>
+              <td>Beam đơn; assembly 2, 3 và nhiều member; Start/Middle/End khác quantity</td>
+              <td>Thứ tự span đúng, đủ mọi đoạn và đủ sáu nhóm main bar</td>
+            </tr>
+            <tr>
+              <td>RTA2</td>
+              <td>Orientation</td>
+              <td>Dầm ngang, nghiêng, rotated, đảo hướng; Fukashi = 0 theo yêu cầu hiện tại</td>
+              <td>Local axes, section và curve không phụ thuộc hướng pick</td>
+            </tr>
+            <tr>
+              <td>RTA3</td>
+              <td>Auxiliary &amp; stirrups</td>
+              <td>Side/dantory bật-tắt; main và ba secondary stirrup; quantity main = 0/1</td>
+              <td>Không chia spacing lỗi; đúng source span và đủ nhóm output</td>
+            </tr>
+            <tr>
+              <td>RTA4</td>
+              <td>Openings</td>
+              <td>Không lỗ, một lỗ, nhiều lỗ, gần đầu dầm và sát vùng đổi bước đai</td>
+              <td>Copy/delete không trùng, corrected length và metadata đúng</td>
+            </tr>
+            <tr>
+              <td>RTA5</td>
+              <td>Resources &amp; config</td>
+              <td>Project trắng; shared parameter đúng/sai; diameter schema đủ, hỏng, thiếu hoặc chưa có</td>
+              <td>Bind/validate đúng contract; lỗi rõ ràng và không silently fallback sai</td>
+            </tr>
+            <tr>
+              <td>RTA6</td>
+              <td>Multi-document &amp; ID</td>
+              <td>Document A → B → A; model có <code>ElementId &gt; 2,147,483,647</code></td>
+              <td>Không dùng shape/type chéo document và không overflow</td>
+            </tr>
+            <tr>
+              <td>RTA7</td>
+              <td>Atomic failure</td>
+              <td>Thiếu shape/type, parameter conflict, lỗi opening hoặc rehost có chủ đích</td>
+              <td>Rollback hết rebar, assembly, schema, metadata và temporary host</td>
+            </tr>
+            <tr>
+              <td>RTA8</td>
+              <td>Host &amp; cleanup</td>
+              <td>Chạy thành công với mọi nhóm span-local</td>
+              <td><code>GetHostId()</code> đúng; không còn temporary DirectShape; không cascade-delete rebar</td>
+            </tr>
+            <tr>
+              <td>RTA9</td>
+              <td>UI preview</td>
+              <td>Sửa quantity nhanh và đổi selection liên tục</td>
+              <td>Preview cuối khớp giá trị cuối, không lag hoặc render dữ liệu cũ</td>
+            </tr>
+            <tr>
+              <td>RTA10</td>
+              <td>Version &amp; parity</td>
+              <td>Revit 2024/2025/2026; so sánh cùng model với command RimT gốc</td>
+              <td>Đối chiếu count, curves, type, host, assembly, shared parameters và schema payload</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>B. Ma trận hình học khác tiết diện</h3>
+        <table>
+          <thead><tr><th>ID</th><th>Span sequence</th><th>Mục tiêu</th><th>Kỳ vọng chính</th><th>Mức ưu tiên</th></tr></thead>
+          <tbody>
+            <tr><td>R01</td><td>400×800 → 400×800</td><td>Regression</td><td>Output không đổi ngoài tolerance 1 mm</td><td><span class="status bad">P0</span></td></tr>
+            <tr><td>W01</td><td>400×800 → 600×800</td><td>Đổi bề rộng</td><td>Lane phân bố lại, cover trái/phải đúng</td><td><span class="status bad">P0</span></td></tr>
+            <tr><td>H01</td><td>400×800 → 400×600 + cột, top aligned</td><td>Chi tiết 1A</td><td>Top liên tục; đáy dầm thấp neo thẳng xuyên nút; đáy dầm cao neo bẻ đứng</td><td><span class="status bad">P0</span></td></tr>
+            <tr><td>H02</td><td>400×600 → 400×800 + cột, top aligned</td><td>Chi tiết 1B</td><td>Vai trò shallow/deep đảo đúng, hình học không phụ thuộc thứ tự pick</td><td><span class="status bad">P0</span></td></tr>
+            <tr><td>Z01</td><td>z trái &gt; z phải + cột</td><td>Bent/Z đi xuống</td><td>Mỗi lane ghép được tạo đúng một run ngang–xiên–ngang; cả hai bend trong transition window</td><td><span class="status bad">P0</span></td></tr>
+            <tr><td>Z02</td><td>z trái &lt; z phải + cột</td><td>Bent/Z đi lên</td><td>Mirror Z01; cùng policy và không phụ thuộc thứ tự pick</td><td><span class="status bad">P0</span></td></tr>
+            <tr><td>Z03</td><td>Đổi b, h và bar elevation</td><td>Combined offset</td><td>Chỉ tạo khi classifier, lane mapping, bend, cover và host đều hợp lệ; nếu không trả Unsupported</td><td><span class="status warn">P1</span></td></tr>
+            <tr><td>Z04</td><td>Cột hẹp / ΔZ quá lớn</td><td>Transition window failure</td><td>Chặn trước transaction; báo ΔZ, required/provided window và bend thiếu</td><td><span class="status bad">P0</span></td></tr>
+            <tr><td>Z05</td><td>Lane, quantity hoặc bar type không tương thích</td><td>Pairing failure</td><td>Không nối cưỡng bức; thanh dư chỉ theo rule riêng đã duyệt</td><td><span class="status warn">P1</span></td></tr>
+            <tr><td>Z06</td><td>Dầm lệch tim/không đồng phẳng</td><td>Non-planar topology</td><td>Unsupported; không tạo đoạn xiên 3D tự phát</td><td><span class="status warn">P1</span></td></tr>
+            <tr><td>Z07</td><td>Runtime Revit cho Z01/Z02</td><td>Writer/host/shape</td><td>Đúng một Rebar/lane, ordered centerline liên tục, đúng segment/bend count, shape và owner host</td><td><span class="status bad">P0</span></td></tr>
+            <tr><td>WH1</td><td>400×800 → 600×600 + cột</td><td>Đổi cả b và h</td><td>Chỉ nối top lane tương thích; mọi anchor nằm trong envelope</td><td><span class="status bad">P0</span></td></tr>
+            <tr><td>Q01</td><td>3 thanh → 5 thanh</td><td>Đổi số lượng</td><td>Lane mapping ổn định, run mới đúng vùng</td><td><span class="status warn">P1</span></td></tr>
+            <tr><td>D01</td><td>D19 → D22</td><td>Đổi đường kính</td><td>Không nối top cưỡng bức; anchor lấy đúng bar type và required length</td><td><span class="status warn">P1</span></td></tr>
+            <tr><td>M01</td><td>400×800 → 600×600 → 300×700</td><td>Nhiều nút có cột</td><td>Mỗi joint decision độc lập, host từng run đúng</td><td><span class="status warn">P1</span></td></tr>
+            <tr><td>E01</td><td>Top aligned, lệch center Y</td><td>Eccentric section</td><td>Trả Unsupported trong Phase 1, không tự bẻ ngang</td><td><span class="status info">P2</span></td></tr>
+            <tr><td>F01</td><td>Không đủ chiều dài neo thẳng</td><td>Validation failure</td><td>Chặn trước transaction, báo Required/Provided và BeamId</td><td><span class="status warn">P1</span></td></tr>
+            <tr><td>F02</td><td>Cột quá thấp/hẹp cho neo bẻ</td><td>Validation failure</td><td>Chặn trước transaction, báo bend/cover/available length bị thiếu</td><td><span class="status warn">P1</span></td></tr>
+            <tr><td>F03</td><td>Không tìm thấy cột tại nút</td><td>Unsupported topology</td><td>Không tạo thép một phần; nêu rõ joint không được hỗ trợ</td><td><span class="status warn">P1</span></td></tr>
+          </tbody>
+        </table>
+
+        <div class="grid-3">
+          <div class="card">
+            <h3>Geometry evidence</h3>
+            <p>Snapshot station, envelope và bar curve; đo khoảng cách tới bốn mặt.</p>
+          </div>
+          <div class="card">
+            <h3>Revit evidence</h3>
+            <p>Host ID sau commit, ảnh mặt cắt, ảnh 3D và số lượng từng loại Rebar.</p>
+          </div>
+          <div class="card">
+            <h3>Build evidence</h3>
+            <p>Debug R24, R25 và R26; build không thay thế kiểm tra runtime.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="risks">
+        <div class="section-kicker">11 · Risks and controls</div>
+        <h2>Rủi ro cần kiểm soát từ đầu</h2>
+        <table>
+          <thead><tr><th>Rủi ro</th><th>Tác động</th><th>Kiểm soát đề xuất</th></tr></thead>
+          <tbody>
+            <tr><td>Trộn hai policy từ các hình 2D</td><td>Tạo connector, lap hoặc fallback sai bản chất</td><td>Policy 1 mới có hai run đáy độc lập; Policy 2 phải là đúng một continuous run/lane</td></tr>
+            <tr><td>Giả Z bằng ba thanh rời</td><td>Đường nhìn giống đúng nhưng không truyền lực liên tục</td><td>Writer nhận một ordered curve list và nghiệm thu đúng một Rebar, không có gap/coupler</td></tr>
+            <tr><td>Cột không đủ transition window</td><td>Hai bend chồng nhau, đoạn xiên bằng 0 hoặc đường chạy ra ngoài bê tông</td><td>So sánh required/provided window, bend separation và joint containment trước transaction</td></tr>
+            <tr><td>Classifier chọn nhầm policy</td><td>Thanh bị neo rời trong khi thiết kế yêu cầu liên tục, hoặc ngược lại</td><td>Policy là input/decision được duyệt; log geometry evidence và cấm silent fallback</td></tr>
+            <tr><td>Chiều dài neo khả dụng nhỏ hơn yêu cầu</td><td>Thanh không phát triển đủ lực</td><td>So sánh Required/Provided và trả failure có BeamId, ColumnId, giá trị thiếu</td></tr>
+            <tr><td>Shape/bán kính uốn không tương thích</td><td>Revit API từ chối hoặc chi tiết không đạt</td><td>Resolve shape trước transaction; validator kiểm tra bend diameter và tail</td></tr>
+            <tr><td>Nhánh neo hoặc Bent/Z va thép cột/đai nút</td><td>Xung đột thi công dù hình chiếu đúng</td><td>Kiểm tra 3D lane + clearance; log cảnh báo nếu chưa có clash model đầy đủ</td></tr>
+            <tr><td>Main bar host về dầm đầu</td><td>Schedule/metadata và behavior sai</td><td>Mỗi run có explicit <code>HostStrategy</code>/<code>TargetHostElementId</code>; cấm fallback</td></tr>
+            <tr><td>Preset lưu nhầm kích thước model</td><td>Preset dùng sai cho project khác</td><td>Chỉ lưu rule/settings; geometry đọc lại từ Revit</td></tr>
+            <tr><td>Refactor phá case cùng tiết diện</td><td>Regression nghiệp vụ đang dùng</td><td>Baseline R01 và geometry tolerance 1 mm cho output cũ</td></tr>
+            <tr><td>UI hiển thị khác logic runtime</td><td>Người dùng hiểu sai kết quả</td><td>UI đọc cùng policy/run plan; hiển thị ΔZ, entry/exit, bends và host, không tự suy luận</td></tr>
+            <tr><td>Openings nằm sát vùng nút</td><td>Đai thay thế xung đột đoạn neo hoặc đoạn Z</td><td>Chạy opening planner sau joint planner và log conflict</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="done">
+        <div class="section-kicker">12 · Acceptance</div>
+        <h2>Definition of Done</h2>
+        <div class="grid-2">
+          <div>
+            <h3>Chức năng</h3>
+            <ul class="clean-list">
+              <li>Nhận diện đúng dầm, cột, hai mặt nút, bar elevation, <code>ΔZ</code> và transition window</li>
+              <li>Classifier trả rõ Independent, Bent/Z hoặc Unsupported; không silent fallback</li>
+              <li>Thép trên liên tục đúng điều kiện; không nối cưỡng bức khi type/lane không tương thích</li>
+              <li>Policy 1: thép đáy dầm thấp neo thẳng xuyên nút, thép đáy dầm cao neo bẻ đứng</li>
+              <li>Policy 2: mỗi lane ghép được tạo đúng một Rebar liên tục ngang–xiên–ngang với hai bend hợp lệ</li>
+              <li>Policy 2 đi lên/đi xuống là ảnh gương theo <code>ΔZ</code> và không phụ thuộc thứ tự pick</li>
+              <li>Không tồn tại connector giả, ba thanh rời giả Z hoặc gap trong ordered centerline</li>
+              <li>Thép chủ đúng cover trên từng span</li>
+              <li>Đai và thép phụ dùng đúng settings từng span</li>
+              <li>Mỗi Rebar có một owner host/host strategy đã được duyệt và xác nhận sau commit</li>
+              <li>Mỗi anchor/transition có Required/Provided; case không đủ bị chặn trước transaction</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Chất lượng</h3>
+            <ul class="clean-list">
+              <li>Không có logic hình học mới trong ViewModel/XAML</li>
+              <li>Classifier, Independent planner và Bent/Z planner có test thuần</li>
+              <li>Regression cùng tiết diện đạt tolerance</li>
+              <li>Build R24/R25/R26 không có error</li>
+              <li>Log có policy, ΔZ, entry/exit, ordered curves, bend/radius, required/provided và host</li>
+              <li>Có screenshot mặt cắt/3D, centerline/shape/host và đo cover/clearance trong Revit</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>Điểm kỹ thuật đã rõ:</strong> ảnh neo giật cấp dùng <em>Independent Joint Anchorage</em>;
+          ảnh mới dùng <em>Bent/Z Through-Column Transition</em> với một thanh liên tục. Cả hai đều không phải nối chồng.
+          <strong>Điểm còn phải duyệt trước khi code:</strong> chiều dài neo; kiểu crank; góc/bán kính;
+          entry/exit; khoảng thẳng tối thiểu giữa hai bend; lane mapping khi quantity/type khác nhau;
+          clash rule và owner host cho thanh xuyên nhiều cấu kiện.
+        </div>
+
+        <h3>Assumptions</h3>
+        <ul>
+          <li>Fukashi tiếp tục bằng 0 theo yêu cầu hiện tại.</li>
+          <li>Hai dầm thẳng, đồng trục, cùng mặt phẳng và có một cột hợp lệ tại nút.</li>
+          <li>Policy 1 áp dụng cho dầm top-aligned; Policy 2 chỉ áp dụng khi bar elevation offset và transition window hợp lệ.</li>
+          <li>Cover dùng chung toàn workflow, nhưng envelope được tính trên hình học thật của từng dầm và cột.</li>
+          <li>Preset hiện có phải được migrate mà không làm mất dữ liệu.</li>
+          <li><code>35Ø</code>, góc xiên, bend radius và vị trí bend không được hard-code từ ảnh minh họa.</li>
+          <li>Chi tiết hình chỉ mô tả thép dọc chính; side bars, đai nút và va chạm với thép cột cần rule riêng.</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    InstallRebarBeamV2 · Unified Audit, Optimization &amp; Different-Section Report · Standalone offline report
+  </footer>
+</body>
+</html>

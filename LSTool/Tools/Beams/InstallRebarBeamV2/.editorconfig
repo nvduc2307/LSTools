@@ -1,0 +1,13 @@
+# RimT is a pre-nullable codebase. Keep nullable analysis enabled for the rest of
+# LSTools while treating this migrated module with its original null semantics.
+[*.cs]
+dotnet_diagnostic.CS8600.severity = none
+dotnet_diagnostic.CS8601.severity = none
+dotnet_diagnostic.CS8602.severity = none
+dotnet_diagnostic.CS8603.severity = none
+dotnet_diagnostic.CS8604.severity = none
+dotnet_diagnostic.CS8618.severity = none
+dotnet_diagnostic.CS8619.severity = none
+dotnet_diagnostic.CS8620.severity = none
+dotnet_diagnostic.CS8625.severity = none
+dotnet_diagnostic.CS8767.severity = none

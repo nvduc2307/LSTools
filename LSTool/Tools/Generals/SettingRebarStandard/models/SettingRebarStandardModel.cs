@@ -21,7 +21,7 @@
                 LCAction?.Invoke(this);
             }
         }
-        public Action<SettingRebarStandardModelUI> LCAction { get; set; }
+        public Action<SettingRebarStandardModelUI>? LCAction { get; set; }
         [ObservableProperty]
         private double _eC;
         [ObservableProperty]
