@@ -57,6 +57,12 @@
       <Content Include="Resources\Datas\RebarbarTypeData.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
+      <Content Include="Resources\Settings\ReleaseChannel.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <EmbeddedResource Include="Resources\Settings\ReleaseProfile.dat">
+        <LogicalName>LSTool.Resources.Settings.ReleaseProfile.dat</LogicalName>
+      </EmbeddedResource>
       <Content Include="Resources\Templates\ShareParameterConcreteBeam.txt">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
@@ -68,6 +74,7 @@
     <ItemGroup>
         <!-- Revit References -->
         <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+        <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
         <PackageReference Include="Nice3point.Revit.Api.AdWindows" Version="$(RevitVersion).*" />
         <PackageReference Include="Nice3point.Revit.Build.Tasks" Version="3.0.1" />
         <PackageReference Include="Nice3point.Revit.Toolkit" Version="$(RevitVersion).*" />
@@ -80,6 +87,7 @@
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+      <Reference Include="System.Net.Http" />
       <Reference Include="System.Windows.Forms" />
       <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" NoWarn="NU1605" />
     </ItemGroup>

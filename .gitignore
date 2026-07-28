@@ -24,3 +24,10 @@
 /InnoSetup/Content/
 /InnoSetup/bin/
 RevitApp/Properties/launchSettings.json
+
+# License server signing material and local Apps Script credentials
+/.license-private/
+/license-server/google-apps-script/.clasp.json
+
+# Generated customer installers
+/installer/dist/

@@ -1,5 +1,6 @@
 ﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.UI;
+using LSTool.Licensing;
 using LSTool.Utils;
 
 namespace LSTool.Tools.Generals.RebarInfomationParameter
@@ -9,6 +10,11 @@ namespace LSTool.Tools.Generals.RebarInfomationParameter
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
+            if (!LicenseGate.EnsureFeature(
+                    LicenseFeatures.RebarInformation))
+            {
+                return Result.Cancelled;
+            }
 
             var result = Result.Succeeded;
             var uiDocument = commandData.Application.ActiveUIDocument;

@@ -1,5 +1,6 @@
 ﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.UI;
+using LSTool.Licensing;
 using LSTool.Tools.Columns.ColumnRebar.actions;
 using LSTool.Utils;
 
@@ -10,6 +11,10 @@ namespace LSTool.Tools.Columns.ColumnRebar
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
+            if (!LicenseGate.EnsureFeature(LicenseFeatures.ColumnRebar))
+            {
+                return Result.Cancelled;
+            }
 
             var result = Result.Succeeded;
             var uiDocument = commandData.Application.ActiveUIDocument;
