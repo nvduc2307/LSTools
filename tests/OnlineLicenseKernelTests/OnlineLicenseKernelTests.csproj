@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net48;net8.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\LSTool\Licensing\Base64Url.cs"
+             Link="Base64Url.cs" />
+    <Compile Include="..\..\LSTool\Licensing\LeasePublicKey.cs"
+             Link="LeasePublicKey.cs" />
+    <Compile Include="..\..\LSTool\Licensing\OnlineLicenseModels.cs"
+             Link="OnlineLicenseModels.cs" />
+    <Compile Include="..\..\LSTool\Licensing\LeaseVerifier.cs"
+             Link="LeaseVerifier.cs" />
+    <Compile Include="..\..\LSTool\Licensing\BootstrapCredentialProvider.cs"
+             Link="BootstrapCredentialProvider.cs" />
+    <Compile Include="..\..\LSTool\Licensing\LicenseClientStateStore.cs"
+             Link="LicenseClientStateStore.cs" />
+    <Compile Include="..\..\LSTool\Licensing\LicenseServerClient.cs"
+             Link="LicenseServerClient.cs" />
+    <EmbeddedResource Include="..\..\LSTool\Resources\Settings\ReleaseProfile.dat"
+                      LogicalName="LSTool.Resources.Settings.ReleaseProfile.dat" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+</Project>

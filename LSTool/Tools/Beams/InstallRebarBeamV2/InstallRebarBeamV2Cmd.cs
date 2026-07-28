@@ -1,6 +1,7 @@
 ﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using HcBimUtils.DocumentUtils;
+using LSTool.Licensing;
 using LSTool.Utils;
 using Nice3point.Revit.Toolkit.External;
 using LSTool.Tools.Beams.InstallRebarBeamV2.service;
@@ -14,6 +15,12 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2
     {
         public override void Execute()
         {
+            if (!LicenseGate.EnsureFeature(
+                    LicenseFeatures.InstallRebarBeamV2))
+            {
+                return;
+            }
+
             AC.GetInformation(Application.ActiveUIDocument);
             var document = Application.ActiveUIDocument.Document;
             using (var tsg = new TransactionGroup(document, "Install Rebar Beam V2"))
