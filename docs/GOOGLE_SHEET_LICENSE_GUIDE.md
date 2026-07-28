@@ -35,15 +35,18 @@ Sheet chỉ là bảng quản trị riêng của nhà cung cấp và không chia
 rời trong thư mục phát hành. Giá trị hiện tại có thể tạm ghi đè khi kiểm thử bằng biến môi trường
 `LSTOOLS_BOOTSTRAP_CREDENTIAL`.
 
-## Build và phát hành
+## Build bộ cài và phát hành
 
-Sau khi thay `ReleaseProfile.dat`, build các phiên bản Revit cần giao:
+Sau khi thay `ReleaseProfile.dat`, chạy:
 
 ```powershell
-dotnet build .\LSTool\LSTool.csproj -c "Release R24"
-dotnet build .\LSTool\LSTool.csproj -c "Release R25"
-dotnet build .\LSTool\LSTool.csproj -c "Release R26"
+.\installer\build-installer.ps1 `
+  -CustomerName "Tên-khách" `
+  -AppVersion "1.0.0"
 ```
+
+Script tự build Release R24–R26, kiểm tra gói phát hành rồi tạo file `.exe` riêng cho khách trong
+`installer\dist`. Bộ cài tự phát hiện Revit 2024–2026 trên máy khách và chỉ cài add-in tương ứng.
 
 Endpoint server nằm trong:
 
