@@ -4,12 +4,13 @@
 
 - Khách hàng không thấy nút License, hộp nhập key, mã thiết bị hay thông tin Google Sheet.
 - Mỗi khách nhận một bộ cài riêng. Bộ cài chứa một mã kích hoạt đóng gói nội bộ.
-- Lần chạy đầu tiên, LSTools tự kích hoạt ngầm và gắn quyền sử dụng với máy đó.
+- Mỗi license có cột `MaxDevices`; cùng một bộ cài có thể kích hoạt trên số máy tối đa đã đặt.
+- Lần chạy đầu tiên trên mỗi máy, LSTools tự kích hoạt ngầm và ghi máy vào sheet `Activations`.
 - Server trả về một credential riêng cho máy; credential được Windows DPAPI mã hóa tại
   `%LocalAppData%\LSTools\runtime-state.dat`.
 - Gỡ rồi cài lại trên cùng máy không làm thời hạn bắt đầu lại. Nếu file cục bộ bị xóa,
-  LSTools chỉ xin cấp lại credential cho đúng máy đã bind và ngày hết hạn vẫn giữ nguyên.
-- Cài bộ đó trên máy khác sẽ bị từ chối cho tới khi quản trị viên reset thiết bị trong Sheet.
+  LSTools chỉ xin cấp lại credential cho activation của đúng máy và ngày hết hạn vẫn giữ nguyên.
+- Máy mới được chấp nhận khi số activation trạng thái `Active` còn nhỏ hơn `MaxDevices`.
 - Mỗi lần xác nhận online, Apps Script cấp lease ký RSA có hiệu lực tối đa 72 giờ. Trong khoảng
   này phần mềm có thể tiếp tục dùng khi mất mạng.
 
@@ -20,7 +21,7 @@ Sheet chỉ là bảng quản trị riêng của nhà cung cấp và không chia
 
 1. Mở Google Sheet quản trị.
 2. Chọn menu **LSTools License > Tạo mã đóng gói mới**.
-3. Nhập tên khách hàng, số ngày sử dụng, danh sách tính năng và ghi chú.
+3. Nhập tên khách hàng, số ngày sử dụng, số máy tối đa, danh sách tính năng và ghi chú.
 4. Hộp thoại trả về một chuỗi Base64. Đây là mã dùng để build bộ cài, không gửi chuỗi này cho
    khách hàng.
 5. Ghi nguyên chuỗi Base64 vào:
@@ -67,15 +68,28 @@ Trước khi giao, kiểm tra:
 
 ## Quản lý khách hàng
 
-- **Đổi máy:** chọn dòng tương ứng rồi dùng
-  **LSTools License > Reset máy của dòng đang chọn**. Sau đó khách mở LSTools trên máy mới để
-  phần mềm tự bind lại.
+- **Đặt số máy:** chọn dòng trong `Licenses`, rồi dùng
+  **LSTools License > Đặt số máy tối đa**. Có thể sửa trực tiếp cột `MaxDevices`, giá trị hợp lệ
+  từ 1 đến 100.
+- **Xem máy:** chọn dòng trong `Licenses`, rồi dùng
+  **Xem máy của license đang chọn** để chuyển tới sheet `Activations`.
+- **Thu hồi một máy:** chọn dòng tương ứng trong `Activations`, rồi dùng
+  **Thu hồi máy đang chọn**. Activation chuyển thành `Revoked` và không còn chiếm chỗ.
+- **Mở lại một máy:** chọn dòng `Revoked` trong `Activations`, rồi dùng
+  **Mở lại máy đang chọn**. Thao tác bị từ chối nếu license đã đủ số máy.
+- **Thu hồi toàn bộ máy:** chọn license rồi dùng
+  **Thu hồi toàn bộ máy của license**. Dùng khi cần chuyển toàn bộ quyền sang nhóm máy mới.
 - **Khóa:** chọn dòng rồi dùng **Khóa dòng đang chọn**.
 - **Mở lại:** chọn dòng rồi dùng **Mở lại dòng đang chọn**.
 - **Gia hạn:** sửa `ExpiresUtc` thành thời điểm UTC mới. Không tạo lại mã đóng gói và không cần
   gửi lại bộ cài nếu khách vẫn dùng đúng máy.
 - **Giới hạn tính năng:** cột `Features` dùng tên tính năng, phân cách bằng dấu phẩy; `*` cho phép
   toàn bộ.
+
+Các license cũ được tự động đặt `MaxDevices = 1`; `DeviceHash` cũ được chuyển thành một dòng
+`Active` trong `Activations`. Cột `DeviceHash` trong `Licenses` chỉ được giữ để tương thích và
+xem nhanh máy đầu tiên. Giảm `MaxDevices` không tự thu hồi các máy đang hoạt động; hãy thu hồi
+từng dòng trong `Activations` nếu cần.
 
 Khóa hoặc thay đổi thời hạn có hiệu lực ở lần kiểm tra online tiếp theo, hoặc muộn nhất khi lease
 72 giờ đã lưu trên máy hết hạn.
@@ -98,7 +112,15 @@ Mã nguồn server:
 - `license-server\google-apps-script\appsscript.json`
 
 Sau mỗi lần sửa `Code.gs`, lưu project rồi cập nhật deployment đang dùng bằng một **phiên bản
-mới**. Giữ nguyên deployment ID để URL `/exec` trong `ReleaseChannel.json` không thay đổi.
+mới**. Giữ nguyên deployment ID để URL `/exec` trong `ReleaseChannel.json` không thay đổi. Sau
+khi triển khai phiên bản có thay đổi cấu trúc dữ liệu, chạy `setupLicenseSheet()` một lần để bổ
+sung cột và sheet mới.
+
+Kiểm tra logic giới hạn máy tại local:
+
+```powershell
+node .\tests\GoogleAppsScriptLicenseKernelTests\run-tests.js
+```
 
 ## Lưu ý bảo mật và vận hành
 
