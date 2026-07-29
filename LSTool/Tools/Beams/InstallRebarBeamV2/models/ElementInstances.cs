@@ -62,6 +62,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
         public RebarBeamDantory RebarBeamDantory { get; set; }
         public Action RebarBeamActiveChange { get; set; }
         public BeamFukashi BeamFukashi { get; set; }
+        private bool _coordinateBeamGenerated;
         public CoverBeam CoverBeam { get; set; }
         public BeamStressRuleType BeamStressRuleType { get; set; }
         public RebarExtend RebarExtend { get; set; }
@@ -270,6 +271,88 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 CopySectionSettings(target.RebarBeamSectionEnd, source.RebarBeamSectionEnd);
             }
         }
+
+        public void CopyInstallationSettingsFrom(ElementInstances source)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+            if (source.RebarBeams == null || source.RebarBeams.Count == 0)
+                throw new InvalidOperationException(
+                    "The source beam run has no reinforcement settings.");
+            if (RebarBeams == null || RebarBeams.Count == 0)
+                throw new InvalidOperationException(
+                    "The target beam run has no spans.");
+
+            DistanceRebarToRebarMm = source.DistanceRebarToRebarMm;
+            CoverMm = source.CoverMm;
+            IsRebarBeamStirrupSame = source.IsRebarBeamStirrupSame;
+            CoverBeam = new CoverBeam
+            {
+                TopCover = source.CoverBeam.TopCover,
+                BottomCover = source.CoverBeam.BottomCover,
+                RightCover = source.CoverBeam.RightCover,
+                LeftCover = source.CoverBeam.LeftCover
+            };
+            BeamStressRuleType = new BeamStressRuleType
+            {
+                StressStart = source.BeamStressRuleType.StressStart,
+                StressMid = source.BeamStressRuleType.StressMid,
+                StressEnd = source.BeamStressRuleType.StressEnd
+            };
+            RebarExtend = new RebarExtend
+            {
+                RebarTopExtend = source.RebarExtend.RebarTopExtend,
+                RebarBotExtend = source.RebarExtend.RebarBotExtend
+            };
+            RebarBeamAnchor = CopyAnchor(source.RebarBeamAnchor);
+            RebarBeamAnchorType = RebarBeamAnchorTypes.FirstOrDefault(
+                    option => option.Id == source.RebarBeamAnchorType?.Id)
+                ?? RebarBeamAnchorTypes.FirstOrDefault();
+            RebarBeamDantory = CopyDantory(source.RebarBeamDantory);
+
+            for (var index = 0; index < RebarBeams.Count; index++)
+            {
+                var sourceIndex = Math.Min(
+                    index,
+                    source.RebarBeams.Count - 1);
+                CopySpanSettings(
+                    RebarBeams[index],
+                    source.RebarBeams[sourceIndex]);
+            }
+
+            RebarBeamActive = RebarBeams.First();
+        }
+
+        private static void CopySpanSettings(
+            RebarBeam target,
+            RebarBeam source)
+        {
+            if (target == null || source == null)
+                throw new InvalidOperationException(
+                    "The source or target span is unavailable.");
+
+            RebarBeam.ResetActionChange(target);
+            target.NameType = source.NameType;
+            target.MainStirrupType1 = source.MainStirrupType1;
+            target.MainStirrupType2 = source.MainStirrupType2;
+            target.MainStirrupType3 = source.MainStirrupType3;
+            target.EnsureMainStirrupShapeSelected();
+            target.MainStirrupTypeHat = source.MainStirrupTypeHat;
+            target.HorizontalDaiPhu = source.HorizontalDaiPhu;
+            target.VerticalDaiPhu = source.VerticalDaiPhu;
+            target.QuantityStirrupSupportHole =
+                source.QuantityStirrupSupportHole;
+            CopySectionSettings(
+                target.RebarBeamSectionStart,
+                source.RebarBeamSectionStart);
+            CopySectionSettings(
+                target.RebarBeamSectionMid,
+                source.RebarBeamSectionMid);
+            CopySectionSettings(
+                target.RebarBeamSectionEnd,
+                source.RebarBeamSectionEnd);
+        }
+
         private void GetDiameterRebarBeam()
         {
             var schema = new RebarBarTypeSchema(RebarBarTypeSchema.GUID, RebarBarTypeSchema.NAME);
@@ -638,6 +721,15 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             }
             return new List<RebarBeam>();
         }
+
+        public void EnsureCoordinateBeamGenerated()
+        {
+            if (_coordinateBeamGenerated) return;
+
+            GenerateCoordinateBeam();
+            _coordinateBeamGenerated = true;
+        }
+
         public void GenerateCoordinateBeam()
         {
             try
@@ -672,6 +764,54 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 throw new InvalidOperationException(
                     "Failed to generate the coordinate system for the selected beam run.", ex);
             }
+        }
+
+        private static RebarBeamAnchor CopyAnchor(
+            RebarBeamAnchor source)
+        {
+            if (source == null)
+                throw new InvalidOperationException(
+                    "The source anchorage settings are unavailable.");
+
+            return new RebarBeamAnchor
+            {
+                Type1_L1_X_Start = source.Type1_L1_X_Start,
+                Type1_L1_X_End = source.Type1_L1_X_End,
+                Type1_L3_X_Start = source.Type1_L3_X_Start,
+                Type1_L3_X_End = source.Type1_L3_X_End,
+                Type2_L1_X_Start = source.Type2_L1_X_Start,
+                Type2_L1_X_End = source.Type2_L1_X_End,
+                Type2_L3_X_Start = source.Type2_L3_X_Start,
+                Type2_L3_X_End = source.Type2_L3_X_End,
+                Type1_L1_Y_Start = source.Type1_L1_Y_Start,
+                Type1_L1_Y_End = source.Type1_L1_Y_End,
+                Type1_L3_Y_Start = source.Type1_L3_Y_Start,
+                Type1_L3_Y_End = source.Type1_L3_Y_End,
+                Type2_L1_Y_Start = source.Type2_L1_Y_Start,
+                Type2_L1_Y_End = source.Type2_L1_Y_End,
+                Type2_L3_Y_Start = source.Type2_L3_Y_Start,
+                Type2_L3_Y_End = source.Type2_L3_Y_End
+            };
+        }
+
+        private static RebarBeamDantory CopyDantory(
+            RebarBeamDantory source)
+        {
+            if (source == null)
+                throw new InvalidOperationException(
+                    "The source auxiliary-bar settings are unavailable.");
+
+            return new RebarBeamDantory
+            {
+                Diameter = source.Diameter,
+                Quantity = source.Quantity,
+                QtyInstall = source.QtyInstall,
+                RebarBeamType = source.RebarBeamType,
+                HasHorizontalHook = source.HasHorizontalHook,
+                Hooks2 = source.Hooks2 == null
+                    ? null
+                    : new Dictionary<int, bool>(source.Hooks2)
+            };
         }
 
         private static void CopySectionSettings(

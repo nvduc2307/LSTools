@@ -72,7 +72,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
         {
 
             _previewRefreshCoordinator.CancelPending();
-            ElementInstances.GenerateCoordinateBeam();
+            ElementInstances.EnsureCoordinateBeamGenerated();
             CanvasPageSectionStart = new CanvasPageBase(SettingRebarSectionView.FindName("CanvasSectionStart") as Canvas);
             CanvasPageSectionMid = new CanvasPageBase(SettingRebarSectionView.FindName("CanvasSectionMid") as Canvas);
             CanvasPageSectionEnd = new CanvasPageBase(SettingRebarSectionView.FindName("CanvasSectionEnd") as Canvas);

@@ -261,6 +261,18 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
 
                     //biến đổi lại box cua mid segment
 
+                    if (lastPositionStartSegment == null
+                        || lastPositionEndSegment == null)
+                    {
+                        throw new InvalidOperationException(
+                            $"Horizontal secondary stirrups for side bars "
+                            + $"in beam {subBeam.Id} require both start and "
+                            + "end hook references; "
+                            + $"start candidates: {stirrupStartSegment.Count}, "
+                            + $"end candidates: {stirrupEndSegment.Count}, "
+                            + $"mid candidates: {stirrupMidSegment.Count}.");
+                    }
+
                     var startPlane = BPlane.CreateByNormalAndOrigin(vectorX,
                         lastPositionStartSegment.Item1.Transform.OfPoint(lastPositionStartSegment.Item1.Left));
                     var endPlane = BPlane.CreateByNormalAndOrigin(vectorX,

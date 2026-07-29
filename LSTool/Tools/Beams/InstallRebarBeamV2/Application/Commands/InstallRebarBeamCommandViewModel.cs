@@ -40,10 +40,12 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
         [RelayCommand]
         private void OK()
         {
+            InstallationCompleted = false;
             RebarDiagnosticLog diagnosticLog = null;
             try
             {
                 _previewRefreshCoordinator.CancelPending();
+                ElementInstances.EnsureCoordinateBeamGenerated();
                 diagnosticLog = RebarDiagnosticLog.Start(this);
                 DiagnosticLog = diagnosticLog;
                 diagnosticLog.Record("command.ok.requested", new
@@ -407,7 +409,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                 {
                     logPath = diagnosticLog.FilePath
                 });
-                MainView.Close();
+                InstallationCompleted = true;
+                if (MainView.IsVisible)
+                    MainView.Close();
             }
             catch (Exception ex)
             {
