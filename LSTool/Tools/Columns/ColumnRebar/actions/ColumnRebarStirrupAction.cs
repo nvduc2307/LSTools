@@ -37,11 +37,13 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             using (var ts = new SubTransaction(_document))
             {
                 ts.Start();
-                var count = ccRInfos.Count;
-                foreach (var ccRInfo in ccRInfos)
+                foreach (var columnStack in ColumnRebarStackGrouping.Group(ccRInfos))
                 {
-                    var index = ccRInfos.IndexOf(ccRInfo);
-                    InstallStirrupMain(ccRInfo, index == 0 || index == count - 1 ? false : true);
+                    for (var index = 0; index < columnStack.Count; index++)
+                    {
+                        var hasBeamZone = index > 0 && index < columnStack.Count - 1;
+                        InstallStirrupMain(columnStack[index], hasBeamZone);
+                    }
                 }
                 ts.Commit();
             }
@@ -51,11 +53,13 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             using (var ts = new SubTransaction(_document))
             {
                 ts.Start();
-                var count = ccRInfos.Count;
-                foreach (var ccRInfo in ccRInfos)
+                foreach (var columnStack in ColumnRebarStackGrouping.Group(ccRInfos))
                 {
-                    var index = ccRInfos.IndexOf(ccRInfo);
-                    InstallStirrupSub(ccRInfo, index == 0 || index == count - 1 ? false : true);
+                    for (var index = 0; index < columnStack.Count; index++)
+                    {
+                        var hasBeamZone = index > 0 && index < columnStack.Count - 1;
+                        InstallStirrupSub(columnStack[index], hasBeamZone);
+                    }
                 }
                 ts.Commit();
             }
