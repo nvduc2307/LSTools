@@ -34,10 +34,6 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             _cover = standard.CoverC;
             var results = new List<ColumnConcreteModel>();
             if (!columns.Any()) return results;
-            var fTransf = columns.FirstOrDefault().GetTransform();
-            var vtx = fTransf.BasisX;
-            var vtz = fTransf.BasisZ;
-            var vty = vtx.CrossProduct(vtz);
             var diameters = new FilteredElementCollector(_document)
                 .WhereElementIsElementType()
                 .OfClass(typeof(RebarBarType))
@@ -50,6 +46,10 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             {
                 try
                 {
+                    var transform = cl.GetTransform();
+                    var vtx = transform.BasisX;
+                    var vtz = transform.BasisZ;
+                    var vty = vtx.CrossProduct(vtz);
                     var index = columns.IndexOf(cl) + 1;
                     var ccM = new ColumnConcreteModel
                     {
@@ -441,8 +441,6 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         }
         private List<FamilyInstance> ValidateColumns(List<Element> elements)
         {
-            var result = new List<FamilyInstance>();
-            var toole = 300;
             if (elements == null)
                 throw new Exception("Element is not found");
             if (!elements.Any())
@@ -450,33 +448,14 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             if (elements.Any(x => x is not FamilyInstance))
                 throw new Exception("Element is not found");
             var columns = elements
-                .Select(x => x as FamilyInstance)
-                .Where(x => x != null)
+                .Cast<FamilyInstance>()
                 .ToList();
-            if (columns == null) throw new Exception("Element is not found");
-            //validate direction
-            var bf = columns.FirstOrDefault();
-            var transfbf = bf?.GetTransform();
-            var dirbf = XYZ.BasisZ;
-            var fAlong = Plane.CreateByNormalAndOrigin(transfbf?.BasisY, transfbf?.Origin);
-            foreach (var b in columns)
+            foreach (var column in columns)
             {
-                if (b.Id.ToString() == bf.Id.ToString()) continue;
-                var transf = b?.GetTransform();
-                var dir = transf?.BasisZ;
-                if (!dir.IsParallel(dirbf))
-                    throw new Exception("Các cột không cùng hướng với nhau");
-                var distance = transf.Origin
-                    .RayIntersectPlane(fAlong.Normal, fAlong)
-                    .DistanceTo(transf.Origin)
-                    .ToMillimeters();
-                if (distance > toole)
-                    throw new Exception($"Các cột lệch nhau quá {toole}");
+                if (!column.GetTransform().BasisZ.IsParallel(XYZ.BasisZ))
+                    throw new Exception("Tool chỉ hỗ trợ cột đứng");
             }
-            result = columns
-                .OrderBy(x => x.GetSingleSolid().GetCenter().DotProduct(dirbf))
-                .ToList();
-            return result;
+            return columns;
         }
     }
 }
