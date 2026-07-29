@@ -1,6 +1,10 @@
 const LICENSE_SHEET_NAME = 'Licenses';
+const ACTIVATION_SHEET_NAME = 'Activations';
 const LICENSE_PRODUCT = 'LSTools';
 const LEASE_HOURS = 72;
+const DEFAULT_MAX_DEVICES = 1;
+const MAX_DEVICE_LIMIT = 100;
+const STORAGE_SCHEMA_VERSION = '2';
 
 const LICENSE_HEADERS = [
   'LicenseId',
@@ -14,13 +18,23 @@ const LICENSE_HEADERS = [
   'ActivatedUtc',
   'LastCheckUtc',
   'CreatedUtc',
+  'Notes',
+  'MaxDevices'
+];
+
+const ACTIVATION_HEADERS = [
+  'LicenseId',
+  'DeviceHash',
+  'Status',
+  'ActivatedUtc',
+  'LastCheckUtc',
+  'RevokedUtc',
   'Notes'
 ];
 
 function doGet() {
   try {
-    const sheet = getLicenseSheet_();
-    getHeaderMap_(sheet);
+    ensureLicenseStorageReady_();
     const privateKey = PropertiesService.getScriptProperties()
       .getProperty('LSTOOLS_PRIVATE_KEY');
     if (!privateKey) {
@@ -94,8 +108,14 @@ function doPost(e) {
 }
 
 function processLicenseRequest_(action, credential, deviceHash) {
+  ensureLicenseStorageReady_();
   const sheet = getLicenseSheet_();
-  const headers = getHeaderMap_(sheet);
+  const headers = getHeaderMap_(sheet, LICENSE_HEADERS);
+  const activationSheet = getActivationSheet_();
+  const activationHeaders = getHeaderMap_(
+    activationSheet,
+    ACTIVATION_HEADERS
+  );
   let row = 0;
 
   if (action === 'activate') {
@@ -140,26 +160,63 @@ function processLicenseRequest_(action, credential, deviceHash) {
     return jsonResponse_(false, 'EXPIRED', 'License đã hết hạn.');
   }
 
-  if (!record.deviceHash) {
-    if (action !== 'activate') {
-      return jsonResponse_(
-        false,
-        'NOT_ACTIVATED',
-        'License chưa được kích hoạt trên thiết bị này.'
-      );
-    }
+  let activationRow = findActivationRow_(
+    activationSheet,
+    activationHeaders,
+    record.licenseId,
+    deviceHash
+  );
+  const activation = activationRow > 0
+    ? readActivationRecord_(
+        activationSheet,
+        activationHeaders,
+        activationRow
+      )
+    : null;
+  const decision = getActivationDecision_(
+    action,
+    activation ? activation.status : '',
+    countActiveActivations_(
+      activationSheet,
+      activationHeaders,
+      record.licenseId
+    ),
+    record.maxDevices
+  );
 
-    sheet.getRange(row, headers.DeviceHash).setValue(deviceHash);
-    sheet.getRange(row, headers.ActivatedUtc).setValue(now);
-    record.deviceHash = deviceHash;
-  } else if (record.deviceHash !== deviceHash) {
+  if (!decision.allowed) {
     return jsonResponse_(
       false,
-      'DEVICE_MISMATCH',
-      'License đã được kích hoạt trên một máy tính khác.'
+      decision.code,
+      decision.message
     );
   }
 
+  if (decision.createActivation) {
+    activationRow = appendRowByHeaders_(
+      activationSheet,
+      activationHeaders,
+      {
+        LicenseId: record.licenseId,
+        DeviceHash: deviceHash,
+        Status: 'Active',
+        ActivatedUtc: now,
+        LastCheckUtc: now,
+        RevokedUtc: '',
+        Notes: ''
+      }
+    );
+
+    if (!record.deviceHash) {
+      sheet.getRange(row, headers.DeviceHash).setValue(deviceHash);
+      sheet.getRange(row, headers.ActivatedUtc).setValue(now);
+      record.deviceHash = deviceHash;
+    }
+  }
+
+  activationSheet
+    .getRange(activationRow, activationHeaders.LastCheckUtc)
+    .setValue(now);
   sheet.getRange(row, headers.LastCheckUtc).setValue(now);
   SpreadsheetApp.flush();
 
@@ -176,6 +233,57 @@ function processLicenseRequest_(action, credential, deviceHash) {
     lease,
     clientCredential
   );
+}
+
+function getActivationDecision_(
+  action,
+  activationStatus,
+  activeCount,
+  maxDevices
+) {
+  const status = String(activationStatus || '').trim().toUpperCase();
+  if (status === 'ACTIVE') {
+    return {
+      allowed: true,
+      createActivation: false,
+      code: 'OK',
+      message: ''
+    };
+  }
+
+  if (status) {
+    return {
+      allowed: false,
+      createActivation: false,
+      code: 'DEVICE_REVOKED',
+      message: 'Thiết bị này đã bị thu hồi quyền sử dụng.'
+    };
+  }
+
+  if (action !== 'activate') {
+    return {
+      allowed: false,
+      createActivation: false,
+      code: 'NOT_ACTIVATED',
+      message: 'Thiết bị chưa được kích hoạt.'
+    };
+  }
+
+  if (Number(activeCount) >= normalizeMaxDevices_(maxDevices)) {
+    return {
+      allowed: false,
+      createActivation: false,
+      code: 'DEVICE_LIMIT_REACHED',
+      message: 'License đã đạt giới hạn số thiết bị.'
+    };
+  }
+
+  return {
+    allowed: true,
+    createActivation: true,
+    code: 'OK',
+    message: ''
+  };
 }
 
 function createClientCredential_(licenseId, deviceHash) {
@@ -319,31 +427,227 @@ function normalizePrivateKey_(value) {
 }
 
 function setupLicenseSheet() {
+  ensureLicenseStorage_();
+  const licenseSheet = getLicenseSheet_();
+  const activationSheet = getActivationSheet_();
+  formatLicenseSheets_(
+    licenseSheet,
+    getHeaderMap_(licenseSheet, LICENSE_HEADERS),
+    activationSheet,
+    getHeaderMap_(activationSheet, ACTIVATION_HEADERS)
+  );
+  return 'READY';
+}
+
+function ensureLicenseStorageReady_() {
+  const properties = PropertiesService.getScriptProperties();
+  if (properties.getProperty('LSTOOLS_STORAGE_VERSION') !==
+      STORAGE_SCHEMA_VERSION) {
+    ensureLicenseStorage_();
+  }
+}
+
+function ensureLicenseStorage_() {
   const spreadsheet = getSpreadsheet_();
   spreadsheet.setSpreadsheetTimeZone('UTC');
-  let sheet = spreadsheet.getSheetByName(LICENSE_SHEET_NAME);
+  const licenseSheet = ensureSheet_(
+    spreadsheet,
+    LICENSE_SHEET_NAME,
+    LICENSE_HEADERS
+  );
+  const activationSheet = ensureSheet_(
+    spreadsheet,
+    ACTIVATION_SHEET_NAME,
+    ACTIVATION_HEADERS
+  );
+  const licenseHeaders = getHeaderMap_(licenseSheet, LICENSE_HEADERS);
+  const activationHeaders = getHeaderMap_(
+    activationSheet,
+    ACTIVATION_HEADERS
+  );
+
+  initializeMaxDevices_(licenseSheet, licenseHeaders);
+  migrateLegacyActivations_(
+    licenseSheet,
+    licenseHeaders,
+    activationSheet,
+    activationHeaders
+  );
+  PropertiesService.getScriptProperties().setProperty(
+    'LSTOOLS_STORAGE_VERSION',
+    STORAGE_SCHEMA_VERSION
+  );
+}
+
+function ensureSheet_(spreadsheet, name, requiredHeaders) {
+  let sheet = spreadsheet.getSheetByName(name);
   if (!sheet) {
-    sheet = spreadsheet.insertSheet(LICENSE_SHEET_NAME);
+    sheet = spreadsheet.insertSheet(name);
   }
 
   if (sheet.getLastRow() === 0) {
-    sheet.getRange(1, 1, 1, LICENSE_HEADERS.length).setValues([LICENSE_HEADERS]);
-  } else {
-    const current = sheet
-      .getRange(1, 1, 1, LICENSE_HEADERS.length)
-      .getDisplayValues()[0];
-    if (current.join('|') !== LICENSE_HEADERS.join('|')) {
-      throw new Error(
-        'Hàng tiêu đề không đúng. Hãy dùng đúng thứ tự trong LICENSE_HEADERS.'
-      );
-    }
+    sheet
+      .getRange(1, 1, 1, requiredHeaders.length)
+      .setValues([requiredHeaders]);
+    return sheet;
   }
 
-  sheet.setFrozenRows(1);
-  sheet.getRange('F:F').setNumberFormat('yyyy-mm-dd hh:mm:ss');
-  sheet.getRange('I:K').setNumberFormat('yyyy-mm-dd hh:mm:ss');
-  sheet.autoResizeColumns(1, LICENSE_HEADERS.length);
-  return 'READY';
+  const current = sheet
+    .getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1))
+    .getDisplayValues()[0]
+    .map(function (value) {
+      return String(value || '').trim();
+    });
+  requiredHeaders.forEach(function (header) {
+    if (current.indexOf(header) < 0) {
+      current.push(header);
+      sheet.getRange(1, current.length).setValue(header);
+    }
+  });
+  return sheet;
+}
+
+function initializeMaxDevices_(sheet, headers) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return;
+  }
+
+  const range = sheet.getRange(
+    2,
+    headers.MaxDevices,
+    lastRow - 1,
+    1
+  );
+  const values = range.getValues();
+  let changed = false;
+  values.forEach(function (row) {
+    const normalized = normalizeMaxDevices_(row[0]);
+    if (Number(row[0]) !== normalized) {
+      row[0] = normalized;
+      changed = true;
+    }
+  });
+  if (changed) {
+    range.setValues(values);
+  }
+}
+
+function migrateLegacyActivations_(
+  licenseSheet,
+  licenseHeaders,
+  activationSheet,
+  activationHeaders
+) {
+  const licenseLastRow = licenseSheet.getLastRow();
+  if (licenseLastRow < 2) {
+    return;
+  }
+
+  const existingKeys = {};
+  const activationLastRow = activationSheet.getLastRow();
+  if (activationLastRow >= 2) {
+    const activationValues = activationSheet
+      .getRange(
+        2,
+        1,
+        activationLastRow - 1,
+        activationSheet.getLastColumn()
+      )
+      .getValues();
+    activationValues.forEach(function (row) {
+      const licenseId = String(
+        row[activationHeaders.LicenseId - 1] || ''
+      ).trim();
+      const deviceHash = normalizeDeviceHash_(
+        row[activationHeaders.DeviceHash - 1]
+      );
+      if (licenseId && deviceHash) {
+        existingKeys[activationKey_(licenseId, deviceHash)] = true;
+      }
+    });
+  }
+
+  const licenseValues = licenseSheet
+    .getRange(
+      2,
+      1,
+      licenseLastRow - 1,
+      licenseSheet.getLastColumn()
+    )
+    .getValues();
+  const rowsToAppend = [];
+  licenseValues.forEach(function (row) {
+    const licenseId = String(
+      row[licenseHeaders.LicenseId - 1] || ''
+    ).trim();
+    const deviceHash = normalizeDeviceHash_(
+      row[licenseHeaders.DeviceHash - 1]
+    );
+    const key = activationKey_(licenseId, deviceHash);
+    if (!licenseId || !deviceHash || existingKeys[key]) {
+      return;
+    }
+
+    const activatedUtc =
+      parseDate_(row[licenseHeaders.ActivatedUtc - 1]) ||
+      parseDate_(row[licenseHeaders.CreatedUtc - 1]) ||
+      new Date();
+    const lastCheckUtc =
+      parseDate_(row[licenseHeaders.LastCheckUtc - 1]) ||
+      activatedUtc;
+    rowsToAppend.push([
+      licenseId,
+      deviceHash,
+      'Active',
+      activatedUtc,
+      lastCheckUtc,
+      '',
+      'Migrated from Licenses.DeviceHash'
+    ]);
+    existingKeys[key] = true;
+  });
+
+  if (rowsToAppend.length > 0) {
+    activationSheet
+      .getRange(
+        activationSheet.getLastRow() + 1,
+        1,
+        rowsToAppend.length,
+        ACTIVATION_HEADERS.length
+      )
+      .setValues(rowsToAppend);
+  }
+}
+
+function formatLicenseSheets_(
+  licenseSheet,
+  licenseHeaders,
+  activationSheet,
+  activationHeaders
+) {
+  licenseSheet.setFrozenRows(1);
+  activationSheet.setFrozenRows(1);
+  [
+    licenseHeaders.ExpiresUtc,
+    licenseHeaders.ActivatedUtc,
+    licenseHeaders.LastCheckUtc,
+    licenseHeaders.CreatedUtc
+  ].forEach(function (column) {
+    licenseSheet.getRange(2, column, licenseSheet.getMaxRows() - 1, 1)
+      .setNumberFormat('yyyy-mm-dd hh:mm:ss');
+  });
+  [
+    activationHeaders.ActivatedUtc,
+    activationHeaders.LastCheckUtc,
+    activationHeaders.RevokedUtc
+  ].forEach(function (column) {
+    activationSheet
+      .getRange(2, column, activationSheet.getMaxRows() - 1, 1)
+      .setNumberFormat('yyyy-mm-dd hh:mm:ss');
+  });
+  licenseSheet.autoResizeColumns(1, licenseSheet.getLastColumn());
+  activationSheet.autoResizeColumns(1, activationSheet.getLastColumn());
 }
 
 function createTrialLicense() {
@@ -378,6 +682,25 @@ function createTrialLicense() {
     return;
   }
 
+  const maxDevicesPrompt = ui.prompt(
+    'Số máy',
+    'Số máy tối đa cho license này (1-' + MAX_DEVICE_LIMIT + '):',
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (maxDevicesPrompt.getSelectedButton() !== ui.Button.OK) {
+    return;
+  }
+
+  const maxDevices = Number(maxDevicesPrompt.getResponseText());
+  if (!Number.isInteger(maxDevices) ||
+      maxDevices < 1 ||
+      maxDevices > MAX_DEVICE_LIMIT) {
+    ui.alert(
+      'Số máy phải là số nguyên từ 1 đến ' + MAX_DEVICE_LIMIT + '.'
+    );
+    return;
+  }
+
   const featuresPrompt = ui.prompt(
     'Tính năng',
     'Danh sách tính năng, cách nhau bằng dấu phẩy. Nhập * để mở toàn bộ:',
@@ -397,8 +720,9 @@ function createTrialLicense() {
     return;
   }
 
+  ensureLicenseStorage_();
   const sheet = getLicenseSheet_();
-  const headers = getHeaderMap_(sheet);
+  const headers = getHeaderMap_(sheet, LICENSE_HEADERS);
   let licenseKey;
   let keyHash;
   do {
@@ -414,20 +738,25 @@ function createTrialLicense() {
     '-' +
     Utilities.getUuid().replace(/-/g, '').slice(0, 8).toUpperCase();
 
-  sheet.appendRow([
-    licenseId,
-    keyHash,
-    customer,
-    LICENSE_PRODUCT,
-    '',
-    expiresUtc,
-    'Active',
-    features,
-    '',
-    '',
-    now,
-    notesPrompt.getResponseText().trim()
-  ]);
+  appendRowByHeaders_(
+    sheet,
+    headers,
+    {
+      LicenseId: licenseId,
+      LicenseKeyHash: keyHash,
+      Customer: customer,
+      Product: LICENSE_PRODUCT,
+      DeviceHash: '',
+      ExpiresUtc: expiresUtc,
+      Status: 'Active',
+      Features: features,
+      ActivatedUtc: '',
+      LastCheckUtc: '',
+      CreatedUtc: now,
+      Notes: notesPrompt.getResponseText().trim(),
+      MaxDevices: maxDevices
+    }
+  );
 
   ui.alert(
     'Mã đóng gói đã tạo',
@@ -438,19 +767,213 @@ function createTrialLicense() {
         Utilities.Charset.UTF_8
       ) +
       '\n\nHết hạn UTC: ' +
-      expiresUtc.toISOString(),
+      expiresUtc.toISOString() +
+      '\nSố máy tối đa: ' +
+      maxDevices,
     ui.ButtonSet.OK
   );
 }
 
 function resetSelectedDevice() {
   const context = getSelectedLicenseRow_();
+  const ui = SpreadsheetApp.getUi();
+  const confirmation = ui.alert(
+    'Thu hồi toàn bộ máy',
+    'Tất cả máy đang hoạt động của license này sẽ bị thu hồi. Tiếp tục?',
+    ui.ButtonSet.YES_NO
+  );
+  if (confirmation !== ui.Button.YES) {
+    return;
+  }
+
+  const record = readLicenseRecord_(
+    context.sheet,
+    context.headers,
+    context.row
+  );
+  const activationSheet = getActivationSheet_();
+  const activationHeaders = getHeaderMap_(
+    activationSheet,
+    ACTIVATION_HEADERS
+  );
+  const now = new Date();
+  const lastRow = activationSheet.getLastRow();
+  let revokedCount = 0;
+  if (lastRow >= 2) {
+    const values = activationSheet
+      .getRange(
+        2,
+        1,
+        lastRow - 1,
+        activationSheet.getLastColumn()
+      )
+      .getValues();
+    values.forEach(function (row, index) {
+      const licenseId = String(
+        row[activationHeaders.LicenseId - 1] || ''
+      ).trim();
+      const status = String(
+        row[activationHeaders.Status - 1] || ''
+      ).trim().toUpperCase();
+      if (licenseId === record.licenseId && status === 'ACTIVE') {
+        const sheetRow = index + 2;
+        activationSheet
+          .getRange(sheetRow, activationHeaders.Status)
+          .setValue('Revoked');
+        activationSheet
+          .getRange(sheetRow, activationHeaders.RevokedUtc)
+          .setValue(now);
+        revokedCount += 1;
+      }
+    });
+  }
+
   context.sheet.getRange(context.row, context.headers.DeviceHash).clearContent();
   context.sheet.getRange(context.row, context.headers.ActivatedUtc).clearContent();
   context.sheet.getRange(context.row, context.headers.LastCheckUtc).clearContent();
-  SpreadsheetApp.getUi().alert(
-    'Đã reset thiết bị. Key có thể kích hoạt trên một máy khác.'
+  ui.alert(
+    'Đã thu hồi ' + revokedCount +
+      ' máy. License có thể cấp chỗ cho máy mới.'
   );
+}
+
+function setSelectedMaxDevices() {
+  const context = getSelectedLicenseRow_();
+  const current = normalizeMaxDevices_(
+    context.sheet
+      .getRange(context.row, context.headers.MaxDevices)
+      .getValue()
+  );
+  const ui = SpreadsheetApp.getUi();
+  const prompt = ui.prompt(
+    'Đặt số máy tối đa',
+    'Nhập số máy từ 1 đến ' + MAX_DEVICE_LIMIT +
+      '. Hiện tại: ' + current,
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (prompt.getSelectedButton() !== ui.Button.OK) {
+    return;
+  }
+
+  const maxDevices = Number(prompt.getResponseText());
+  if (!Number.isInteger(maxDevices) ||
+      maxDevices < 1 ||
+      maxDevices > MAX_DEVICE_LIMIT) {
+    ui.alert(
+      'Số máy phải là số nguyên từ 1 đến ' + MAX_DEVICE_LIMIT + '.'
+    );
+    return;
+  }
+
+  context.sheet
+    .getRange(context.row, context.headers.MaxDevices)
+    .setValue(maxDevices);
+  ui.alert(
+    'Đã đặt giới hạn ' + maxDevices +
+      ' máy. Các máy đang hoạt động không bị tự động thu hồi.'
+  );
+}
+
+function showSelectedLicenseActivations() {
+  const context = getSelectedLicenseRow_();
+  const record = readLicenseRecord_(
+    context.sheet,
+    context.headers,
+    context.row
+  );
+  const activationSheet = getActivationSheet_();
+  const activationHeaders = getHeaderMap_(
+    activationSheet,
+    ACTIVATION_HEADERS
+  );
+  const lastRow = activationSheet.getLastRow();
+  let firstRow = 0;
+  let count = 0;
+  if (lastRow >= 2) {
+    const values = activationSheet
+      .getRange(2, activationHeaders.LicenseId, lastRow - 1, 1)
+      .getDisplayValues();
+    values.forEach(function (row, index) {
+      if (String(row[0] || '').trim() === record.licenseId) {
+        count += 1;
+        if (firstRow === 0) {
+          firstRow = index + 2;
+        }
+      }
+    });
+  }
+
+  if (firstRow > 0) {
+    getSpreadsheet_().setActiveSheet(activationSheet);
+    activationSheet
+      .getRange(firstRow, activationHeaders.LicenseId)
+      .activate();
+  }
+  SpreadsheetApp.getUi().alert(
+    count > 0
+      ? 'Có ' + count +
+        ' máy đã ghi nhận. Sheet Activations đã được mở tại dòng đầu tiên.'
+      : 'License này chưa có máy nào được kích hoạt.'
+  );
+}
+
+function revokeSelectedActivation() {
+  const context = getSelectedActivationRow_();
+  context.sheet
+    .getRange(context.row, context.headers.Status)
+    .setValue('Revoked');
+  context.sheet
+    .getRange(context.row, context.headers.RevokedUtc)
+    .setValue(new Date());
+  SpreadsheetApp.getUi().alert(
+    'Đã thu hồi máy. Chỗ trống có thể được cấp cho một máy mới.'
+  );
+}
+
+function reactivateSelectedActivation() {
+  const context = getSelectedActivationRow_();
+  const activation = readActivationRecord_(
+    context.sheet,
+    context.headers,
+    context.row
+  );
+  const licenseSheet = getLicenseSheet_();
+  const licenseHeaders = getHeaderMap_(licenseSheet, LICENSE_HEADERS);
+  const licenseRow = findLicenseRowByValue_(
+    licenseSheet,
+    licenseHeaders.LicenseId,
+    activation.licenseId
+  );
+  if (licenseRow === 0) {
+    throw new Error('Không tìm thấy license của máy đang chọn.');
+  }
+
+  const record = readLicenseRecord_(
+    licenseSheet,
+    licenseHeaders,
+    licenseRow
+  );
+  const activeCount = countActiveActivations_(
+    context.sheet,
+    context.headers,
+    activation.licenseId
+  );
+  if (activation.status !== 'ACTIVE' &&
+      activeCount >= record.maxDevices) {
+    SpreadsheetApp.getUi().alert(
+      'Không thể mở lại vì license đã đủ ' +
+        record.maxDevices + ' máy.'
+    );
+    return;
+  }
+
+  context.sheet
+    .getRange(context.row, context.headers.Status)
+    .setValue('Active');
+  context.sheet
+    .getRange(context.row, context.headers.RevokedUtc)
+    .clearContent();
+  SpreadsheetApp.getUi().alert('Đã mở lại máy đang chọn.');
 }
 
 function revokeSelectedLicense() {
@@ -471,9 +994,14 @@ function onOpen() {
     .addItem('Chuẩn bị sheet', 'setupLicenseSheet')
     .addSeparator()
     .addItem('Tạo mã đóng gói mới', 'createTrialLicense')
-    .addItem('Reset máy của dòng đang chọn', 'resetSelectedDevice')
+    .addItem('Đặt số máy tối đa', 'setSelectedMaxDevices')
+    .addItem('Xem máy của license đang chọn', 'showSelectedLicenseActivations')
+    .addItem('Thu hồi toàn bộ máy của license', 'resetSelectedDevice')
     .addItem('Khóa dòng đang chọn', 'revokeSelectedLicense')
     .addItem('Mở lại dòng đang chọn', 'reactivateSelectedLicense')
+    .addSeparator()
+    .addItem('Thu hồi máy đang chọn', 'revokeSelectedActivation')
+    .addItem('Mở lại máy đang chọn', 'reactivateSelectedActivation')
     .addToUi();
 }
 
@@ -496,11 +1024,18 @@ function getLicenseSheet_() {
   return sheet;
 }
 
-function getHeaderMap_(sheet) {
-  if (sheet.getLastColumn() < LICENSE_HEADERS.length) {
-    throw new Error('Sheet Licenses thiếu cột.');
+function getActivationSheet_() {
+  const sheet = getSpreadsheet_().getSheetByName(ACTIVATION_SHEET_NAME);
+  if (!sheet) {
+    throw new Error(
+      'Chưa có sheet Activations. Hãy chạy setupLicenseSheet().'
+    );
   }
 
+  return sheet;
+}
+
+function getHeaderMap_(sheet, requiredHeaders) {
   const row = sheet
     .getRange(1, 1, 1, sheet.getLastColumn())
     .getDisplayValues()[0];
@@ -511,13 +1046,29 @@ function getHeaderMap_(sheet) {
     }
   });
 
-  LICENSE_HEADERS.forEach(function (header) {
+  requiredHeaders.forEach(function (header) {
     if (!result[header]) {
-      throw new Error('Sheet Licenses thiếu cột ' + header + '.');
+      throw new Error(
+        'Sheet ' + sheet.getName() + ' thiếu cột ' + header + '.'
+      );
     }
   });
 
   return result;
+}
+
+function appendRowByHeaders_(sheet, headers, valuesByHeader) {
+  const values = new Array(sheet.getLastColumn()).fill('');
+  Object.keys(valuesByHeader).forEach(function (header) {
+    if (!headers[header]) {
+      throw new Error(
+        'Sheet ' + sheet.getName() + ' thiếu cột ' + header + '.'
+      );
+    }
+    values[headers[header] - 1] = valuesByHeader[header];
+  });
+  sheet.appendRow(values);
+  return sheet.getLastRow();
 }
 
 function findLicenseRow_(sheet, hashColumn, keyHash) {
@@ -545,6 +1096,52 @@ function findLicenseRowByValue_(sheet, column, expectedValue) {
   return 0;
 }
 
+function findActivationRow_(
+  sheet,
+  headers,
+  licenseId,
+  deviceHash
+) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return 0;
+  }
+
+  const values = sheet
+    .getRange(2, 1, lastRow - 1, sheet.getLastColumn())
+    .getDisplayValues();
+  const expectedKey = activationKey_(licenseId, deviceHash);
+  for (let index = 0; index < values.length; index += 1) {
+    const rowKey = activationKey_(
+      values[index][headers.LicenseId - 1],
+      values[index][headers.DeviceHash - 1]
+    );
+    if (rowKey === expectedKey) {
+      return index + 2;
+    }
+  }
+
+  return 0;
+}
+
+function countActiveActivations_(sheet, headers, licenseId) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return 0;
+  }
+
+  const values = sheet
+    .getRange(2, 1, lastRow - 1, sheet.getLastColumn())
+    .getDisplayValues();
+  const expectedLicenseId = String(licenseId || '').trim();
+  return values.filter(function (row) {
+    return String(row[headers.LicenseId - 1] || '').trim() ===
+        expectedLicenseId &&
+      String(row[headers.Status - 1] || '').trim().toUpperCase() ===
+        'ACTIVE';
+  }).length;
+}
+
 function readLicenseRecord_(sheet, headers, row) {
   const values = sheet
     .getRange(row, 1, 1, sheet.getLastColumn())
@@ -560,7 +1157,26 @@ function readLicenseRecord_(sheet, headers, row) {
     deviceHash: normalizeDeviceHash_(at('DeviceHash')),
     expiresUtc: parseDate_(at('ExpiresUtc')),
     status: String(at('Status') || '').trim().toUpperCase(),
-    features: parseFeatures_(at('Features'))
+    features: parseFeatures_(at('Features')),
+    maxDevices: normalizeMaxDevices_(at('MaxDevices'))
+  };
+}
+
+function readActivationRecord_(sheet, headers, row) {
+  const values = sheet
+    .getRange(row, 1, 1, sheet.getLastColumn())
+    .getValues()[0];
+  const at = function (header) {
+    return values[headers[header] - 1];
+  };
+
+  return {
+    licenseId: String(at('LicenseId') || '').trim(),
+    deviceHash: normalizeDeviceHash_(at('DeviceHash')),
+    status: String(at('Status') || '').trim().toUpperCase(),
+    activatedUtc: parseDate_(at('ActivatedUtc')),
+    lastCheckUtc: parseDate_(at('LastCheckUtc')),
+    revokedUtc: parseDate_(at('RevokedUtc'))
   };
 }
 
@@ -578,7 +1194,25 @@ function getSelectedLicenseRow_() {
   return {
     sheet: sheet,
     row: row,
-    headers: getHeaderMap_(sheet)
+    headers: getHeaderMap_(sheet, LICENSE_HEADERS)
+  };
+}
+
+function getSelectedActivationRow_() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if (sheet.getName() !== ACTIVATION_SHEET_NAME) {
+    throw new Error('Hãy chọn một dòng trong sheet Activations.');
+  }
+
+  const row = sheet.getActiveRange().getRow();
+  if (row < 2) {
+    throw new Error('Hãy chọn một dòng máy, không chọn hàng tiêu đề.');
+  }
+
+  return {
+    sheet: sheet,
+    row: row,
+    headers: getHeaderMap_(sheet, ACTIVATION_HEADERS)
   };
 }
 
@@ -609,6 +1243,23 @@ function normalizeDeviceHash_(value) {
     .replace(/\s/g, '')
     .trim()
     .toUpperCase();
+}
+
+function normalizeMaxDevices_(value) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) ||
+      parsed < 1 ||
+      parsed > MAX_DEVICE_LIMIT) {
+    return DEFAULT_MAX_DEVICES;
+  }
+
+  return parsed;
+}
+
+function activationKey_(licenseId, deviceHash) {
+  return String(licenseId || '').trim().toUpperCase() +
+    '|' +
+    normalizeDeviceHash_(deviceHash);
 }
 
 function sha256Hex_(value) {

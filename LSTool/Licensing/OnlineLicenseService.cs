@@ -238,6 +238,30 @@ namespace LSTool.Licensing
                    string.Equals(
                        code,
                        "NOT_FOUND",
+                       StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(
+                       code,
+                       "EXPIRED",
+                       StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(
+                       code,
+                       "REVOKED",
+                       StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(
+                       code,
+                       "INACTIVE",
+                       StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(
+                       code,
+                       "DEVICE_MISMATCH",
+                       StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(
+                       code,
+                       "DEVICE_REVOKED",
+                       StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(
+                       code,
+                       "NOT_ACTIVATED",
                        StringComparison.OrdinalIgnoreCase);
         }
 
@@ -280,6 +304,26 @@ namespace LSTool.Licensing
             {
                 return LicenseValidationResult.Failure(
                     LicenseValidationCode.InvalidMachine,
+                    message);
+            }
+
+            if (string.Equals(
+                    code,
+                    "DEVICE_LIMIT_REACHED",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return LicenseValidationResult.Failure(
+                    LicenseValidationCode.DeviceLimitReached,
+                    message);
+            }
+
+            if (string.Equals(
+                    code,
+                    "DEVICE_REVOKED",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return LicenseValidationResult.Failure(
+                    LicenseValidationCode.DeviceRevoked,
                     message);
             }
 
