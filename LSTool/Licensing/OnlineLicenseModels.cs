@@ -104,6 +104,8 @@ namespace LSTool.Licensing
         InvalidSignature,
         InvalidProduct,
         InvalidMachine,
+        DeviceLimitReached,
+        DeviceRevoked,
         NotYetValid,
         Expired,
         LeaseExpired,
