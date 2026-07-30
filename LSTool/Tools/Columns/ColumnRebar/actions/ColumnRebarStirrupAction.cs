@@ -1,9 +1,11 @@
 ﻿using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
+using HcBimUtils;
 using LSTool.Tools.Columns.ColumnRebar.models;
 using LSTool.Tools.Generals.SettingRebarStandard.models;
 using LSTool.Utils;
 using Newtonsoft.Json;
+using System.Windows.Shapes;
 
 namespace LSTool.Tools.Columns.ColumnRebar.actions
 {
@@ -125,6 +127,20 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                         .PointsToCurveLoop(), cover, -ccRInfo.VTZ)
                         .Select(x => x.GetEndPoint(1))
                         .ToList();
+                var p1 = baseShapes[0];
+                var p2 = baseShapes[1];
+                var p3 = baseShapes[2];
+                var p4 = baseShapes[3];
+                var vtStart = (p2 - p1).Normalize();
+                var vtEnd = (p1 - p4).Normalize();
+                baseShapes = new List<XYZ>()
+                {
+                    p1 - vtStart * diamterSt.MmToFoot() / 2,
+                    p2,
+                    p3,
+                    p4,
+                    p1 + vtEnd * diamterSt.MmToFoot() / 2
+                };
                 var shapes_Start = _installStirrup(start_zone1, End_zone1, baseShapes, ccRInfo.SpacingSTE, 50, ccRInfo.SpacingSTE / 2);
                 var shapes_Mid = _installStirrup(start_zone2, End_zone2, baseShapes, ccRInfo.SpacingST, ccRInfo.SpacingST / 2, ccRInfo.SpacingST / 2);
                 var shapes_End = _installStirrup(start_zone3, End_zone3, baseShapes, ccRInfo.SpacingSTE, 50, ccRInfo.SpacingSTE / 2);
@@ -241,6 +257,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                             + vt * extent;
                         var p4 = gr2[0].Position.RayIntersectPlane(f2.Plane.Normal, f2.Plane)
                             - vt * extent;
+
                         shape.Add(p4);
                         shape.Add(p3);
                         shape.Add(p2);
@@ -295,6 +312,20 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                             .PointsToCurveLoop(), cover, -ccRInfo.VTZ)
                             .Select(x => x.GetEndPoint(1))
                             .ToList();
+                        var p1 = baseShapes[0];
+                        var p2 = baseShapes[1];
+                        var p3 = baseShapes[2];
+                        var p4 = baseShapes[3];
+                        var vtStart = (p2 - p1).Normalize();
+                        var vtEnd = (p1 - p4).Normalize();
+                        baseShapes = new List<XYZ>()
+                        {
+                            p1 - vtStart * diamterSt / 2,
+                            p2,
+                            p3,
+                            p4,
+                            p1 + vtEnd * diamterSt / 2
+                        };
                     }
 
                     var shapes_Start = _installStirrup(start_zone1, End_zone1, baseShapes, ccRInfo.SpacingSTE, 50, ccRInfo.SpacingSTE / 2);
@@ -362,13 +393,14 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     var shapes = baseShapes
                         .Select(x => x + i * vt * spacingMm.FromMillimeters())
                         .ToList();
-                    result.Add(shapes.PointsToCurves(true));
+                    result.Add(shapes.PointsToCurves());
+                    //_document.CreateCurves(shapes.PointsToCurves());
                     if (i != qty - 1) continue;
                     if (duSpacing < 0.3 * spacingMm) continue;
                     var shapesDu = shapes
                         .Select(x => x + vt * duSpacing.FromMillimeters())
                         .ToList();
-                    result.Add(shapesDu.PointsToCurves(true));
+                    result.Add(shapesDu.PointsToCurves());
                 }
             }
             catch (Exception)
