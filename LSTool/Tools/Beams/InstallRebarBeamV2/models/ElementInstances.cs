@@ -120,7 +120,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                     "The selection must contain only structural framing family instances.");
             RebarBarTypeCustoms = _document.GetElementsFromClass<RebarBarType>()
                 .Select(x => new RebarBarTypeCustom(x))
-                .Where(x => x.NameStyle.Contains("D") && x.NameStyle.Contains("("))
+                .Where(x => x.NameStyle.Contains("D"))
                 .ToList();
             var duplicateBarTypeNames = RebarBarTypeCustoms
                 .GroupBy(type => type.NameStyle, StringComparer.OrdinalIgnoreCase)
