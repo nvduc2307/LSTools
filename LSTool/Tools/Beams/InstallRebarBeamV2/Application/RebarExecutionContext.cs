@@ -1,7 +1,6 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
-using HcBimUtils;
-using HcBimUtils.DocumentUtils;
+using LSTool.Compatibility;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Plans;
 using LSTool.Tools.Beams.InstallRebarBeamV2.models;

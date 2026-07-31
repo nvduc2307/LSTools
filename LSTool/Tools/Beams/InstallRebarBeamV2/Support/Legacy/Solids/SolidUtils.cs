@@ -1,6 +1,5 @@
-﻿using Autodesk.Revit.DB;
-using HcBimUtils;
-using HcBimUtils.GeometryUtils.Geometry;
+using Autodesk.Revit.DB;
+using LSTool.Compatibility;
 using RIMT.Utils.Compares;
 
 namespace RIMT.Utils.Solids
@@ -25,7 +24,7 @@ namespace RIMT.Utils.Solids
             Solid result = null;
             try
             {
-                var vtx = l.Direction();
+                var vtx = l.Direction;
                 var vty = vtx.IsParallel(XYZ.BasisZ)
                     ? vtx.CrossProduct(XYZ.BasisX)
                     : vtx.CrossProduct(XYZ.BasisZ);

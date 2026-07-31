@@ -1,9 +1,9 @@
-﻿using Autodesk.Revit.DB.Structure;
+using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
-using HcBimUtils;
 using LSTool.Tools.Columns.ColumnRebar.models;
 using LSTool.Tools.Generals.SettingRebarStandard.models;
 using LSTool.Utils;
+using LSTool.Compatibility;
 using Newtonsoft.Json;
 using System.Windows.Shapes;
 

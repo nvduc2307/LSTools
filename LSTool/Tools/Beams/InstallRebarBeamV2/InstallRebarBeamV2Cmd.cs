@@ -1,10 +1,10 @@
-﻿using Autodesk.Revit.Attributes;
+using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI.Selection;
-using HcBimUtils.DocumentUtils;
 using LSTool.Licensing;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Application.Selection;
 using LSTool.Utils;
+using LSTool.Compatibility;
 using Nice3point.Revit.Toolkit.External;
 using LSTool.Tools.Beams.InstallRebarBeamV2.service;
 using LSTool.Tools.Beams.InstallRebarBeamV2.iservices;
