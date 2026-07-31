@@ -52,6 +52,11 @@ function Get-InnoCompilerPath {
         'C:\Program Files (x86)\Inno Setup 6\ISCC.exe',
         'C:\Program Files\Inno Setup 6\ISCC.exe'
     )
+    if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+        $candidates += Join-Path `
+            $env:LOCALAPPDATA `
+            'Programs\Inno Setup 6\ISCC.exe'
+    }
     foreach ($candidate in $candidates) {
         if (Test-Path -LiteralPath $candidate -PathType Leaf) {
             return $candidate
