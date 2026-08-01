@@ -399,18 +399,14 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             if (stirrupLimit <= 0)
                 throw new Exception(InstallRebarBeamV2Exceptions.EXCEPTION_DIAMETER_NOT_FOUND);
 
-            MainRebarDiameters = RebarBarTypeCustoms
-                .Where(type => type.ModelBarDiameter.IsGreater(stirrupLimit))
+            MainRebarDiameters = [.. RebarBarTypeCustoms
+                .OrderBy(type => type.BarDiameter)
                 .Select(type => type.NameStyle)
-                .Where(name => name.Contains("D"))
-                .OrderBy(name => name)
-                .ToList();
-            StirrupRebarDiameters = RebarBarTypeCustoms
-                .Where(type => type.ModelBarDiameter.IsSmallerEqual(stirrupLimit))
+                .Where(name => name.Contains("D"))];
+            StirrupRebarDiameters = [.. RebarBarTypeCustoms
+                .OrderBy(type => type.BarDiameter)
                 .Select(type => type.NameStyle)
-                .Where(name => name.Contains("D"))
-                .OrderBy(name => name)
-                .ToList();
+                .Where(name => name.Contains("D"))];
             if (MainRebarDiameters.Count == 0 || StirrupRebarDiameters.Count == 0)
                 throw new InvalidOperationException(
                     "Diameter classification produced an empty main-bar or stirrup list. Check the configured rebar types.");
