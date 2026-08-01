@@ -362,13 +362,13 @@
                         <TextBlock Style="{StaticResource FieldLabel}"
   Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_DIAMETER}"/>
                         <ComboBox ItemsSource="{Binding ElementInstances.StirrupRebarDiameters}"
- SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamStirrup.Diameter}"/>
+ SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionMid.RebarBeamStirrup.Diameter}"/>
                      </StackPanel>
                      <StackPanel Grid.Column="1" Margin="4,0,0,0">
                         <TextBlock Style="{StaticResource FieldLabel}"
   Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_SPACING}"/>
                         <TextBox behaviors:TextBoxBehavior.SelectAllTextOnFocus="True"
-Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamStirrup.Spacing, UpdateSourceTrigger=PropertyChanged, Delay=500}"/>
+Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionMid.RebarBeamStirrup.Spacing, UpdateSourceTrigger=PropertyChanged, Delay=500}"/>
                      </StackPanel>
                   </Grid>
                </StackPanel>
@@ -393,13 +393,13 @@ Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamS
                      <TextBlock Style="{StaticResource FieldLabel}"
   Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_DIAMETER}"/>
                      <ComboBox ItemsSource="{Binding ElementInstances.StirrupRebarDiameters}"
- SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamStirrup.Diameter}"/>
+ SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionEnd.RebarBeamStirrup.Diameter}"/>
                   </StackPanel>
                   <StackPanel Grid.Column="1" Margin="4,0,0,0">
                      <TextBlock Style="{StaticResource FieldLabel}"
   Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_SPACING}"/>
                      <TextBox behaviors:TextBoxBehavior.SelectAllTextOnFocus="True"
-Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamStirrup.Spacing, UpdateSourceTrigger=PropertyChanged, Delay=500}"/>
+Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionEnd.RebarBeamStirrup.Spacing, UpdateSourceTrigger=PropertyChanged, Delay=500}"/>
                   </StackPanel>
                </Grid>
                </StackPanel>

@@ -250,7 +250,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics
             {
                 quantitySide = section?.RebarBeamSideBar?.QuantitySide,
                 diameter = section?.RebarBeamSideBar?.Diameter,
-                stirrupDiameter = section?.RebarBeamStirrup?.Diameter
+                stirrupDiameter = section?.RebarBeamStirrup?.Diameter,
+                stirrupSpacing = section?.RebarBeamStirrup?.Spacing
             };
         }
 

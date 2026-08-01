@@ -242,13 +242,23 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 InitDataRebarBeamSection(rebarBeam, rebarBeam.RebarBeamSectionStart);
                 InitDataRebarBeamSection(rebarBeam, rebarBeam.RebarBeamSectionMid);
                 InitDataRebarBeamSection(rebarBeam, rebarBeam.RebarBeamSectionEnd);
+                NormalizeLayer1Diameters(rebarBeam);
             }
         }
         public void InitDataRebarBeamApply()
         {
-            ApplySection(this.RebarBeamActive.RebarBeamSectionStart);
-            ApplySection(this.RebarBeamActive.RebarBeamSectionMid);
-            ApplySection(this.RebarBeamActive.RebarBeamSectionEnd);
+            DetachLayer1DiameterSynchronization(this.RebarBeamActive);
+            try
+            {
+                ApplySection(this.RebarBeamActive.RebarBeamSectionStart);
+                ApplySection(this.RebarBeamActive.RebarBeamSectionMid);
+                ApplySection(this.RebarBeamActive.RebarBeamSectionEnd);
+            }
+            finally
+            {
+                AttachSynchronizationCallbacks(this.RebarBeamActive);
+            }
+            NormalizeLayer1Diameters(this.RebarBeamActive);
         }
 
         public void CopyActiveSpanSettingsToAll()
@@ -269,6 +279,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 CopySectionSettings(target.RebarBeamSectionStart, source.RebarBeamSectionStart);
                 CopySectionSettings(target.RebarBeamSectionMid, source.RebarBeamSectionMid);
                 CopySectionSettings(target.RebarBeamSectionEnd, source.RebarBeamSectionEnd);
+                AttachSynchronizationCallbacks(target);
+                NormalizeLayer1Diameters(target);
             }
         }
 
@@ -323,7 +335,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             RebarBeamActive = RebarBeams.First();
         }
 
-        private static void CopySpanSettings(
+        private void CopySpanSettings(
             RebarBeam target,
             RebarBeam source)
         {
@@ -351,6 +363,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             CopySectionSettings(
                 target.RebarBeamSectionEnd,
                 source.RebarBeamSectionEnd);
+            AttachSynchronizationCallbacks(target);
+            NormalizeLayer1Diameters(target);
         }
 
         private void GetDiameterRebarBeam()
@@ -458,6 +472,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 rebarBeamSection.RebarBeamBot.RebarBeamBotLevel3.Quantity =
                     sectionActive.RebarBeamBot.RebarBeamBotLevel3.Quantity;
 
+                rebarBeamSection.RebarBeamStirrup.DiameterChange = null;
                 rebarBeamSection.RebarBeamStirrup.Diameter =
                     sectionActive.RebarBeamStirrup.Diameter;
                 rebarBeamSection.RebarBeamStirrup.Quantity =
@@ -468,6 +483,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 rebarBeamSection.RebarBeamStirrup.SpacingChange = () =>
                 {
                     ReWriteSpacingStirrup(rebarBeamSection, this.RebarBeamActive);
+                };
+                rebarBeamSection.RebarBeamStirrup.DiameterChange = () =>
+                {
+                    ReWriteDiameterStirrup(rebarBeamSection, this.RebarBeamActive);
                 };
 
                 rebarBeamSection.RebarBeamSideBar.Diameter =
@@ -509,6 +528,168 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 };
             }
         }
+        private void ReWriteDiameterStirrup(RebarBeamSection rebarBeamSection, RebarBeam rebarBeam)
+        {
+            if (IsRebarBeamStirrupSame)
+            {
+                var diameter = rebarBeamSection.RebarBeamStirrup.Diameter;
+                rebarBeam.RebarBeamSectionStart.RebarBeamStirrup.DiameterChange = null;
+                rebarBeam.RebarBeamSectionMid.RebarBeamStirrup.DiameterChange = null;
+                rebarBeam.RebarBeamSectionEnd.RebarBeamStirrup.DiameterChange = null;
+                rebarBeam.RebarBeamSectionStart.RebarBeamStirrup.Diameter = diameter;
+                rebarBeam.RebarBeamSectionMid.RebarBeamStirrup.Diameter = diameter;
+                rebarBeam.RebarBeamSectionEnd.RebarBeamStirrup.Diameter = diameter;
+                rebarBeam.RebarBeamSectionStart.RebarBeamStirrup.DiameterChange = () =>
+                {
+                    ReWriteDiameterStirrup(rebarBeam.RebarBeamSectionStart, rebarBeam);
+                };
+                rebarBeam.RebarBeamSectionMid.RebarBeamStirrup.DiameterChange = () =>
+                {
+                    ReWriteDiameterStirrup(rebarBeam.RebarBeamSectionMid, rebarBeam);
+                };
+                rebarBeam.RebarBeamSectionEnd.RebarBeamStirrup.DiameterChange = () =>
+                {
+                    ReWriteDiameterStirrup(rebarBeam.RebarBeamSectionEnd, rebarBeam);
+                };
+            }
+        }
+        private void ReWriteLayer1Diameter(
+            RebarBeamSection sourceSection,
+            RebarBeam rebarBeam,
+            RebarBeamMainBarLevelType level)
+        {
+            var sourceBar = GetLayer1Bar(sourceSection, level);
+            if (sourceBar == null || rebarBeam == null)
+                return;
+
+            var sections = new RebarBeamSection[]
+            {
+                rebarBeam.RebarBeamSectionStart,
+                rebarBeam.RebarBeamSectionMid,
+                rebarBeam.RebarBeamSectionEnd
+            };
+            var bars = sections
+                .Select(section => GetLayer1Bar(section, level))
+                .Where(bar => bar != null)
+                .ToList();
+            foreach (var bar in bars)
+                bar.DiameterChange = null;
+            foreach (var bar in bars)
+                bar.Diameter = sourceBar.Diameter;
+            foreach (var section in sections)
+                AttachLayer1DiameterSynchronization(section, rebarBeam);
+        }
+
+        private void AttachSynchronizationCallbacks(RebarBeam rebarBeam)
+        {
+            if (rebarBeam == null)
+                return;
+
+            var sections = new RebarBeamSection[]
+            {
+                rebarBeam.RebarBeamSectionStart,
+                rebarBeam.RebarBeamSectionMid,
+                rebarBeam.RebarBeamSectionEnd
+            };
+            foreach (var section in sections)
+            {
+                AttachLayer1DiameterSynchronization(section, rebarBeam);
+                if (section?.RebarBeamStirrup == null)
+                    continue;
+                section.RebarBeamStirrup.SpacingChange = () =>
+                {
+                    ReWriteSpacingStirrup(section, rebarBeam);
+                };
+                section.RebarBeamStirrup.DiameterChange = () =>
+                {
+                    ReWriteDiameterStirrup(section, rebarBeam);
+                };
+            }
+        }
+
+        private void NormalizeLayer1Diameters(RebarBeam rebarBeam)
+        {
+            if (rebarBeam?.RebarBeamSectionStart == null)
+                return;
+            ReWriteLayer1Diameter(
+                rebarBeam.RebarBeamSectionStart,
+                rebarBeam,
+                RebarBeamMainBarLevelType.RebarTop);
+            ReWriteLayer1Diameter(
+                rebarBeam.RebarBeamSectionStart,
+                rebarBeam,
+                RebarBeamMainBarLevelType.RebarBot);
+        }
+
+        private static void DetachLayer1DiameterSynchronization(
+            RebarBeam rebarBeam)
+        {
+            if (rebarBeam == null)
+                return;
+            var sections = new RebarBeamSection[]
+            {
+                rebarBeam.RebarBeamSectionStart,
+                rebarBeam.RebarBeamSectionMid,
+                rebarBeam.RebarBeamSectionEnd
+            };
+            foreach (var section in sections)
+            {
+                var topBar = GetLayer1Bar(
+                    section,
+                    RebarBeamMainBarLevelType.RebarTop);
+                var bottomBar = GetLayer1Bar(
+                    section,
+                    RebarBeamMainBarLevelType.RebarBot);
+                if (topBar != null)
+                    topBar.DiameterChange = null;
+                if (bottomBar != null)
+                    bottomBar.DiameterChange = null;
+            }
+        }
+
+        private void AttachLayer1DiameterSynchronization(
+            RebarBeamSection section,
+            RebarBeam rebarBeam)
+        {
+            var topBar = GetLayer1Bar(
+                section,
+                RebarBeamMainBarLevelType.RebarTop);
+            if (topBar != null)
+            {
+                topBar.DiameterChange = () =>
+                {
+                    ReWriteLayer1Diameter(
+                        section,
+                        rebarBeam,
+                        RebarBeamMainBarLevelType.RebarTop);
+                };
+            }
+
+            var bottomBar = GetLayer1Bar(
+                section,
+                RebarBeamMainBarLevelType.RebarBot);
+            if (bottomBar != null)
+            {
+                bottomBar.DiameterChange = () =>
+                {
+                    ReWriteLayer1Diameter(
+                        section,
+                        rebarBeam,
+                        RebarBeamMainBarLevelType.RebarBot);
+                };
+            }
+        }
+
+        private static RebarBeamMainBar GetLayer1Bar(
+            RebarBeamSection section,
+            RebarBeamMainBarLevelType level)
+        {
+            if (section == null)
+                return null;
+            return level == RebarBeamMainBarLevelType.RebarTop
+                ? section.RebarBeamTop?.RebarBeamTopLevel1
+                : section.RebarBeamBot?.RebarBeamBotLevel1;
+        }
         private void InitDataRebarBeamSection(RebarBeam rebarBeam, RebarBeamSection rebarBeamSection)
         {
             RebarBeamSection sectionActive = null;
@@ -537,6 +718,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             {
                 //check
                 ReWriteSpacingStirrup(rebarBeamSection, rebarBeam);
+            };
+            rebarBeamSection.RebarBeamStirrup.DiameterChange = () =>
+            {
+                ReWriteDiameterStirrup(rebarBeamSection, rebarBeam);
             };
 
             rebarBeamSection.RebarBeamSideBar = new RebarBeamSideBar();
@@ -701,6 +886,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 rebarBeamSection.RebarBeamTop.RebarBeamTopLevel1.Hooks2 = new();
                 rebarBeamSection.RebarBeamBot.RebarBeamBotLevel1.Hooks2 = new();
             }
+            AttachLayer1DiameterSynchronization(rebarBeamSection, rebarBeam);
         }
         private List<RebarBeam> GetRebarBeamTypes()
         {

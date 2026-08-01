@@ -36,9 +36,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 {
                     _diameter = value;
                     OnPropertyChanged();
+                    DiameterChange?.Invoke();
                 }
             }
         }
+        public Action DiameterChange { get; set; }
 
         public long HostId;
         public int RebarBeamType { get; set; }

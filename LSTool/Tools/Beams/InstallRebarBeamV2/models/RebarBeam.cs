@@ -154,8 +154,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 rebarBeam.RebarBeamSectionStart.RebarBeamSideBar.QuantitySideChange = null;
                 rebarBeam.RebarBeamSectionStart.RebarBeamTop.RebarGroupTypeChange = null;
                 rebarBeam.RebarBeamSectionStart.RebarBeamBot.RebarGroupTypeChange = null;
+                rebarBeam.RebarBeamSectionStart.RebarBeamTop.RebarBeamTopLevel1.DiameterChange = null;
+                rebarBeam.RebarBeamSectionStart.RebarBeamBot.RebarBeamBotLevel1.DiameterChange = null;
 
                 rebarBeam.RebarBeamSectionStart.RebarBeamStirrup.SpacingChange = null;
+                rebarBeam.RebarBeamSectionStart.RebarBeamStirrup.DiameterChange = null;
             }
             if (rebarBeam.RebarBeamSectionMid != null)
             {
@@ -170,8 +173,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 rebarBeam.RebarBeamSectionMid.RebarBeamSideBar.QuantitySideChange = null;
                 rebarBeam.RebarBeamSectionMid.RebarBeamTop.RebarGroupTypeChange = null;
                 rebarBeam.RebarBeamSectionMid.RebarBeamBot.RebarGroupTypeChange = null;
+                rebarBeam.RebarBeamSectionMid.RebarBeamTop.RebarBeamTopLevel1.DiameterChange = null;
+                rebarBeam.RebarBeamSectionMid.RebarBeamBot.RebarBeamBotLevel1.DiameterChange = null;
 
                 rebarBeam.RebarBeamSectionMid.RebarBeamStirrup.SpacingChange = null;
+                rebarBeam.RebarBeamSectionMid.RebarBeamStirrup.DiameterChange = null;
             }
             if (rebarBeam.RebarBeamSectionEnd != null)
             {
@@ -186,8 +192,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 rebarBeam.RebarBeamSectionEnd.RebarBeamSideBar.QuantitySideChange = null;
                 rebarBeam.RebarBeamSectionEnd.RebarBeamTop.RebarGroupTypeChange = null;
                 rebarBeam.RebarBeamSectionEnd.RebarBeamBot.RebarGroupTypeChange = null;
+                rebarBeam.RebarBeamSectionEnd.RebarBeamTop.RebarBeamTopLevel1.DiameterChange = null;
+                rebarBeam.RebarBeamSectionEnd.RebarBeamBot.RebarBeamBotLevel1.DiameterChange = null;
 
                 rebarBeam.RebarBeamSectionEnd.RebarBeamStirrup.SpacingChange = null;
+                rebarBeam.RebarBeamSectionEnd.RebarBeamStirrup.DiameterChange = null;
             }
         }
     }
