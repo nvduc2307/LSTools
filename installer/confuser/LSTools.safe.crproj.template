@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project
+  baseDir="__BASE_DIR__"
+  outputDir="__OUTPUT_DIR__"
+  xmlns="http://confuser.codeplex.com">
+  <rule preset="none" pattern="true" inherit="false">
+    <protection id="rename">
+      <argument name="mode" value="decodable" />
+      <argument name="renPublic" value="false" />
+    </protection>
+    <protection id="constants">
+      <argument name="mode" value="normal" />
+    </protection>
+    <protection id="ctrl flow">
+      <argument name="type" value="switch" />
+      <argument name="predicate" value="normal" />
+      <argument name="intensity" value="60" />
+      <argument name="depth" value="4" />
+      <argument name="junk" value="false" />
+    </protection>
+  </rule>
+  <module path="LSTool.dll" />
+__PROBE_PATHS__
+</project>

@@ -1,6 +1,6 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI.Selection;
-using HcBimUtils;
+using LSTool.Compatibility;
 
 namespace RIMT.CreateRebarAssemblies.model
 {

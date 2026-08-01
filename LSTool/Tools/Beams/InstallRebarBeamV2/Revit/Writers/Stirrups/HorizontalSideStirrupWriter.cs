@@ -1,6 +1,6 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
-using HcBimUtils;
+using LSTool.Compatibility;
 using LSTool.Tools.Beams.InstallRebarBeamV2.viewModels;
 using LSTool.Tools.Beams.InstallRebarBeamV2.models;
 using LSTool.Tools.Beams.InstallRebarBeamV2.service.MainStirrup;
@@ -10,14 +10,11 @@ using RIMT.Utils.RevPoints;
 using RIMT.Utils.RevRebars;
 using LSTool.Tools.Beams.InstallRebarBeamV2.models.MainStirrups;
 using RIMT.Utils.Revit;
-using HcBimUtils.GeometryUtils;
-using HcBimUtils.MoreLinq;
 using LSTool.Tools.Beams.InstallRebarBeamV2.models.SecondaryStirrups;
 using LSTool.Tools.Beams.InstallRebarBeamV2.service.SubVerticalStirrup;
 using LSTool.Tools.Beams.InstallRebarBeamV2.iservices;
 using LSTool.Tools.Beams.InstallRebarBeamV2;
 using RIMT.Utils;
-using HcBimUtils.DocumentUtils;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Application;
 using System.Diagnostics;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Revit.Writers;
@@ -260,6 +257,18 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                     }
 
                     //biến đổi lại box cua mid segment
+
+                    if (lastPositionStartSegment == null
+                        || lastPositionEndSegment == null)
+                    {
+                        throw new InvalidOperationException(
+                            $"Horizontal secondary stirrups for side bars "
+                            + $"in beam {subBeam.Id} require both start and "
+                            + "end hook references; "
+                            + $"start candidates: {stirrupStartSegment.Count}, "
+                            + $"end candidates: {stirrupEndSegment.Count}, "
+                            + $"mid candidates: {stirrupMidSegment.Count}.");
+                    }
 
                     var startPlane = BPlane.CreateByNormalAndOrigin(vectorX,
                         lastPositionStartSegment.Item1.Transform.OfPoint(lastPositionStartSegment.Item1.Left));

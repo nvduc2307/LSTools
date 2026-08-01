@@ -7,7 +7,9 @@ param(
 
     [switch]$SkipBuild,
 
-    [string]$IsccPath = ''
+    [string]$IsccPath = '',
+
+    [string]$ConfuserCliPath = ''
 )
 
 Set-StrictMode -Version Latest
@@ -20,6 +22,15 @@ $profilePath = Join-Path `
     'LSTool\Resources\Settings\ReleaseProfile.dat'
 $installerScript = Join-Path $PSScriptRoot 'LSTools.iss'
 $outputDirectory = Join-Path $PSScriptRoot 'dist'
+$stagingDirectory = Join-Path $PSScriptRoot 'staging'
+$protectionDirectory = Join-Path $PSScriptRoot 'protection-maps'
+$protectionScript = Join-Path $PSScriptRoot 'protect-release.ps1'
+$protectionVerifier = Join-Path `
+    $repositoryRoot `
+    'tests\ObfuscationKernelTests\ObfuscationKernelTests.csproj'
+$protectionVerifierNuGetConfig = Join-Path `
+    $repositoryRoot `
+    'tests\ObfuscationKernelTests\NuGet.Config'
 
 function Get-InnoCompilerPath {
     param([string]$RequestedPath)
@@ -41,6 +52,11 @@ function Get-InnoCompilerPath {
         'C:\Program Files (x86)\Inno Setup 6\ISCC.exe',
         'C:\Program Files\Inno Setup 6\ISCC.exe'
     )
+    if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+        $candidates += Join-Path `
+            $env:LOCALAPPDATA `
+            'Programs\Inno Setup 6\ISCC.exe'
+    }
     foreach ($candidate in $candidates) {
         if (Test-Path -LiteralPath $candidate -PathType Leaf) {
             return $candidate
@@ -196,6 +212,51 @@ if ([string]::IsNullOrWhiteSpace($safeCustomerName)) {
 $outputBaseFilename = (
     "LSTools-$safeCustomerName-$AppVersion-Setup"
 )
+
+$verifierArguments = @()
+foreach ($releasePackage in $releasePackages) {
+    $revitVersion = $releasePackage.RevitVersion
+    $stagingPath = Join-Path $stagingDirectory $revitVersion
+    $protectionOutputPath = Join-Path `
+        $protectionDirectory `
+        (Join-Path $outputBaseFilename $revitVersion)
+
+    & $protectionScript `
+        -PackagePath $releasePackage.PackagePath `
+        -StagingPath $stagingPath `
+        -ProtectionOutputPath $protectionOutputPath `
+        -RevitVersion $revitVersion `
+        -ConfuserCliPath $ConfuserCliPath
+    if ($LASTEXITCODE -ne 0) {
+        throw "DLL protection failed: Revit $revitVersion"
+    }
+
+    $verifierArguments += @(
+        $revitVersion,
+        (Join-Path $releasePackage.PackagePath 'LSTool.dll'),
+        (Join-Path $stagingPath 'LSTool.dll')
+    )
+}
+
+Write-Host 'Verifying protected assemblies...'
+& dotnet restore `
+    $protectionVerifier `
+    --configfile $protectionVerifierNuGetConfig `
+    --nologo
+if ($LASTEXITCODE -ne 0) {
+    throw 'Protected assembly verifier restore failed.'
+}
+
+& dotnet run `
+    --project $protectionVerifier `
+    -c Release `
+    --no-restore `
+    -- `
+    @verifierArguments
+if ($LASTEXITCODE -ne 0) {
+    throw 'Protected assembly verification failed.'
+}
+
 $compilerPath = Get-InnoCompilerPath -RequestedPath $IsccPath
 New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
 

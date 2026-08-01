@@ -1,7 +1,6 @@
-﻿using Autodesk.Revit.DB;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
-using HcBimUtils;
-using HcBimUtils.GeometryUtils.Geometry;
+using LSTool.Compatibility;
 using RIMT.Utils.Compares;
 
 namespace RIMT.Utils.RevPoints

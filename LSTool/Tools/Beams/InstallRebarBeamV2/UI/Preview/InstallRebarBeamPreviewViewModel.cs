@@ -1,10 +1,7 @@
 using Autodesk.Revit.DB;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using HcBimUtils;
-using HcBimUtils.DocumentUtils;
-using HcBimUtils.MoreLinq;
-using HcBimUtils.WPFUtils;
+using LSTool.Compatibility;
 using Newtonsoft.Json;
 using RIMT.BeamRebar.ViewModel;
 using RIMT.CreateRebarAssemblies.model;
@@ -72,7 +69,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
         {
 
             _previewRefreshCoordinator.CancelPending();
-            ElementInstances.GenerateCoordinateBeam();
+            ElementInstances.EnsureCoordinateBeamGenerated();
             CanvasPageSectionStart = new CanvasPageBase(SettingRebarSectionView.FindName("CanvasSectionStart") as Canvas);
             CanvasPageSectionMid = new CanvasPageBase(SettingRebarSectionView.FindName("CanvasSectionMid") as Canvas);
             CanvasPageSectionEnd = new CanvasPageBase(SettingRebarSectionView.FindName("CanvasSectionEnd") as Canvas);

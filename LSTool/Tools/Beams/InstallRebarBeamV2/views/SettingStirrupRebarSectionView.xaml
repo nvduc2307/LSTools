@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:LSTool.Tools.Beams.InstallRebarBeamV2.views"
-             xmlns:converters="clr-namespace:HcBimUtils.WPFUtils.Converters;assembly=HcBimUtils"
              xmlns:behaviors="clr-namespace:LSTool.Tools.Beams.InstallRebarBeamV2.Support.Wpf"
              xmlns:langs ="clr-namespace:LSTool.Properties.Langs"
              mc:Ignorable="d" 
@@ -199,7 +198,6 @@
             </Setter>
         </Style>
 
-        <converters:RadioBoolToIntConverter x:Key="RadioBoolToIntConverter"></converters:RadioBoolToIntConverter>
         <behaviors:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
     </UserControl.Resources>
     <StackPanel Background="#FAFCFB">

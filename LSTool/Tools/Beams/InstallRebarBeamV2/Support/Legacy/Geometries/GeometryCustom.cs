@@ -1,5 +1,5 @@
 using Autodesk.Revit.DB;
-using HcBimUtils;
+using LSTool.Compatibility;
 
 namespace RIMT.Utils.Geometries
 {

@@ -1,7 +1,6 @@
-﻿using Autodesk.Revit.DB;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
-using HcBimUtils;
-using HcBimUtils.DocumentUtils;
+using LSTool.Compatibility;
 using LSTool.Tools.Beams.InstallRebarBeamV2.models.MainStirrups;
 using LSTool.Tools.Beams.InstallRebarBeamV2.models.SecondaryStirrups;
 using RIMT.Utils.Revit;

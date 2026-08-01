@@ -1,5 +1,5 @@
 using Autodesk.Revit.DB;
-using HcBimUtils;
+using LSTool.Compatibility;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics;
 using LSTool.Tools.Beams.InstallRebarBeamV2.models;
 using LSTool.Tools.Beams.InstallRebarBeamV2.viewModels;

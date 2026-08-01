@@ -1,5 +1,5 @@
-﻿using Autodesk.Revit.DB;
-using HcBimUtils;
+using Autodesk.Revit.DB;
+using LSTool.Compatibility;
 
 namespace RIMT.Utils.RevParameters
 {

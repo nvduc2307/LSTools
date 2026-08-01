@@ -17,7 +17,7 @@ if not defined APP_VERSION (
 if not defined APP_VERSION set "APP_VERSION=1.0.0"
 
 echo.
-echo Dang build bo cai LSTools...
+echo Dang build va bao ve bo cai LSTools bang ConfuserEx2...
 echo Khach hang: %CUSTOMER_NAME%
 echo Phien ban:  %APP_VERSION%
 echo.

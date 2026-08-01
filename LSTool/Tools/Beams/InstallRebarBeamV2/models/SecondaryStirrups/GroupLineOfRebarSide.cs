@@ -1,6 +1,5 @@
-﻿using Autodesk.Revit.DB;
-using HcBimUtils;
-using HcBimUtils.GeometryUtils;
+using Autodesk.Revit.DB;
+using LSTool.Compatibility;
 
 namespace LSTool.Tools.Beams.InstallRebarBeamV2.models.SecondaryStirrups
 {

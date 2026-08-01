@@ -1,10 +1,7 @@
-﻿using Autodesk.Revit.DB;
+using Autodesk.Revit.DB;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using HcBimUtils;
-using HcBimUtils.DocumentUtils;
-using HcBimUtils.MoreLinq;
-using HcBimUtils.WPFUtils;
+using LSTool.Compatibility;
 using Newtonsoft.Json;
 using RIMT.BeamRebar.ViewModel;
 using RIMT.CreateRebarAssemblies.model;
@@ -22,7 +19,6 @@ using RIMT.Utils.canvass;
 using RIMT.Utils.Entities;
 using RIMT.Utils.RevitElements;
 using RIMT.Utils.RevRebars;
-using RIMT.Utils.SelectFilters;
 using RIMT.Utils.SkipWarning;
 using System.IO;
 using System.Windows.Controls;
@@ -42,6 +38,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
         private readonly PreviewRefreshCoordinator _previewRefreshCoordinator;
         public Element OBJ { get; set; }
         public IReadOnlyList<Element> SelectedBeams { get; private set; }
+        public bool InstallationCompleted { get; private set; }
         public InstallRebarBeamView MainView { get; set; }
         public SettingRebarSectionView SettingRebarSectionView { get; set; }
         public SettingStirrupRebarSectionView SettingStirrupRebarSectionView { get; set; }
@@ -66,7 +63,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
             IRebarBeamTypeService rebarBeamTypeService,
             IBeamStressRuleTypeService beamStressRuleTypeService,
             IDrawRebarBeamInCanvasSerice drawRebarBeamInCanvas,
-            IInstallRebarBeamInModelService installRebarBeamInModelService)
+            IInstallRebarBeamInModelService installRebarBeamInModelService,
+            IReadOnlyList<Element> selectedBeams)
         {
             _rebarBeamTypeService = rebarBeamTypeService;
             _beamStressRuleTypeService = beamStressRuleTypeService;
@@ -74,15 +72,15 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
             _installRebarBeamInModelService = installRebarBeamInModelService;
             SettingRebarStandardModel =
                 SettingRebarStandardAction.GetSetting(AC.UiDoc.Document);
-            SelectedBeams = AC.UiDoc.Selection.PickObjects(
-                    Autodesk.Revit.UI.Selection.ObjectType.Element,
-                    new GenericSelectionFilterFromCategory(BuiltInCategory.OST_StructuralFraming),
-                    "Select one or more beams, then click Finish")
-                .Select(reference => AC.Document.GetElement(reference))
+            SelectedBeams = selectedBeams?
                 .Where(element => element != null)
                 .GroupBy(element => element.Id.Value)
                 .Select(group => group.First())
-                .ToList();
+                .ToList()
+                ?? throw new ArgumentNullException(nameof(selectedBeams));
+            if (SelectedBeams.Count == 0)
+                throw new InvalidOperationException(
+                    "Select at least one structural framing beam.");
             OBJ = SelectedBeams.FirstOrDefault();
             ElementInstances = new LSTool.Tools.Beams.InstallRebarBeamV2.models.ElementInstances(
                 AC.UiDoc,
@@ -107,6 +105,24 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
             MainView.Loaded += MainView_Loaded;
             _previewRefreshCoordinator = new PreviewRefreshCoordinator(RefreshPreview, TimeSpan.FromMilliseconds(100));
             InitAction();
+        }
+
+        internal void CopyInstallationSettingsFrom(
+            InstallRebarBeamV2ViewModel source)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+
+            ElementInstances.CopyInstallationSettingsFrom(
+                source.ElementInstances);
+            SettingStirrupSectionViewModel
+                    .RebarDiameterHorizontalDaiPhuChongPhinh =
+                source.SettingStirrupSectionViewModel
+                    .RebarDiameterHorizontalDaiPhuChongPhinh;
+            SettingStirrupSectionViewModel
+                    .SpacingHorizontalDaiPhuChongPhinh =
+                source.SettingStirrupSectionViewModel
+                    .SpacingHorizontalDaiPhuChongPhinh;
         }
 
         [RelayCommand]

@@ -1,8 +1,8 @@
-﻿using System.IO;
+using System.IO;
 using System.Reflection;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
-using HcBimUtils.DocumentUtils;
+using LSTool.Compatibility;
 
 namespace LSTool.Tools.Beams.InstallRebarBeamV2.models.SecondaryStirrups
 {

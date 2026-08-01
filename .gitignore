@@ -31,3 +31,8 @@ RevitApp/Properties/launchSettings.json
 
 # Generated customer installers
 /installer/dist/
+/installer/staging/
+/installer/protection-maps/
+
+# Downloaded build tools
+/.tools/

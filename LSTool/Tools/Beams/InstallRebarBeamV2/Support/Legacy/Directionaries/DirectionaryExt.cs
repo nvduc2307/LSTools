@@ -1,4 +1,4 @@
-﻿using HcBimUtils.MoreLinq;
+using LSTool.Compatibility;
 using System.IO;
 using System.Text;
 
@@ -10,7 +10,7 @@ namespace RIMT.Utils.Directionaries
         {
             var pathItems = pathFile.Split('\\');
             var fileName = pathItems.LastOrDefault();
-            var dir = pathItems.Slice(0, pathItems.Count() - 1).Aggregate((a, b) => $"{a}\\{b}");
+            var dir = pathItems.Take(pathItems.Length - 1).Aggregate((a, b) => $"{a}\\{b}");
             var isFileExisted = File.Exists(pathFile);
             var isExisted = Directory.Exists(dir);
             if (!isExisted) Directory.CreateDirectory(dir);

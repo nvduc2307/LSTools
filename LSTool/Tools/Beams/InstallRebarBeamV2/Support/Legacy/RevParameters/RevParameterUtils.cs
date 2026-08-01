@@ -1,6 +1,6 @@
-﻿using Autodesk.Revit.DB;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
-using HcBimUtils;
+using LSTool.Compatibility;
 using RIMT.Utils;
 using RIMT.Utils.FilterElementsInRevit;
 using System.IO;
@@ -91,7 +91,7 @@ namespace RIMT.Utils.RevParameters
         }
         public static string GetParameterValue(this Element element, string paraName)
         {
-            var hasPara = ParameterUtilities.HasParameter(element, paraName);
+            var hasPara = LSTool.Utils.ParameterHelper.HasParameter(element, paraName);
             if (!hasPara) return string.Empty;
             try
             {

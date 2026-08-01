@@ -1,5 +1,5 @@
 using Autodesk.Revit.DB.Structure;
-using HcBimUtils;
+using LSTool.Compatibility;
 using RIMT.Utils.Geometries;
 using RIMT.Utils.RevPoints;
 using RIMT.Utils.RevRebars;

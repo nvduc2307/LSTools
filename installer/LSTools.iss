@@ -31,11 +31,11 @@ CloseApplications=no
 
 [Files]
 Source: "manifests\LSTool.R24.addin"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2024"; DestName: "LSTool.addin"; Flags: ignoreversion; Check: ShouldInstallVersion('2024')
-Source: "..\LSTool\bin\Release R24\*"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2024\LSTool"; Excludes: "publish\*,*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: ShouldInstallVersion('2024')
+Source: "staging\2024\*"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2024\LSTool"; Excludes: "publish\*,*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: ShouldInstallVersion('2024')
 Source: "manifests\LSTool.R25.addin"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2025"; DestName: "LSTool.addin"; Flags: ignoreversion; Check: ShouldInstallVersion('2025')
-Source: "..\LSTool\bin\Release R25\*"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2025\LSTool"; Excludes: "publish\*,*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: ShouldInstallVersion('2025')
+Source: "staging\2025\*"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2025\LSTool"; Excludes: "publish\*,*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: ShouldInstallVersion('2025')
 Source: "manifests\LSTool.R26.addin"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2026"; DestName: "LSTool.addin"; Flags: ignoreversion; Check: ShouldInstallVersion('2026')
-Source: "..\LSTool\bin\Release R26\*"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2026\LSTool"; Excludes: "publish\*,*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: ShouldInstallVersion('2026')
+Source: "staging\2026\*"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2026\LSTool"; Excludes: "publish\*,*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: ShouldInstallVersion('2026')
 
 [InstallDelete]
 Type: files; Name: "{userappdata}\Autodesk\Revit\Addins\2024\LSTool\Resources\Settings\LicenseServer.json"

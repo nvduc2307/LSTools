@@ -1,6 +1,6 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
-using HcBimUtils;
+using LSTool.Compatibility;
 using Newtonsoft.Json;
 using RIMT.Utils.Geometries;
 using System.Globalization;

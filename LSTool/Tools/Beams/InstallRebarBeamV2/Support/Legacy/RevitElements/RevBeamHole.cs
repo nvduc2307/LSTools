@@ -1,8 +1,6 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
-using HcBimUtils;
-using HcBimUtils.DocumentUtils;
-using HcBimUtils.RebarUtils;
+using LSTool.Compatibility;
 using Newtonsoft.Json;
 using RIMT.BeamRebar.ViewModel;
 using RIMT.Utils.Compares;

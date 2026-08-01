@@ -48,6 +48,9 @@ Sau khi thay `ReleaseProfile.dat`, chạy:
 
 Script tự build Release R24–R26, kiểm tra gói phát hành rồi tạo file `.exe` riêng cho khách trong
 `installer\dist`. Bộ cài tự phát hiện Revit 2024–2026 trên máy khách và chỉ cài add-in tương ứng.
+Trước khi Inno Setup chạy, script dùng ConfuserEx2 để làm rối DLL của từng phiên bản, đặt bản đã bảo
+vệ trong `installer\staging` và kiểm tra các entry point Revit bằng metadata. Các file
+`symbols.map` được giữ riêng trong `installer\protection-maps`; tuyệt đối không gửi chúng cho khách.
 
 Endpoint server nằm trong:
 
@@ -64,7 +67,10 @@ Trước khi giao, kiểm tra:
 - Không có `ReleaseProfile.dat` rời trong output.
 - Có `Resources\Settings\ReleaseChannel.json`.
 - Không còn `Resources\Settings\LicenseServer.json`.
+- Log ConfuserEx2 có số lượng `Renamed symbols` cho cả R24, R25 và R26.
+- Kiểm tra metadata xác nhận đủ các entry point Revit và embedded release profile.
 - Mở Revit với kết nối Internet, chạy một lệnh LSTools và xác nhận lệnh hoạt động.
+- Mở các cửa sổ WPF chính để kiểm tra binding/BAML sau obfuscation.
 
 ## Quản lý khách hàng
 
@@ -127,6 +133,9 @@ node .\tests\GoogleAppsScriptLicenseKernelTests\run-tests.js
 - Cách này ẩn hoàn toàn quy trình license khỏi trải nghiệm thông thường của khách, nhưng không thể
   làm bí mật tuyệt đối trước người có khả năng reverse-engineer DLL. Quyền kiểm soát thực tế vẫn
   nằm ở bind máy, ngày hết hạn, chữ ký RSA và quyết định của server.
+- ConfuserEx2 làm tăng đáng kể chi phí dịch ngược bằng rename nội bộ, constants và control flow,
+  nhưng không biến DLL .NET thành mã không thể dịch ngược. Không đặt private key hoặc bí mật server
+  trong DLL dù đã obfuscate.
 - Client refresh sau 24 giờ. Khi server tạm thời không truy cập được, lease đã ký còn hạn vẫn được
   chấp nhận.
 - Nếu server trả lời từ chối rõ ràng, client chặn ngay và không dùng lease cache để vượt qua quyết
