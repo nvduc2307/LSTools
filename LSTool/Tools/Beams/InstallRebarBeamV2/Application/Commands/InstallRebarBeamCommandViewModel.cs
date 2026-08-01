@@ -413,9 +413,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
             catch (Exception ex)
             {
                 diagnosticLog?.RecordException("command.failed", ex);
-                var message = GetDetailedError(ex);
-                if (diagnosticLog != null)
-                    message += $"{Environment.NewLine}{Environment.NewLine}Diagnostic log:{Environment.NewLine}{diagnosticLog.FilePath}";
+                var message = RebarErrorMessageBuilder.Build(
+                    ex,
+                    "Beam reinforcement installation",
+                    diagnosticLog?.FilePath);
                 IO.ShowWarning(message);
             }
             finally
@@ -481,18 +482,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     + $"{rebar.Id.Value}.");
             }
             return targetHostId;
-        }
-
-        private static string GetDetailedError(Exception exception)
-        {
-            var messages = new List<string>();
-            for (var current = exception; current != null; current = current.InnerException)
-            {
-                if (!string.IsNullOrWhiteSpace(current.Message)
-                    && !messages.Contains(current.Message))
-                    messages.Add(current.Message);
-            }
-            return string.Join(Environment.NewLine, messages);
         }
 
         [RelayCommand]

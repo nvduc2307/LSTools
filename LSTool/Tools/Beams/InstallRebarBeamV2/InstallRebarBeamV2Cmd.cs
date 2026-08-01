@@ -2,6 +2,7 @@ using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI.Selection;
 using LSTool.Licensing;
+using LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Application.Selection;
 using LSTool.Utils;
 using LSTool.Compatibility;
@@ -89,7 +90,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2
                 }
                 catch (Exception ex)
                 {
-                    IO.ShowWarning(ex.Message);
+                    IO.ShowWarning(
+                        RebarErrorMessageBuilder.Build(
+                            ex,
+                            "Beam reinforcement installation"));
                     if (tsg.GetStatus() == TransactionStatus.Started)
                         tsg.RollBack();
                 }
