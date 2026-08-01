@@ -40,7 +40,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             RebarBeamMainBarGroupType group,
             RebarBarTypeCustom barType,
             IReadOnlyList<MainBarBeamReal> legacyGeometry,
-            string stageName)
+            string stageName,
+            string diameterFilter = null)
         {
             if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
             if (context == null) throw new ArgumentNullException(nameof(context));
@@ -64,6 +65,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             {
                 var configuredQuantity = _geometryService
                     .GetRebarBeamGroupLevelInfo(viewModel, level, group)
+                    .Where(bar => MatchesDiameter(bar, diameterFilter))
                     .Select(bar => bar.Quantity)
                     .DefaultIfEmpty(0)
                     .Max();
@@ -192,7 +194,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     legacyGeometry,
                     stageName,
                     joint,
-                    geometryToleranceFt);
+                    geometryToleranceFt,
+                    diameterFilter);
             }
 
             var expectedTransitionRunCount = ValidateJointBarCompatibility(
@@ -201,7 +204,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 level,
                 group,
                 joint,
-                stageName);
+                stageName,
+                diameterFilter);
             var laneAlignmentToleranceFt = Math.Min(
                 geometryToleranceFt,
                 0.01.MmToFoot());
@@ -335,7 +339,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 IReadOnlyList<MainBarBeamReal> legacyGeometry,
                 string stageName,
                 BeamJointGeometry joint,
-                double toleranceFt)
+                double toleranceFt,
+                string diameterFilter)
         {
             var expectedLaneCount = ValidateJointBarCompatibility(
                 viewModel,
@@ -343,7 +348,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 level,
                 group,
                 joint,
-                stageName);
+                stageName,
+                diameterFilter);
             if (legacyGeometry.Count != expectedLaneCount)
             {
                 throw Unsupported(
@@ -2688,11 +2694,13 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             RebarBeamMainBarLevelType level,
             RebarBeamMainBarGroupType group,
             BeamJointGeometry joint,
-            string stageName)
+            string stageName,
+            string diameterFilter)
         {
             var activeBars = _geometryService
                 .GetRebarBeamGroupLevelInfo(viewModel, level, group)
-                .Where(bar => bar.Quantity > 0)
+                .Where(bar => bar.Quantity > 0
+                    && MatchesDiameter(bar, diameterFilter))
                 .ToList();
             if (activeBars.Any(bar =>
                     string.IsNullOrWhiteSpace(bar.Diameter)))
@@ -2742,9 +2750,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 level,
                 group);
             var leftBar = leftBars.FirstOrDefault(
-                bar => bar.HostId == joint.LeftBeam.Id);
+                bar => bar.HostId == joint.LeftBeam.Id
+                    && MatchesDiameter(bar, diameterFilter));
             var rightBar = rightBars.FirstOrDefault(
-                bar => bar.HostId == joint.RightBeam.Id);
+                bar => bar.HostId == joint.RightBeam.Id
+                    && MatchesDiameter(bar, diameterFilter));
             if (leftBar == null || rightBar == null)
             {
                 throw Unsupported(
@@ -2787,6 +2797,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     + $"'{rightBar.Diameter}'.");
             }
             return leftBar.Quantity;
+        }
+
+        private static bool MatchesDiameter(
+            RebarBeamMainBar bar,
+            string diameterFilter)
+        {
+            return string.IsNullOrWhiteSpace(diameterFilter)
+                || string.Equals(
+                    bar?.Diameter,
+                    diameterFilter,
+                    StringComparison.OrdinalIgnoreCase);
         }
 
         private BendClearance CalculateBendClearance(

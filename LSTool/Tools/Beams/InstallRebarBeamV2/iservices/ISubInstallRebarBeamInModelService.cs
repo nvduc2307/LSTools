@@ -20,7 +20,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.iservices
             InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel,
             RebarBeamMainBarLevelType rebarBeamMainBarLevelType,
             RebarBeamMainBarGroupType rebarBeamMainBarGroupType,
-            double extentCover);
+            double extentCover,
+            string diameterFilter = null);
         public List<RebarBeamMainBar> GetRebarBeamAllSection(
             InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel);
         public List<RebarBeamSectionStart> GetRebarBeamSectionStart(

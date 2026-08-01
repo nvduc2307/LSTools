@@ -428,7 +428,7 @@
                             <TextBlock Style="{StaticResource FieldLabel}"
                                        Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_DIAMETER}"/>
                             <ComboBox ItemsSource="{Binding ElementInstances.MainRebarDiameters}"
-                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamTop.RebarBeamTopLevelActive.Diameter}"/>
+                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionMid.RebarBeamTop.RebarBeamTopLevelActive.Diameter}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4,0,0,0">
                             <TextBlock Style="{StaticResource FieldLabel}"
@@ -464,7 +464,7 @@
                             <TextBlock Style="{StaticResource FieldLabel}"
                                        Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_DIAMETER}"/>
                             <ComboBox ItemsSource="{Binding ElementInstances.MainRebarDiameters}"
-                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamBot.RebarBeamBotLevelActive.Diameter}"/>
+                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionMid.RebarBeamBot.RebarBeamBotLevelActive.Diameter}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4,0,0,0">
                             <TextBlock Style="{StaticResource FieldLabel}"
@@ -493,7 +493,7 @@
                             <TextBlock Style="{StaticResource FieldLabel}"
                                        Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_DIAMETER}"/>
                             <ComboBox ItemsSource="{Binding ElementInstances.StirrupRebarDiameters}"
-                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamStirrup.Diameter}"/>
+                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionMid.RebarBeamStirrup.Diameter}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4,0,0,0">
                             <TextBlock Style="{StaticResource FieldLabel}"
@@ -517,7 +517,7 @@
                             <TextBlock Style="{StaticResource FieldLabel}"
                                        Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_DIAMETER}"/>
                             <ComboBox ItemsSource="{Binding ElementInstances.RebarDiameters}"
-                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamSideBar.Diameter}"/>
+                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionMid.RebarBeamSideBar.Diameter}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4,0,0,0">
                             <TextBlock Style="{StaticResource FieldLabel}"
@@ -576,7 +576,7 @@
                             <TextBlock Style="{StaticResource FieldLabel}"
                                        Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_DIAMETER}"/>
                             <ComboBox ItemsSource="{Binding ElementInstances.MainRebarDiameters}"
-                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamTop.RebarBeamTopLevelActive.Diameter}"/>
+                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionEnd.RebarBeamTop.RebarBeamTopLevelActive.Diameter}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4,0,0,0">
                             <TextBlock Style="{StaticResource FieldLabel}"
@@ -612,7 +612,7 @@
                             <TextBlock Style="{StaticResource FieldLabel}"
                                        Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_DIAMETER}"/>
                             <ComboBox ItemsSource="{Binding ElementInstances.MainRebarDiameters}"
-                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamBot.RebarBeamBotLevelActive.Diameter}"/>
+                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionEnd.RebarBeamBot.RebarBeamBotLevelActive.Diameter}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4,0,0,0">
                             <TextBlock Style="{StaticResource FieldLabel}"
@@ -641,7 +641,7 @@
                             <TextBlock Style="{StaticResource FieldLabel}"
                                        Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_DIAMETER}"/>
                             <ComboBox ItemsSource="{Binding ElementInstances.StirrupRebarDiameters}"
-                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamStirrup.Diameter}"/>
+                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionEnd.RebarBeamStirrup.Diameter}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4,0,0,0">
                             <TextBlock Style="{StaticResource FieldLabel}"
@@ -665,7 +665,7 @@
                             <TextBlock Style="{StaticResource FieldLabel}"
                                        Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_DIAMETER}"/>
                             <ComboBox ItemsSource="{Binding ElementInstances.RebarDiameters}"
-                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamSideBar.Diameter}"/>
+                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionEnd.RebarBeamSideBar.Diameter}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4,0,0,0">
                             <TextBlock Style="{StaticResource FieldLabel}"

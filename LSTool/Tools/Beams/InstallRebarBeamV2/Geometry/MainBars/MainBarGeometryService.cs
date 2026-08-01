@@ -17,10 +17,20 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
             InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel,
             RebarBeamMainBarLevelType rebarBeamMainBarLevelType,
             RebarBeamMainBarGroupType rebarBeamMainBarGroupType,
-            double extentCoverSide)
+            double extentCoverSide,
+            string diameterFilter = null)
         {
             try
             {
+                bool IsIncludedDiameter(RebarBeamMainBar rebar)
+                {
+                    return string.IsNullOrWhiteSpace(diameterFilter)
+                        || string.Equals(
+                            rebar?.Diameter,
+                            diameterFilter,
+                            StringComparison.OrdinalIgnoreCase);
+                }
+
                 var rebarBeams = installRebarBeamV2ViewModel.ElementInstances.RebarBeams;
                 var subBeams = installRebarBeamV2ViewModel.ElementInstances.Beam.ElementSubs;
                 var qRebarBeams = rebarBeams.Count;
@@ -62,12 +72,15 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 // refresh rebarInfo.QtyInstall
                 foreach (var item in rebarInfos)
                 {
-                    item.QtyInstall = item.Quantity;
+                    item.QtyInstall = IsIncludedDiameter(item)
+                        ? item.Quantity
+                        : 0;
                 }
                 var qRebarsMax = Math.Max(rebarInfos.Max(x => x.Quantity), rqMax);
                 if (qRebarsMax <= 0) return new List<MainBarBeamReal>();
                 var rebarGroupInfo = rebarInfos.FirstOrDefault(
-                        info => info.Quantity > 0)
+                        info => info.Quantity > 0
+                            && IsIncludedDiameter(info))
                     ?? rebarGroupInfosStart.FirstOrDefault()
                     ?? throw new InvalidOperationException("Main-bar configuration is unavailable.");
                 var diameter = installRebarBeamV2ViewModel.ElementInstances
@@ -118,7 +131,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         try
                         {
 
-                            var qty = rebarInfo.Quantity;
+                            var qty = IsIncludedDiameter(rebarInfo)
+                                ? rebarInfo.Quantity
+                                : 0;
                             if (!rebarBeamById.TryGetValue(rebarInfo.HostId, out var rebarBeam)
                                 || !subBeamById.TryGetValue(rebarInfo.HostId, out var boxSubBeam)
                                 || !subBeamIndexById.TryGetValue(rebarInfo.HostId, out var subBeamIndex))
@@ -186,6 +201,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                                 {
                                     if (i == 0 || i == qRebarsMax - 1)
                                     {
+                                        if (curve.MainPoints.Count == 0)
+                                        {
+                                            curve.Diameter = rebarInfo.Diameter;
+                                            curve.SourceBeamId = rebarInfo.HostId;
+                                        }
                                         curve.MainPoints.AddRange(new List<XYZ>() { l.GetEndPoint(0), l.GetEndPoint(1) });
                                         rebarInfo.QtyInstall--;
                                     }
@@ -193,6 +213,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                                     {
                                         if (rebarInfo.QtyInstall > 1)
                                         {
+                                            if (curve.MainPoints.Count == 0)
+                                            {
+                                                curve.Diameter = rebarInfo.Diameter;
+                                                curve.SourceBeamId = rebarInfo.HostId;
+                                            }
                                             curve.MainPoints.AddRange(new List<XYZ>() { l.GetEndPoint(0), l.GetEndPoint(1) });
                                             rebarInfo.QtyInstall--;
                                         }
@@ -361,8 +386,16 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
             if (rebarInfo == null)
                 throw new InvalidOperationException(
                     "Main-bar configuration is unavailable.");
+            var diameterName = string.IsNullOrWhiteSpace(mainBarBeamReal.Diameter)
+                ? rebarInfo.Diameter
+                : mainBarBeamReal.Diameter;
             var diameter = installRebarBeamV2ViewModel.ElementInstances.RebarBarTypeCustoms
-                .FirstOrDefault(x => x.NameStyle == rebarInfo.Diameter);
+                .FirstOrDefault(x => string.Equals(
+                    x.NameStyle,
+                    diameterName,
+                    StringComparison.OrdinalIgnoreCase))
+                ?? throw new InvalidOperationException(
+                    $"Main-bar type '{diameterName}' is unavailable.");
             var radiusMm = diameter.ModelBarDiameter.FootToMm();
             var bendrRadiusMm = diameter.StandardBendDiameter.FootToMm();
 

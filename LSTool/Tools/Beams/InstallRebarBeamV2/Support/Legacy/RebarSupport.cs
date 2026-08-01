@@ -35,7 +35,7 @@ namespace RIMT.Utils.RevRebars
                 ?? rebarBarType?.get_Parameter(BuiltInParameter.ALL_MODEL_TYPE_NAME)?.AsValueString()
                 ?? rebarBarType?.Name;
             BarDiameter = ReadDouble(rebarBarType, BuiltInParameter.REBAR_BAR_DIAMETER);
-            ModelBarDiameter = ReadDouble(rebarBarType, BuiltInParameter.REBAR_MODEL_BAR_DIAMETER);
+            ModelBarDiameter = ReadDouble(rebarBarType, BuiltInParameter.REBAR_BAR_DIAMETER);
             if (ModelBarDiameter <= 0) ModelBarDiameter = BarDiameter;
             BarDiameterReal = BarDiameter;
             StandardBendDiameter = ReadDouble(rebarBarType, BuiltInParameter.REBAR_STANDARD_BEND_DIAMETER);
