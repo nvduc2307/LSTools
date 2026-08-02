@@ -563,28 +563,6 @@ Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionEnd.RebarBeamSti
                   </StackPanel>
                </StackPanel>
             </GroupBox>-->
-            <GroupBox Grid.Column="2" Margin="4,8,0,0" Header="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_GROUP_SETTING_DANTORY}">
-               <Grid>
-                  <Grid.ColumnDefinitions>
-                     <ColumnDefinition/>
-                     <ColumnDefinition/>
-                  </Grid.ColumnDefinitions>
-                  <StackPanel Margin="0,0,4,0">
-                     <TextBlock Style="{StaticResource FieldLabel}"
-                HorizontalAlignment="Left" 
-                Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_DIAMETER}"/>
-                     <ComboBox
-                ItemsSource="{Binding ElementInstances.RebarDiameters}"
-                SelectedItem="{Binding ElementInstances.RebarBeamDantory.Diameter}"/>
-                  </StackPanel>
-                  <StackPanel Margin="4,0,0,0" Grid.Column="1">
-                     <TextBlock Style="{StaticResource FieldLabel}"
-                HorizontalAlignment="Left" 
-                Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_QUANTITY}"/>
-                     <TextBox Text="{Binding ElementInstances.RebarBeamDantory.Quantity}"/>
-                  </StackPanel>
-               </Grid>
-            </GroupBox>
          </Grid>
 
       </Grid>

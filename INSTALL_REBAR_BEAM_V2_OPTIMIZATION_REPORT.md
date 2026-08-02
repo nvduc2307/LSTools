@@ -19,7 +19,7 @@ InstallRebarBeamV2/
 |  `- MainBarCreationPlan       Revit-write input for main bars
 |- Geometry/
 |  |- MainBars/                 main-bar planning and geometry
-|  `- Auxiliary/                side-bar and dantory geometry
+|  `- Auxiliary/                side-bar geometry
 |- Revit/Writers/
 |  |- MainBarRebarWriter
 |  `- Stirrups/                 four stirrup writer groups
@@ -40,7 +40,7 @@ InstallRebarBeamV2/
 - Main bars now follow `Planner -> MainBarCreationPlan -> Writer`; geometry calculation and Revit element creation are timed separately.
 - The created rebar collection is materialized once for assembly creation, metadata lookup, and rehosting.
 - The real target host id is resolved once and carried in the installation result.
-- Span-local side bars, dantory bars, and stirrups retain their source beam id and are rehosted to that physical span after the rebar assembly is created. Continuous main bars keep the assembly-wide primary host behavior.
+- Span-local side bars and stirrups retain their source beam id and are rehosted to that physical span after the rebar assembly is created. Continuous main bars keep the assembly-wide primary host behavior.
 - Temporary-host cleanup now verifies the assigned host and confirms that no created rebar was cascade-deleted.
 
 ### Geometry and opening processing
@@ -78,7 +78,7 @@ Partial classes are used only as a compatibility seam: XAML bindings, generated 
 The command writes a single `Debug` timing summary after post-processing. It contains stages such as:
 
 - `main.top.1.plan` / `main.top.1.write`
-- `side`, `dantory`
+- `side`
 - `stirrup.main` and the three secondary-stirrup groups
 - `metadata.type`, `metadata.schema`
 - `assembly.create`, `assembly.metadata`
@@ -103,7 +103,7 @@ Before release, run the following cases in each supported Revit version used by 
 1. One physical beam member, all six main-bar groups enabled.
 2. Multi-span beam chain with different start/mid/end quantities.
 3. Quantity equal to zero and quantity equal to one for every main-bar level.
-4. Side bars and dantory bars enabled and disabled independently.
+4. Side bars enabled and disabled independently.
 5. All four stirrup groups, including vertical and horizontal secondary stirrups.
 6. No opening, one circular opening, and multiple openings near adjacent spans.
 7. Successful rehost: no temporary DirectShape remains after commit.

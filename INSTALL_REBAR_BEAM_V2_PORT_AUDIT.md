@@ -49,7 +49,7 @@ Mã hiện build thành công trên R24, R25 và R26, resource bắt buộc có 
 
 ### 5. Atomic transaction và báo lỗi
 
-- Toàn bộ mutation vẫn nằm trong một transaction, nhưng exception từ các nhóm top/bottom/side/dantory/main stirrup/secondary stirrup giờ được đẩy lên transaction ngoài.
+- Toàn bộ mutation vẫn nằm trong một transaction, nhưng exception từ các nhóm top/bottom/side/main stirrup/secondary stirrup giờ được đẩy lên transaction ngoài.
 - Khi một nhóm bắt buộc, schema, assembly metadata, opening replacement hoặc reset host lỗi, transaction rollback và UI hiển thị chuỗi inner exception.
 - Ghi schema kiểm tra schema/field/element hợp lệ thay vì bỏ qua.
 - Đồng bộ group top/bottom, áp preset, tính section và coordinate không còn nuốt lỗi dữ liệu đầu vào.
@@ -111,7 +111,7 @@ Build được chạy với `/p:DeployRevitAddin=false` để chỉ xác minh co
 
 1. Chọn trực tiếp assembly có 2, 3 và nhiều beam member; xác nhận rebar phủ đủ mọi đoạn và thứ tự member đúng.
 2. Beam ngang, nghiêng, rotated, đảo hướng, khác section và có Fukashi.
-3. Đủ 12 nhóm output: top 1-3, bottom 1-3, side, dantory, main stirrup, secondary vertical/horizontal.
+3. Đủ 11 nhóm output: top 1-3, bottom 1-3, side, main stirrup, secondary vertical/horizontal.
 4. Opening: một lỗ, nhiều lỗ, gần đầu dầm và tại vùng đổi bước stirrup.
 5. Project trắng chưa có shared parameter RimT; kiểm tra parameter, GUID, schedule và giá trị segment.
 6. Diameter schema đầy đủ, schema hỏng/thiếu và model chưa có schema.

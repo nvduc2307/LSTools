@@ -142,15 +142,6 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Setting Dantory.
-        /// </summary>
-        public static string IRBV2_GROUP_SETTING_DANTORY {
-            get {
-                return ResourceManager.GetString("IRBV2_GROUP_SETTING_DANTORY", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Setting Rebar Bot.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_REBAR_BOT {
@@ -294,14 +285,6 @@ namespace LSTool.Properties.Langs {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized string similar to Sub Setting.
-        /// </summary>
-        public static string IRBV2_TAB_SETTING_SUB_SETTING {
-            get {
-                return ResourceManager.GetString("IRBV2_TAB_SETTING_SUB_SETTING", resourceCulture);
-            }
-        }
     }
 }
 

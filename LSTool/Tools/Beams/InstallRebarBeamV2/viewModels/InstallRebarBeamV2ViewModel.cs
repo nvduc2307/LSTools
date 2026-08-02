@@ -43,7 +43,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
         public SettingRebarSectionView SettingRebarSectionView { get; set; }
         public SettingStirrupRebarSectionView SettingStirrupRebarSectionView { get; set; }
         public SettingBeamView SettingBeamView { get; set; }
-        public SettingSubSettingView SettingSubSettingView { get; set; }
         public AnchorBeamType1View AnchorBeamType1View { get; set; }
         public AnchorBeamType2View AnchorBeamType2View { get; set; }
         [ObservableProperty]
@@ -86,7 +85,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                 AC.UiDoc,
                 SelectedBeams);
             SettingRebarSectionView = new SettingRebarSectionView() { DataContext = this };
-            SettingSubSettingView = new SettingSubSettingView() { DataContext = this };
 
             SettingStirrupRebarSectionView = new SettingStirrupRebarSectionView() { DataContext = this };
             SettingStirrupSectionViewModel = new SettingStirrupSectionViewModel(this)
@@ -139,11 +137,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
         private void TabSettingBeamView()
         {
             UserControlViewCurrent = SettingBeamView;
-        }
-        [RelayCommand]
-        private void TabSettingSubSettingView()
-        {
-            UserControlViewCurrent = SettingSubSettingView;
         }
         [RelayCommand]
         private void Apply()
@@ -223,7 +216,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     AC.UiDoc,
                     SelectedBeams);
                 SettingRebarSectionView = new SettingRebarSectionView() { DataContext = this };
-                SettingSubSettingView = new SettingSubSettingView() { DataContext = this };
 
                 SettingStirrupRebarSectionView = new SettingStirrupRebarSectionView() { DataContext = this };
                 SettingStirrupSectionViewModel = new SettingStirrupSectionViewModel(this)

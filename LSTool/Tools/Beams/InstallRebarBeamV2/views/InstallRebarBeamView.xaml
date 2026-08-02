@@ -416,9 +416,6 @@
                             <RadioButton Style="{StaticResource NavRadio}"
                                          Command="{Binding TabSettingBeamViewCommand}"
                                          GroupName="menuTab" Content="03   Beam Rules"/>
-                            <RadioButton Style="{StaticResource NavRadio}"
-                                         Command="{Binding TabSettingSubSettingViewCommand}"
-                                         GroupName="menuTab" Content="04   Additional Bars"/>
                         </StackPanel>
 
                         <Border Grid.Row="3" Background="#20343D" CornerRadius="6" Padding="10" Margin="0,12,0,0">

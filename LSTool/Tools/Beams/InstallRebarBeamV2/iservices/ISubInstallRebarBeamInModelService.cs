@@ -10,9 +10,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.iservices
         public void GenerateRebarDeverlop(
             InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel,
             MainBarBeamReal mainBarBeamReal);
-        public List<MainBarBeamReal> GetDantoryBarBeamReals(
-            InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel,
-            double extentCover);
         public List<MainBarBeamReal> GetSideBarBeamReals(
             InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel,
             double extentCover);

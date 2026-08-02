@@ -192,10 +192,4 @@
   <data name="IRBV2_SETTING_DISTANCE_R_TO_R" xml:space="preserve">
     <value>Rebar Spacing</value>
   </data>
-  <data name="IRBV2_TAB_SETTING_SUB_SETTING" xml:space="preserve">
-    <value>Additional Settings</value>
-  </data>
-  <data name="IRBV2_GROUP_SETTING_DANTORY" xml:space="preserve">
-    <value>Erection Bars</value>
-  </data>
 </root>

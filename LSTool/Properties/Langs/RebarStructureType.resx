@@ -173,10 +173,6 @@
     <value>梁_腹筋</value>
     <comment>Thép chống phình</comment>
   </data>
-  <data name="BEAM_DANTORI_REBAR" xml:space="preserve">
-    <value>梁_段取り筋</value>
-    <comment>Thép dantori dầm</comment>
-  </data>
   <data name="FOUNDATION_MAIN_REBAR" xml:space="preserve">
     <value>基礎_ベース筋</value>
     <comment>Thép chính móng</comment>
@@ -192,10 +188,6 @@
   <data name="FOUNDATION_MAINTOP_REBAR" xml:space="preserve">
     <value>基礎_はかま筋</value>
     <comment>Thép chính bên trên móng</comment>
-  </data>
-  <data name="FOUNDATION_DANTORI_REBAR" xml:space="preserve">
-    <value>基礎_段取り筋</value>
-    <comment>Thép dantori móng</comment>
   </data>
   <data name="FOUNDATION_OTHER_REBAR2" xml:space="preserve">
     <value>基礎_その他補強筋</value>
