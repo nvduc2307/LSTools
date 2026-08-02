@@ -71,7 +71,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     var installRebarBot2 = installResult.BottomLevel2;
                     var installRebarBot3 = installResult.BottomLevel3;
                     var installRebarSide = installResult.SideBars;
-                    var installRebarDantories = installResult.DantoryBars;
                     var installRebarStirrup = installResult.MainStirrups;
                     var installRebarSubVerticalStirrup = installResult.SecondaryVerticalStirrups;
                     var installRebarSubHorizontalStirrupForMainRebar = installResult.SecondaryHorizontalMainStirrups;
@@ -83,7 +82,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     {
                         totalCount = allCreatedRebars.Count,
                         sideCount = installRebarSide.Count,
-                        dantoryCount = installRebarDantories.Count,
                         mainStirrupCount = installRebarStirrup.Count,
                         secondaryVerticalStirrupCount = installRebarSubVerticalStirrup.Count,
                         secondaryHorizontalMainStirrupCount = installRebarSubHorizontalStirrupForMainRebar.Count,
@@ -102,7 +100,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                         SetRebarType(installRebarBot2, LSTool.Properties.Langs.RebarStructureType.BEAM_MAIN_REBAR_LOWER_STAGE_2);
                         SetRebarType(installRebarBot3, LSTool.Properties.Langs.RebarStructureType.BEAM_MAIN_REBAR_LOWER_STAGE_3);
                         SetRebarType(installRebarSide, LSTool.Properties.Langs.RebarStructureType.BEAM_ABDOMINAL_REBAR);
-                        SetRebarType(installRebarDantories, LSTool.Properties.Langs.RebarStructureType.BEAM_DANTORI_REBAR);
                         SetRebarType(installRebarStirrup, LSTool.Properties.Langs.RebarStructureType.BEAM_STP);
                         SetRebarType(installRebarSubVerticalStirrup, LSTool.Properties.Langs.RebarStructureType.BEAM_SECONDARY_STP_REBAR);
                         SetRebarType(installRebarSubHorizontalStirrupForMainRebar, LSTool.Properties.Langs.RebarStructureType.BEAM_SECONDARY_STP_REBAR);
@@ -131,7 +128,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                         rebarinfos.AddRange(CreateRebarInfos(installRebarBot2, installResult, MetadataRebarBeamType.MainBar, RebarBeamLevel.Bottom, RebarBeamGroup.Level2));
                         rebarinfos.AddRange(CreateRebarInfos(installRebarBot3, installResult, MetadataRebarBeamType.MainBar, RebarBeamLevel.Bottom, RebarBeamGroup.Level3));
                         rebarinfos.AddRange(CreateRebarInfos(installRebarSide, installResult, MetadataRebarBeamType.SideBar, RebarBeamLevel.None, RebarBeamGroup.None));
-                        rebarinfos.AddRange(CreateRebarInfos(installRebarDantories, installResult, MetadataRebarBeamType.Dantory, RebarBeamLevel.None, RebarBeamGroup.None));
                         rebarinfos.AddRange(CreateRebarInfos(installRebarStirrup, installResult, MetadataRebarBeamType.Stirrup, RebarBeamLevel.None, RebarBeamGroup.None));
                         rebarinfos.AddRange(CreateRebarInfos(installRebarSubVerticalStirrup, installResult, MetadataRebarBeamType.Stirrup, RebarBeamLevel.None, RebarBeamGroup.None));
                         rebarinfos.AddRange(CreateRebarInfos(installRebarSubHorizontalStirrupForMainRebar, installResult, MetadataRebarBeamType.Stirrup, RebarBeamLevel.None, RebarBeamGroup.None));

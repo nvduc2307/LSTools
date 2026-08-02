@@ -13,7 +13,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application
         public List<Rebar> BottomLevel2 { get; set; } = new();
         public List<Rebar> BottomLevel3 { get; set; } = new();
         public List<Rebar> SideBars { get; set; } = new();
-        public List<Rebar> DantoryBars { get; set; } = new();
         public List<Rebar> MainStirrups { get; set; } = new();
         public List<Rebar> SecondaryVerticalStirrups { get; set; } = new();
         public List<Rebar> SecondaryHorizontalMainStirrups { get; set; } = new();
@@ -34,7 +33,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application
             .Concat(BottomLevel2)
             .Concat(BottomLevel3)
             .Concat(SideBars)
-            .Concat(DantoryBars)
             .Concat(MainStirrups)
             .Concat(SecondaryVerticalStirrups)
             .Concat(SecondaryHorizontalMainStirrups)

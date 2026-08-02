@@ -70,15 +70,6 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 梁_段取り筋.
-        /// </summary>
-        public static string BEAM_DANTORI_REBAR {
-            get {
-                return ResourceManager.GetString("BEAM_DANTORI_REBAR", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 梁_ふかし筋.
         /// </summary>
         public static string BEAM_FUKASHI_REBAR {
@@ -327,15 +318,6 @@ namespace LSTool.Properties.Langs {
         public static string COLUMN_STP_REBAR {
             get {
                 return ResourceManager.GetString("COLUMN_STP_REBAR", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 基礎_段取り筋.
-        /// </summary>
-        public static string FOUNDATION_DANTORI_REBAR {
-            get {
-                return ResourceManager.GetString("FOUNDATION_DANTORI_REBAR", resourceCulture);
             }
         }
         

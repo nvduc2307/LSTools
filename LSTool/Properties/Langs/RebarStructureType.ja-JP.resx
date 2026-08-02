@@ -159,9 +159,6 @@
   <data name="BEAM_ABDOMINAL_REBAR" xml:space="preserve">
     <value>梁_腹筋</value>
   </data>
-  <data name="BEAM_DANTORI_REBAR" xml:space="preserve">
-    <value>梁_段取り筋</value>
-  </data>
   <data name="FOUNDATION_MAIN_REBAR" xml:space="preserve">
     <value>基礎_ベース筋</value>
   </data>
@@ -173,9 +170,6 @@
   </data>
   <data name="FOUNDATION_MAINTOP_REBAR" xml:space="preserve">
     <value>基礎_はかま筋</value>
-  </data>
-  <data name="FOUNDATION_DANTORI_REBAR" xml:space="preserve">
-    <value>基礎_段取り筋</value>
   </data>
   <data name="FOUNDATION_OTHER_REBAR2" xml:space="preserve">
     <value>基礎_その他補強筋</value>

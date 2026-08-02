@@ -56,6 +56,5 @@
         MainBar = 0,
         Stirrup = 1,
         SideBar = 2,
-        Dantory = 3,
     }
 }

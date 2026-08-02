@@ -53,8 +53,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
             result.BottomLevel3 = CreateMainBars(installRebarBeamV2ViewModel, context, RebarBeamMainBarLevelType.RebarBot, RebarBeamMainBarGroupType.GroupLevel3, "main.bottom.3");
             using (context.Metrics.Measure("side"))
                 result.SideBars = InstallRebarSide(installRebarBeamV2ViewModel, context);
-            using (context.Metrics.Measure("dantory"))
-                result.DantoryBars = InstallRebarDantory(installRebarBeamV2ViewModel, context);
             using (context.Metrics.Measure("stirrup.main"))
                 result.MainStirrups = InstallRebarStirrup(installRebarBeamV2ViewModel, context);
             using (context.Metrics.Measure("stirrup.secondary.vertical"))
@@ -152,44 +150,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
             }
         }
 
-        private List<Rebar> InstallRebarDantory(
-            InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel,
-            RebarExecutionContext context)
-        {
-            try
-            {
-                var results = new List<Rebar>();
-                var host = context.TemporaryHost;
-                var vtx = installRebarBeamV2ViewModel.ElementInstances.Beam.BoxElement.VTX;
-                var vty = installRebarBeamV2ViewModel.ElementInstances.Beam.BoxElement.VTY;
-                var vtz = installRebarBeamV2ViewModel.ElementInstances.Beam.BoxElement.VTZ;
-                var rebarDantories = _subInstallRebarBeamInModelService.GetDantoryBarBeamReals(
-                    installRebarBeamV2ViewModel,
-                    0);
-                foreach (var r in rebarDantories)
-                {
-                    var diameterSide = context.GetBarType(r.Diameter);
-                    var l = r.StartPoint.CreateLine(r.EndPoint);
-                    var rebar = RebarCreationCompat.CreateFromCurves(
-                            AC.Document,
-                            RebarStyle.Standard,
-                            diameterSide.RebarBarType,
-                            host,
-                            -vty,
-                            new List<Curve>() { l },
-                            true,
-                            true);
-                    RevRebarUtils.SetSolidRebar3DView(rebar, AC.Document.ActiveView);
-                    context.RegisterTargetHost(rebar, r.SourceBeamId);
-                    results.Add(rebar);
-                }
-                return results;
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("Failed to create dantory bars.", ex);
-            }
-        }
     }
 }
 

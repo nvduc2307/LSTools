@@ -59,7 +59,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 RebarBeamActiveChange?.Invoke();
             }
         }
-        public RebarBeamDantory RebarBeamDantory { get; set; }
         public Action RebarBeamActiveChange { get; set; }
         public BeamFukashi BeamFukashi { get; set; }
         private bool _coordinateBeamGenerated;
@@ -208,11 +207,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 Type2_L3_Y_Start = 500,
                 Type2_L3_Y_End = 500
             };
-            RebarBeamDantory = new RebarBeamDantory()
-            {
-                Diameter = RebarDiameters.FirstOrDefault(),
-                Quantity = 2
-            };
         }
 
         public RebarBarTypeCustom GetRebarBarType(string name)
@@ -320,8 +314,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             RebarBeamAnchorType = RebarBeamAnchorTypes.FirstOrDefault(
                     option => option.Id == source.RebarBeamAnchorType?.Id)
                 ?? RebarBeamAnchorTypes.FirstOrDefault();
-            RebarBeamDantory = CopyDantory(source.RebarBeamDantory);
-
             for (var index = 0; index < RebarBeams.Count; index++)
             {
                 var sourceIndex = Math.Min(
@@ -973,26 +965,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 Type2_L1_Y_End = source.Type2_L1_Y_End,
                 Type2_L3_Y_Start = source.Type2_L3_Y_Start,
                 Type2_L3_Y_End = source.Type2_L3_Y_End
-            };
-        }
-
-        private static RebarBeamDantory CopyDantory(
-            RebarBeamDantory source)
-        {
-            if (source == null)
-                throw new InvalidOperationException(
-                    "The source auxiliary-bar settings are unavailable.");
-
-            return new RebarBeamDantory
-            {
-                Diameter = source.Diameter,
-                Quantity = source.Quantity,
-                QtyInstall = source.QtyInstall,
-                RebarBeamType = source.RebarBeamType,
-                HasHorizontalHook = source.HasHorizontalHook,
-                Hooks2 = source.Hooks2 == null
-                    ? null
-                    : new Dictionary<int, bool>(source.Hooks2)
             };
         }
 
