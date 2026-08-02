@@ -111,7 +111,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             {
                 CreateRebarColumn_Single(faces, ignoreFirstEnd, out List<List<ColumnRebarPositionModel>> rebarPositions0);
                 result.AddRange(rebarPositions0);
-            }    
+            }
             else
             {
                 //Truong hop co nhieu cot
@@ -123,7 +123,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             return result;
         }
         private void CreateRebarColumn_Single(
-            List<ColumnFaceModel> faces, 
+            List<ColumnFaceModel> faces,
             bool ignoreFirstEnd,
             out List<List<ColumnRebarPositionModel>> rebarPoss)
         {
@@ -164,12 +164,16 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             }
             foreach (var cv in result)
             {
-                RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                var isRebarFreeForm = RebarHelper.IsRebarFreeForm(cv, out XYZ normal);
+                if (isRebarFreeForm)
+                    RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                else
+                    RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", normal, _rebarBarTypes, _host);
             }
         }
         private void CreateRebarColumn_Multi(
-            List<ColumnFaceModel> faces, 
-            bool ignoreFirstEnd, 
+            List<ColumnFaceModel> faces,
+            bool ignoreFirstEnd,
             out List<List<ColumnRebarPositionModel>> rebarPoss)
         {
             rebarPoss = new List<List<ColumnRebarPositionModel>>();
@@ -213,7 +217,10 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 var rebarPosition = rebarPositions[index];
                 var rebarPositionNext = rebarPositions[index + 1];
                 var rebarPositionPrev = index == 0 ? null : rebarPositions[index - 1];
-                var isLapDiff = IsDifferentFace(face, faces[index + 1]);
+                var isLapDiffTop = IsDifferentFace(face, faces[index + 1]);
+                var isLapDiffBot = index == 0 
+                    ? false 
+                    : IsDifferentFace(faces[index - 1], face);
                 var rbCount = rebarPosition.Count;
                 foreach (var item in rebarPosition)
                 {
@@ -224,8 +231,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     var isSole = !condit1 && !isOdd ? true : condit1 && isOdd ? true : false;
                     var lapLengthGap = lapLength + (isSole ? lapLength + gapLap : 0);
                     var rebarPositionNextTarget = rebarPositionNext.FirstOrDefault(x => x.Index == item.Index);
-                    var rebarPositionPrevTarget = rebarPositionPrev == null 
-                        ? null 
+                    var rebarPositionPrevTarget = rebarPositionPrev == null
+                        ? null
                         : rebarPositionPrev.FirstOrDefault(x => x.Index == item.Index);
                     var numberOfPrev = rebarPositionPrevTarget == null
                         ? -1
@@ -233,18 +240,25 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     var condit1Prev = numberOfPrev % 2 == 0;
                     var isSolePrev = rebarPositionPrevTarget != null
                         && (!condit1Prev && !isOddPrev ? true : condit1Prev && isOddPrev ? true : false);
-                    var lapLengthGapPrev = isSolePrev ? lapLengthPrev + gapLapPrev : 0;
-                    if (isLapDiff)
+                    var lapLengthGapPrev = isSolePrev 
+                        ? lapLengthPrev + gapLapPrev 
+                        : 0;
+                    if (isLapDiffTop)
                     {
                         var p1 = index == 0
                             ? item.Position - vtZ * anchor
-                            : item.Position;
+                            : item.Position - vtZ * (isLapDiffBot ? anchor : 0);
                         var p2 = item.Position + vtZ * (length - face.CoverBase.FromMillimeters());
-                        var p3 = p2 - face.Plane.Normal * minHook;
+                        var p3 = p2 - face.Plane.Normal * anchor * 0.5;
                         var ps = index == 0 ?
                             new List<XYZ>() { p1 - vtY * minHook, p1, p2, p3 }
-                            : new List<XYZ>() { p1 + vtZ * lapLengthGapPrev, p2, p3 };
-                        RebarHelper.CreateRebar(_document, ps.PointsToCurves(), $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                            : new List<XYZ>() { p1 + vtZ * (isLapDiffBot ? 0 : lapLengthGapPrev), p2, p3 };
+                        var cv = ps.PointsToCurves();
+                        var isRebarFreeForm = RebarHelper.IsRebarFreeForm(cv, out XYZ normal);
+                        if (isRebarFreeForm)
+                            RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                        else
+                            RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", normal, _rebarBarTypes, _host);
                     }
                     else
                     {
@@ -252,50 +266,74 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                         {
                             if (rebarPositionNextTarget == null)
                             {
-                                var p1 = item.Position - vtZ * anchor;
+                                var p1 = index == 0
+                                ? item.Position - vtZ * anchor
+                                : item.Position - vtZ * (isLapDiffBot ? anchor : 0);
                                 var p2 = item.Position + vtZ * (length + lapLengthGap);
                                 var ps = index == 0 ?
                                 new List<XYZ>() { p1 - vtY * minHook, p1, p2 }
-                                : new List<XYZ>() { p1 + vtZ * lapLengthGapPrev, p2 };
-                                RebarHelper.CreateRebar(_document, ps.PointsToCurves(), $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                                : new List<XYZ>() { p1 + vtZ * (isLapDiffBot ? 0 : lapLengthGapPrev), p2 };
+                                var cv = ps.PointsToCurves();
+                                var isRebarFreeForm = RebarHelper.IsRebarFreeForm(cv, out XYZ normal);
+                                if (isRebarFreeForm)
+                                    RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                                else
+                                    RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", normal, _rebarBarTypes, _host);
                             }
                             else
                             {
                                 var p1 = index == 0
                                 ? item.Position - vtZ * anchor
-                                : item.Position;
+                                : item.Position - vtZ * (isLapDiffBot ? anchor : 0);
                                 var p2 = item.Position + vtZ * (length - face.HeightBeamZone.FromMillimeters());
                                 var p3 = rebarPositionNextTarget.Position;
                                 var p4 = rebarPositionNextTarget.Position + vtZ * lapLengthGap;
                                 var ps = index == 0 ?
                                 new List<XYZ>() { p1 - vtY * minHook, p1, p2.Add(face.HeightBeamZone <= 5 ? vtZ * lapLengthGap : vtZ * 0.0), face.HeightBeamZone <= 5 ? null : p3, face.HeightBeamZone <= 5 ? null : p4 }
-                                : new List<XYZ>() { p1 + vtZ * lapLengthGapPrev, p2.Add(face.HeightBeamZone <= 5 ? vtZ * lapLengthGap : vtZ * 0.0), face.HeightBeamZone <= 5 ? null : p3, face.HeightBeamZone <= 5 ? null : p4 };
-                                RebarHelper.CreateRebar(_document, ps.Where(x => x != null).ToList().PointsToCurves(), $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                                : new List<XYZ>() { p1 + vtZ * (isLapDiffBot ? 0 : lapLengthGapPrev), p2.Add(face.HeightBeamZone <= 5 ? vtZ * lapLengthGap : vtZ * 0.0), face.HeightBeamZone <= 5 ? null : p3, face.HeightBeamZone <= 5 ? null : p4 };
+                                var cv = ps.PointsToCurves();
+                                var isRebarFreeForm = RebarHelper.IsRebarFreeForm(cv, out XYZ normal);
+                                if (isRebarFreeForm)
+                                    RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                                else
+                                    RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", normal, _rebarBarTypes, _host);
                             }
                         }
                         else
                         {
                             if (rebarPositionNextTarget == null)
                             {
-                                var p1 = item.Position;
+                                var p1 = index == 0
+                                ? item.Position - vtZ * anchor
+                                : item.Position - vtZ * (isLapDiffBot ? anchor : 0);
                                 var p2 = item.Position + vtZ * (length + lapLengthGap);
                                 var ps = index == 0 ?
                                 new List<XYZ>() { p1 - vtY * minHook, p1, p2 }
-                                : new List<XYZ>() { p1 + vtZ * lapLengthGapPrev, p2 };
-                                RebarHelper.CreateRebar(_document, ps.PointsToCurves(), $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                                : new List<XYZ>() { p1 + vtZ * (isLapDiffBot ? 0 : lapLengthGapPrev), p2 };
+                                var cv = ps.PointsToCurves();
+                                var isRebarFreeForm = RebarHelper.IsRebarFreeForm(cv, out XYZ normal);
+                                if (isRebarFreeForm)
+                                    RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                                else
+                                    RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", normal, _rebarBarTypes, _host);
                             }
                             else
                             {
                                 var p1 = index == 0
                                 ? item.Position - vtZ * anchor
-                                : item.Position;
+                                : item.Position - vtZ * (isLapDiffBot ? anchor : 0);
                                 var p2 = item.Position + vtZ * (length - face.HeightBeamZone.FromMillimeters());
                                 var p3 = rebarPositionNextTarget.Position;
                                 var p4 = rebarPositionNextTarget.Position + vtZ * lapLengthGap;
                                 var ps = index == 0 ?
                                 new List<XYZ>() { p1 - vtY * minHook, p1, p2.Add(face.HeightBeamZone <= 5 ? vtZ * lapLengthGap : vtZ * 0.0), face.HeightBeamZone <= 5 ? null : p3, face.HeightBeamZone <= 5 ? null : p4 }
-                                : new List<XYZ>() { p1 + vtZ * lapLengthGapPrev, p2.Add(face.HeightBeamZone <= 5 ? vtZ * lapLengthGap : vtZ * 0.0), face.HeightBeamZone <= 5 ? null : p3, face.HeightBeamZone <= 5 ? null : p4 };
-                                RebarHelper.CreateRebar(_document, ps.Where(x => x != null).ToList().PointsToCurves(), $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                                : new List<XYZ>() { p1 + vtZ * (isLapDiffBot ? 0 : lapLengthGapPrev), p2.Add(face.HeightBeamZone <= 5 ? vtZ * lapLengthGap : vtZ * 0.0), face.HeightBeamZone <= 5 ? null : p3, face.HeightBeamZone <= 5 ? null : p4 };
+                                var cv = ps.PointsToCurves();
+                                var isRebarFreeForm = RebarHelper.IsRebarFreeForm(cv, out XYZ normal);
+                                if (isRebarFreeForm)
+                                    RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                                else
+                                    RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", normal, _rebarBarTypes, _host);
                             }
                         }
                     }
@@ -304,7 +342,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             rebarPoss = rebarPositions;
         }
         private void CreateRebarColumn_Multi_Last(
-            List<ColumnFaceModel> faces, 
+            List<ColumnFaceModel> faces,
             bool ignoreFirstEnd,
             out List<List<ColumnRebarPositionModel>> rebarPoss)
         {
@@ -370,8 +408,11 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             }
             foreach (var cv in result)
             {
-                //_document.CreateCurves(cv);
-                RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                var isRebarFreeForm = RebarHelper.IsRebarFreeForm(cv, out XYZ normal);
+                if (isRebarFreeForm)
+                    RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", "A", _rebarBarTypes, _host);
+                else
+                    RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", normal, _rebarBarTypes, _host);
             }
         }
         private bool IsDifferentFace(ColumnFaceModel fs, ColumnFaceModel fe)
@@ -383,10 +424,10 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             return distance >= e;
         }
         private List<ColumnRebarPositionModel> SolvePositionInstallRebar(
-            XYZ start, 
-            XYZ end, 
-            int qty, 
-            int maxQty, 
+            XYZ start,
+            XYZ end,
+            int qty,
+            int maxQty,
             ColumnFaceModel hostFace)
         {
             var results = new List<ColumnRebarPositionModel>();
@@ -400,19 +441,19 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 for (int i = 0; i < haft; i++)
                 {
                     var p = start + i * spacing * vt;
-                    results.Add(new ColumnRebarPositionModel() 
+                    results.Add(new ColumnRebarPositionModel()
                     { Index = i + 1, Position = p, Face = hostFace.FaceType, HostId = hostFace.HostId });
                 }
                 if (qtyDu == 1)
                 {
                     var p = start.MidPoint(end);
-                    results.Add(new ColumnRebarPositionModel() 
+                    results.Add(new ColumnRebarPositionModel()
                     { Index = 1 + maxQty / 2, Position = p, Face = hostFace.FaceType, HostId = hostFace.HostId });
                 }
                 for (int i = 0; i < haft; i++)
                 {
                     var p = end - i * spacing * vt;
-                    results.Add(new ColumnRebarPositionModel() 
+                    results.Add(new ColumnRebarPositionModel()
                     { Index = maxQty - i, Position = p, Face = hostFace.FaceType, HostId = hostFace.HostId });
                 }
             }

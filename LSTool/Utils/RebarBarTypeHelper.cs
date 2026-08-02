@@ -17,7 +17,10 @@ namespace LSTool.Utils
             if (rebarBarType == null || diameter <= 0)
                 return;
             if (Math.Abs(rebarBarType.get_Parameter(BuiltInParameter.REBAR_BAR_DIAMETER).AsDouble().ToMillimeters() - diameter.ToMillimeters()) > 1)
+            {
                 rebarBarType.get_Parameter(BuiltInParameter.REBAR_BAR_DIAMETER).Set(diameter);
+                rebarBarType.get_Parameter(BuiltInParameter.REBAR_MODEL_BAR_DIAMETER).Set(diameter);
+            }
 #if REVIT2022 || REVIT2023 || REVIT2024
             if (Math.Abs(rebarBarType.BarModelDiameter.ToMillimeters() - diameter.ToMillimeters()) > 1)
                 rebarBarType.BarModelDiameter = diameter;
