@@ -10,6 +10,7 @@ using Nice3point.Revit.Toolkit.External;
 using LSTool.Tools.Beams.InstallRebarBeamV2.service;
 using LSTool.Tools.Beams.InstallRebarBeamV2.iservices;
 using LSTool.Tools.Beams.InstallRebarBeamV2.viewModels;
+using LSTool.Tools.Generals.SettingDiameters.action;
 using RIMT.Utils.SelectFilters;
 
 namespace LSTool.Tools.Beams.InstallRebarBeamV2
@@ -43,6 +44,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2
                         .GroupBy(element => element.Id.Value)
                         .Select(group => group.First())
                         .ToList();
+                    SynchronizeConfiguredRebarBarTypes(
+                        Application.ActiveUIDocument);
                     var beamGroups =
                         BeamSelectionRunGrouping.Group(selectedBeams);
 
@@ -96,6 +99,41 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2
                             "Beam reinforcement installation"));
                     if (tsg.GetStatus() == TransactionStatus.Started)
                         tsg.RollBack();
+                }
+            }
+        }
+
+        private static void SynchronizeConfiguredRebarBarTypes(
+            Autodesk.Revit.UI.UIDocument uiDocument)
+        {
+            if (uiDocument?.Document == null)
+                throw new InvalidOperationException(
+                    "The active Revit document is unavailable.");
+
+            var configuredTypes = RebarDatabasesAction
+                .ReadConfiguredRebarBarTypes(uiDocument.Document);
+            if (configuredTypes.Count == 0) return;
+
+            using (var transaction = new Transaction(
+                       uiDocument.Document,
+                       "Synchronize Rebar Bar Types"))
+            {
+                transaction.Start();
+                try
+                {
+                    RebarDatabasesAction.SynchronizeRebarBarTypes(
+                        uiDocument.Document,
+                        configuredTypes);
+                    transaction.Commit();
+                }
+                catch
+                {
+                    if (transaction.GetStatus()
+                        == TransactionStatus.Started)
+                    {
+                        transaction.RollBack();
+                    }
+                    throw;
                 }
             }
         }

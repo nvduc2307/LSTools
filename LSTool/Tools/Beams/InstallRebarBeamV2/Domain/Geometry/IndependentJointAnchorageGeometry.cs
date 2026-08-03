@@ -45,8 +45,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
     /// beam. They may increase or decrease, which makes the same policy work
     /// when the beam order is mirrored. The historical Deep/Shallow property
     /// names now represent bent/straight source elevations respectively.
-    /// RequiredAnchorageLength is a design-rule input; the temporary
-    /// 35-diameter rule belongs to the caller rather than this geometry kernel.
+    /// RequiredAnchorageLength is measured from the bent-side joint face into
+    /// the bent-side beam. The joint width is crossed in addition to this
+    /// development length. The temporary 35-diameter rule belongs to the
+    /// caller rather than this geometry kernel.
     /// </summary>
     public sealed class IndependentJointAnchorageInput
     {
@@ -265,13 +267,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 input.RunEndStation - input.RunStartStation);
             double verticalDirection = Math.Sign(
                 input.ShallowBarElevation - input.DeepBarElevation);
-            double jointWidth = DirectedDistance(
-                input.JointStartStation,
-                input.JointEndStation,
-                direction);
             double straightAvailable = DirectedDistance(
                 input.RunStartStation,
-                input.JointEndStation,
+                input.JointStartStation,
                 direction);
 
             if (input.RequiredAnchorageLength >
@@ -280,17 +278,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 return IndependentJointAnchorageResult.Unsupported(
                     IndependentJointAnchorageFailure
                         .InsufficientStraightAnchorAvailability,
-                    "The bent-side concrete envelope is shorter than the "
-                    + "required straight-through anchorage.");
-            }
-            if (input.RequiredAnchorageLength <=
-                jointWidth + input.Tolerance)
-            {
-                return IndependentJointAnchorageResult.Unsupported(
-                    IndependentJointAnchorageFailure
-                        .StraightAnchorDoesNotCrossJoint,
-                    "The required straight anchorage does not cross the full "
-                    + "joint and enter the bent-side beam.");
+                    "The bent-side beam concrete envelope is shorter than "
+                    + "the required straight-through development length "
+                    + "measured from the bent-side joint face.");
             }
 
             double availableVertical = (
@@ -362,7 +352,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             }
 
             double straightAnchorEndStation =
-                input.JointEndStation
+                input.JointStartStation
                 - direction * input.RequiredAnchorageLength;
             double bentEndElevation =
                 input.DeepBarElevation
@@ -483,7 +473,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
 
             double straightProvided = DirectedDistance(
                 straightEnd.Station,
-                input.JointEndStation,
+                input.JointStartStation,
                 direction);
             if (straightProvided + tolerance <
                 input.RequiredAnchorageLength)

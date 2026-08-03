@@ -118,6 +118,20 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics
 
             if (ContainsAny(
                     combined,
+                    "inconsistent nominal/model diameters",
+                    "remains inconsistent after synchronization"))
+            {
+                return new UserGuidance(
+                    "One or more Rebar Bar Types use different nominal and "
+                    + "modeled diameters, so Revit geometry would not match "
+                    + "the selected bar size.",
+                    "Open Rebar Diameter Settings and save once to "
+                    + "synchronize the configured types, then run the beam "
+                    + "reinforcement command again.");
+            }
+
+            if (ContainsAny(
+                    combined,
                     "active section without a bar type",
                     "bar types have not been initialized",
                     "rebar type name is required",
@@ -150,6 +164,20 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics
                     "Select connected structural framing elements in "
                     + "their physical order. Do not mix unrelated or "
                     + "non-parallel beams in the same run.");
+            }
+
+            if (ContainsAny(
+                    combined,
+                    "temporary 35D anchorage rule",
+                    "IndependentAnchorInsufficientBentAnchorAvailability"))
+            {
+                return new UserGuidance(
+                    "The selected bar diameter requires more 35D anchorage "
+                    + "length than the cover-reduced beam geometry provides.",
+                    "This case cannot be generated under the current 35D "
+                    + "rule. Use an engineer-approved alternative anchorage "
+                    + "detail or revise the beam/rebar design before running "
+                    + "the command again.");
             }
 
             if (Contains(combined, "stirrup"))

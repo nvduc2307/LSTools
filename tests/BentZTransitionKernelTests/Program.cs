@@ -44,18 +44,29 @@ internal static class Program
             TemporaryClearanceUsesModeledValueFirst,
             TemporaryClearanceFallsBackToConfiguredBeamValue,
             TemporaryClearanceRejectsMissingValues,
+            CenterlineRadiusUsesModelDiameter,
+            CenterlineRadiusFallsBackToNominalDiameter,
+            CenterlineRadiusRejectsInvalidDiameters,
+            RectangularColumnFallbackAcceptsSplitJoinedEdges,
+            RectangularColumnFallbackRejectsCutVolume,
+            RectangularColumnFallbackRejectsEnvelopeChange,
+            RectangularColumnFallbackRejectsOtherFailure,
+            RectangularColumnFallbackRejectsUnsupportedOriginal,
             ColumnEnvelopeAcceptsExactBoundary,
             ColumnEnvelopeAcceptsVerificationBudget,
             ColumnEnvelopeRejectsBeyondVerificationBudget,
             ColumnEnvelopeReportsEveryFailedSide,
             ColumnEnvelopeRejectsInvalidOrEmptyInput,
             IndependentAnchorageUsesCallerSuppliedThirtyFiveDiameters,
+            IndependentAnchorageAllowsD6AcrossThreeHundredFiftyColumn,
+            IndependentAnchorageAllowsD10With411Point89Vertical,
+            IndependentAnchorageRejectsD25With411Point89Vertical,
             IndependentAnchorageMirrorsBeamOrder,
             IndependentAnchorageSupportsOppositeVerticalDirection,
             IndependentAnchorageRejectsNonFiniteInput,
             IndependentAnchorageRejectsNonMonotonicStations,
             IndependentAnchorageRejectsMissingStraightAvailability,
-            IndependentAnchorageMustCrossTheJoint,
+            IndependentAnchorageMeasuresFromBentSideJointFace,
             IndependentAnchorageRejectsMissingVerticalAvailability,
             IndependentAnchorageRejectsInsufficientFaceInset,
             IndependentAnchorageRejectsInsufficientRoundedBendLeg,
@@ -263,6 +274,125 @@ internal static class Program
         }
 
         Equal(true, rejected, "missing clearance rejection");
+    }
+
+    private static void CenterlineRadiusUsesModelDiameter()
+    {
+        Near(
+            18.35,
+            RebarCenterlineBendRadiusRule.Resolve(24.0, 12.7, 6.0),
+            "Revit 2026 D6 centerline radius");
+    }
+
+    private static void CenterlineRadiusFallsBackToNominalDiameter()
+    {
+        Near(
+            15.0,
+            RebarCenterlineBendRadiusRule.Resolve(24.0, 0.0, 6.0),
+            "legacy nominal diameter fallback");
+    }
+
+    private static void CenterlineRadiusRejectsInvalidDiameters()
+    {
+        Throws<ArgumentOutOfRangeException>(() =>
+            RebarCenterlineBendRadiusRule.Resolve(0.0, 12.7, 6.0));
+        Throws<ArgumentOutOfRangeException>(() =>
+            RebarCenterlineBendRadiusRule.Resolve(24.0, 0.0, 0.0));
+    }
+
+    private static void RectangularColumnFallbackAcceptsSplitJoinedEdges()
+    {
+        RectangularColumnFallbackResult result =
+            EvaluateRectangularColumnFallback();
+
+        Equal(true, result.IsAllowed, "split-edge fallback validity");
+        Equal(
+            RectangularColumnFallbackFailure.None,
+            result.Failure,
+            "split-edge fallback failure");
+    }
+
+    private static void RectangularColumnFallbackRejectsCutVolume()
+    {
+        RectangularColumnFallbackResult result =
+            EvaluateRectangularColumnFallback(
+                currentSolidVolumeCubicFt: 11.0);
+
+        Equal(false, result.IsAllowed, "cut-volume fallback validity");
+        Equal(
+            RectangularColumnFallbackFailure.CurrentVolumeMismatch,
+            result.Failure,
+            "cut-volume fallback failure");
+    }
+
+    private static void RectangularColumnFallbackRejectsEnvelopeChange()
+    {
+        RectangularColumnFallbackResult result =
+            EvaluateRectangularColumnFallback(originalSizeXmm: 400.0);
+
+        Equal(false, result.IsAllowed, "envelope fallback validity");
+        Equal(
+            RectangularColumnFallbackFailure.EnvelopeMismatch,
+            result.Failure,
+            "envelope fallback failure");
+    }
+
+    private static void RectangularColumnFallbackRejectsOtherFailure()
+    {
+        RectangularColumnFallbackResult result =
+            EvaluateRectangularColumnFallback(
+                failedOnlyBecauseOfSplitEdges: false);
+
+        Equal(false, result.IsAllowed, "other-failure fallback validity");
+        Equal(
+            RectangularColumnFallbackFailure.NotSplitEdgeFailure,
+            result.Failure,
+            "other-failure fallback failure");
+    }
+
+    private static void
+        RectangularColumnFallbackRejectsUnsupportedOriginal()
+    {
+        RectangularColumnFallbackResult result =
+            EvaluateRectangularColumnFallback(
+                originalGeometrySupported: false);
+
+        Equal(false, result.IsAllowed, "unsupported-original validity");
+        Equal(
+            RectangularColumnFallbackFailure.OriginalGeometryUnsupported,
+            result.Failure,
+            "unsupported-original failure");
+    }
+
+    private static RectangularColumnFallbackResult
+        EvaluateRectangularColumnFallback(
+            bool failedOnlyBecauseOfSplitEdges = true,
+            int currentSolidCount = 1,
+            double currentSolidVolumeCubicFt = 12.360133352521064,
+            double currentExpectedBoxVolumeCubicFt = 12.360133352521201,
+            double currentSizeXmm = 350.0,
+            double currentSizeYmm = 250.0,
+            double currentHeightMm = 4000.0,
+            bool originalGeometrySupported = true,
+            double originalSizeXmm = 350.0,
+            double originalSizeYmm = 250.0,
+            double originalHeightMm = 4000.0)
+    {
+        return RectangularColumnPostProcessingFallbackRule.Evaluate(
+            failedOnlyBecauseOfSplitEdges,
+            currentSolidCount,
+            currentSolidVolumeCubicFt,
+            currentExpectedBoxVolumeCubicFt,
+            currentSizeXmm,
+            currentSizeYmm,
+            currentHeightMm,
+            originalGeometrySupported,
+            originalSizeXmm,
+            originalSizeYmm,
+            originalHeightMm,
+            1.0,
+            1e-6,
+            1e-9);
     }
 
     private static void ColumnEnvelopeAcceptsExactBoundary()
@@ -915,7 +1045,7 @@ internal static class Program
 
     private static void IndependentAnchorageUsesCallerSuppliedThirtyFiveDiameters()
     {
-        const double barDiameter = 0.2;
+        const double barDiameter = 0.1;
         double requiredLength = 35.0 * barDiameter;
         IndependentJointAnchorageResult result =
             IndependentJointAnchorageGeometry.Plan(
@@ -946,7 +1076,7 @@ internal static class Program
             result.StraightThroughPoints[0].Station,
             "straight shallow start");
         Near(
-            3.0,
+            2.5,
             result.StraightThroughPoints[1].Station,
             "straight deep anchor end");
         Near(
@@ -954,10 +1084,77 @@ internal static class Program
             result.BentVerticalPoints[1].Station,
             "bent station");
         Near(
-            7.0,
+            3.5,
             result.BentVerticalPoints[2].Elevation,
             "bent vertical end");
         Near(0.5, result.TangentSetback, "90-degree tangent setback");
+    }
+
+    private static void
+        IndependentAnchorageAllowsD6AcrossThreeHundredFiftyColumn()
+    {
+        IndependentJointAnchorageResult result =
+            IndependentJointAnchorageGeometry.Plan(
+                new IndependentJointAnchorageInput(
+                    0.0,
+                    2000.0,
+                    2350.0,
+                    5000.0,
+                    0.0,
+                    150.0,
+                    1000.0,
+                    210.0,
+                    50.0,
+                    20.0,
+                    18.0,
+                    6.0,
+                    1.0));
+
+        Equal(
+            IndependentJointAnchorageStatus.Planned,
+            result.Status,
+            "D6 350-column status");
+        Near(
+            1790.0,
+            result.StraightThroughPoints[1].Station,
+            "D6 350-column endpoint");
+        Near(
+            210.0,
+            result.StraightProvidedAnchorageLength,
+            "D6 350-column provided anchorage");
+    }
+
+    private static void IndependentAnchorageAllowsD10With411Point89Vertical()
+    {
+        IndependentJointAnchorageResult result =
+            IndependentJointAnchorageGeometry.Plan(
+                RuntimeDepthInput(35.0 * 10.0));
+
+        Equal(
+            IndependentJointAnchorageStatus.Planned,
+            result.Status,
+            "D10 runtime-depth status");
+        Near(
+            350.0,
+            result.BentProvidedAnchorageLength,
+            "D10 runtime-depth provided anchorage");
+    }
+
+    private static void IndependentAnchorageRejectsD25With411Point89Vertical()
+    {
+        IndependentJointAnchorageResult result =
+            IndependentJointAnchorageGeometry.Plan(
+                RuntimeDepthInput(35.0 * 25.0));
+
+        Equal(
+            IndependentJointAnchorageStatus.Unsupported,
+            result.Status,
+            "D25 runtime-depth status");
+        Equal(
+            IndependentJointAnchorageFailure
+                .InsufficientBentAnchorAvailability,
+            result.Failure,
+            "D25 runtime-depth failure");
     }
 
     private static void IndependentAnchorageMirrorsBeamOrder()
@@ -975,7 +1172,7 @@ internal static class Program
                     0.0,
                     3.0,
                     10.0,
-                    7.0,
+                    5.0,
                     1.0,
                     0.25,
                     0.5,
@@ -1031,7 +1228,7 @@ internal static class Program
                     5.0,
                     2.0,
                     -5.0,
-                    7.0,
+                    5.0,
                     1.0,
                     0.25,
                     0.5,
@@ -1043,7 +1240,7 @@ internal static class Program
             result.Status,
             "downward status");
         Near(
-            -2.0,
+            0.0,
             result.BentVerticalPoints[2].Elevation,
             "downward bent endpoint");
     }
@@ -1098,7 +1295,7 @@ internal static class Program
     {
         IndependentJointAnchorageResult result =
             IndependentJointAnchorageGeometry.Plan(
-                IndependentInput(requiredAnchorageLength: 11.0));
+                IndependentInput(requiredAnchorageLength: 7.0));
 
         Equal(
             IndependentJointAnchorageStatus.Unsupported,
@@ -1111,28 +1308,31 @@ internal static class Program
             "straight availability failure");
     }
 
-    private static void IndependentAnchorageMustCrossTheJoint()
+    private static void IndependentAnchorageMeasuresFromBentSideJointFace()
     {
         IndependentJointAnchorageResult result =
             IndependentJointAnchorageGeometry.Plan(
                 IndependentInput(requiredAnchorageLength: 4.0));
 
         Equal(
-            IndependentJointAnchorageStatus.Unsupported,
+            IndependentJointAnchorageStatus.Planned,
             result.Status,
-            "joint-crossing status");
-        Equal(
-            IndependentJointAnchorageFailure
-                .StraightAnchorDoesNotCrossJoint,
-            result.Failure,
-            "joint-crossing failure");
+            "joint-face measurement status");
+        Near(
+            2.0,
+            result.StraightThroughPoints[1].Station,
+            "joint-face anchor endpoint");
+        Near(
+            4.0,
+            result.StraightProvidedAnchorageLength,
+            "joint-face provided anchorage");
     }
 
     private static void IndependentAnchorageRejectsMissingVerticalAvailability()
     {
         IndependentJointAnchorageResult result =
             IndependentJointAnchorageGeometry.Plan(
-                IndependentInput(bentVerticalLimitElevation: 6.0));
+                IndependentInput(bentVerticalLimitElevation: 4.0));
 
         Equal(
             IndependentJointAnchorageStatus.Unsupported,
@@ -1173,7 +1373,7 @@ internal static class Program
                     0.0,
                     3.0,
                     10.0,
-                    7.0,
+                    5.0,
                     1.0,
                     0.25,
                     0.5,
@@ -1244,7 +1444,7 @@ internal static class Program
         var longerStraight = new[]
         {
             new BentZStationPoint(16.0, 3.0),
-            new BentZStationPoint(2.0, 3.0)
+            new BentZStationPoint(0.0, 3.0)
         };
         var longerBent = new[]
         {
@@ -1259,7 +1459,7 @@ internal static class Program
                 longerBent);
 
         Equal(true, validation.IsValid, "longer-run validity");
-        Near(8.0, validation.StraightProvidedAnchorageLength, "long straight");
+        Near(6.0, validation.StraightProvidedAnchorageLength, "long straight");
         Near(8.0, validation.BentProvidedAnchorageLength, "long bent");
     }
 
@@ -1595,7 +1795,7 @@ internal static class Program
     }
 
     private static IndependentJointAnchorageInput IndependentInput(
-        double requiredAnchorageLength = 7.0,
+        double requiredAnchorageLength = 5.0,
         double bentVerticalLimitElevation = 10.0,
         double bendInsetFromShallowFace = 1.0)
     {
@@ -1613,6 +1813,25 @@ internal static class Program
             0.5,
             0.25,
             0.001);
+    }
+
+    private static IndependentJointAnchorageInput RuntimeDepthInput(
+        double requiredAnchorageLength)
+    {
+        return new IndependentJointAnchorageInput(
+            0.0,
+            2000.0,
+            2350.0,
+            5000.0,
+            0.0,
+            150.0,
+            411.89,
+            requiredAnchorageLength,
+            50.0,
+            20.0,
+            18.0,
+            10.0,
+            1.0);
     }
 
     private static BentZTransitionResult Plan(
@@ -1648,5 +1867,21 @@ internal static class Program
             throw new InvalidOperationException(
                 label + ": expected " + expected + ", actual " + actual + ".");
         }
+    }
+
+    private static void Throws<TException>(Action action)
+        where TException : Exception
+    {
+        try
+        {
+            action();
+        }
+        catch (TException)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            "Expected exception " + typeof(TException).Name + ".");
     }
 }

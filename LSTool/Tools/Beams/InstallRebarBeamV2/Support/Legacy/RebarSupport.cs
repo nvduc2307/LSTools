@@ -35,7 +35,14 @@ namespace RIMT.Utils.RevRebars
                 ?? rebarBarType?.get_Parameter(BuiltInParameter.ALL_MODEL_TYPE_NAME)?.AsValueString()
                 ?? rebarBarType?.Name;
             BarDiameter = ReadDouble(rebarBarType, BuiltInParameter.REBAR_BAR_DIAMETER);
-            ModelBarDiameter = ReadDouble(rebarBarType, BuiltInParameter.REBAR_BAR_DIAMETER);
+            // Revit 2025/2026 keeps the nominal and modeled diameters in
+            // separate parameters. The modeled diameter controls the actual
+            // centerline bend radius returned by GetCenterlineCurves, so
+            // copying the nominal value here makes strict geometry planning
+            // under-estimate every bend when the two values differ.
+            ModelBarDiameter = ReadDouble(
+                rebarBarType,
+                BuiltInParameter.REBAR_MODEL_BAR_DIAMETER);
             if (ModelBarDiameter <= 0) ModelBarDiameter = BarDiameter;
             BarDiameterReal = BarDiameter;
             StandardBendDiameter = ReadDouble(rebarBarType, BuiltInParameter.REBAR_STANDARD_BEND_DIAMETER);

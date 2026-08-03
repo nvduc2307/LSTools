@@ -122,6 +122,31 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 .Select(x => new RebarBarTypeCustom(x))
                 .Where(x => x.NameStyle.Contains("D"))
                 .ToList();
+            var inconsistentDiameters = RebarBarTypeCustoms
+                .Select(type => new
+                {
+                    Type = type,
+                    NominalMm = type.BarDiameter.FootToMm(),
+                    ModeledMm = type.ModelBarDiameter.FootToMm()
+                })
+                .Where(item =>
+                    item.NominalMm <= 0.0
+                    || item.ModeledMm <= 0.0
+                    || Math.Abs(item.NominalMm - item.ModeledMm) > 1.0)
+                .ToList();
+            if (inconsistentDiameters.Count > 0)
+            {
+                var details = string.Join(
+                    ", ",
+                    inconsistentDiameters.Select(item =>
+                        $"{item.Type.NameStyle}: nominal "
+                        + $"{item.NominalMm:0.###} mm / modeled "
+                        + $"{item.ModeledMm:0.###} mm"));
+                throw new InvalidOperationException(
+                    "Rebar Bar Types have inconsistent nominal/model "
+                    + $"diameters ({details}). Synchronize the configured "
+                    + "diameter database before generating reinforcement.");
+            }
             var duplicateBarTypeNames = RebarBarTypeCustoms
                 .GroupBy(type => type.NameStyle, StringComparer.OrdinalIgnoreCase)
                 .Where(group => group.Count() > 1)

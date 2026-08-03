@@ -22,5 +22,9 @@
              Link="TemporaryIndependentJointAnchorageRule.cs" />
     <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\TemporaryJointStirrupFallbackRule.cs"
              Link="TemporaryJointStirrupFallbackRule.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\RectangularColumnPostProcessingFallbackRule.cs"
+             Link="RectangularColumnPostProcessingFallbackRule.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\RebarCenterlineBendRadiusRule.cs"
+             Link="RebarCenterlineBendRadiusRule.cs" />
   </ItemGroup>
 </Project>
