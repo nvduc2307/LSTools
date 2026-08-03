@@ -378,6 +378,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     + $"diameter for the temporary 35D rule: "
                     + exception.Message);
             }
+            var hMinDiameterMultiplier =
+                viewModel.SettingRebarStandardModel?.HMin ?? 0;
+            if (hMinDiameterMultiplier <= 0)
+            {
+                throw Unsupported(
+                    context,
+                    stageName,
+                    "InvalidRebarStandardHMin",
+                    "General Setting hMin must be greater than zero. "
+                    + "Its unit is the nominal bar diameter (hMin x D).");
+            }
 
             var bendClearance = CalculateBendClearance(
                 viewModel,
@@ -519,6 +530,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                       + bendClearance.CenterlineClearanceFt;
             var anchoragePlans =
                 new List<IndependentJointAnchorageResult>(lanes.Count);
+            var bentTailPlans =
+                new List<IndependentJointBentTailPlan>(lanes.Count);
             for (var laneIndex = 0;
                  laneIndex < lanes.Count;
                  laneIndex++)
@@ -535,6 +548,32 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 var jointEnd = direction > 0.0
                     ? joint.ColumnEnd
                     : joint.ColumnStart;
+                var verticalDirection = Math.Sign(
+                    lane.StraightSide.CorePoint.Z
+                    - lane.BentSide.CorePoint.Z);
+                var verticalAvailableFt =
+                    (verticalLimitZ - lane.BentSide.CorePoint.Z)
+                    * verticalDirection;
+                IndependentJointBentTailPlan bentTailPlan;
+                try
+                {
+                    bentTailPlan = IndependentJointBentTailRule.Resolve(
+                        requiredAnchorageFt,
+                        nominalBarDiameterFt,
+                        hMinDiameterMultiplier,
+                        verticalAvailableFt,
+                        toleranceFt);
+                }
+                catch (Exception exception)
+                {
+                    throw Unsupported(
+                        context,
+                        stageName,
+                        "InvalidRebarStandardHMin",
+                        "The hMin anchorage fallback could not be resolved "
+                        + "from General Setting: "
+                        + exception.Message);
+                }
                 var input =
                     new IndependentJointAnchorageInput(
                         lane.BentSide.Station,
@@ -549,13 +588,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         bendClearance.CenterlineClearanceFt,
                         bendClearance.CenterlineBendRadiusFt,
                         minimumStraightLengthFt,
-                        toleranceFt);
-                var verticalDirection = Math.Sign(
-                    lane.StraightSide.CorePoint.Z
-                    - lane.BentSide.CorePoint.Z);
-                var verticalAvailableFt =
-                    (verticalLimitZ - lane.BentSide.CorePoint.Z)
-                    * verticalDirection;
+                        toleranceFt,
+                        bentTailPlan.RequiredBentTailLength);
+                bentTailPlans.Add(bentTailPlan);
                 context.DiagnosticLog?.Record(
                     "main.independent-anchor.input",
                     new
@@ -566,6 +601,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         straightBeamId = straightBeam.Id,
                         requiredAnchorageMm = Math.Round(
                             requiredAnchorageFt.FootToMm(),
+                            3),
+                        bentTailPolicy =
+                            bentTailPlan.Policy.ToString(),
+                        hMinDiameterMultiplier,
+                        hMinLengthMm = Math.Round(
+                            (hMinDiameterMultiplier
+                                * nominalBarDiameterFt).FootToMm(),
+                            3),
+                        requiredBentTailMm = Math.Round(
+                            bentTailPlan.RequiredBentTailLength
+                                .FootToMm(),
                             3),
                         measurementOrigin = "BentSideJointFace",
                         jointWidthMm = Math.Round(
@@ -614,20 +660,54 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         bentProvidedAnchorageMm = Math.Round(
                             planned.BentProvidedAnchorageLength
                                 .FootToMm(),
-                            3)
+                            3),
+                        bentTailPolicy =
+                            bentTailPlan.Policy.ToString()
                     });
+                if (planned.Status
+                        == IndependentJointAnchorageStatus.Planned
+                    && bentTailPlan.UsesHMinFallback)
+                {
+                    context.DiagnosticLog?.Record(
+                        "main.independent-anchor.hmin-fallback.planned",
+                        new
+                        {
+                            stageName,
+                            lane = laneIndex + 1,
+                            hMinDiameterMultiplier,
+                            requiredFullAnchorageMm = Math.Round(
+                                requiredAnchorageFt.FootToMm(),
+                                3),
+                            requiredBentTailMm = Math.Round(
+                                bentTailPlan.RequiredBentTailLength
+                                    .FootToMm(),
+                                3),
+                            availableVerticalMm = Math.Round(
+                                Math.Max(0.0, verticalAvailableFt)
+                                    .FootToMm(),
+                                3),
+                            horizontalPolicy =
+                                "LongestGeometryPermitted"
+                        });
+                }
                 if (planned.Status
                     != IndependentJointAnchorageStatus.Planned)
                 {
                     var requiredAnchorageMm =
                         requiredAnchorageFt.FootToMm();
+                    var requiredBentTailMm =
+                        bentTailPlan.RequiredBentTailLength.FootToMm();
                     var availableVerticalMm =
                         Math.Max(0.0, verticalAvailableFt).FootToMm();
                     var measurement = planned.Failure
                         == IndependentJointAnchorageFailure
                             .InsufficientBentAnchorAvailability
-                            ? $" The vertical 35D leg requires "
-                              + $"{requiredAnchorageMm:0.###} mm, but only "
+                            ? $" The vertical "
+                              + (bentTailPlan.UsesHMinFallback
+                                  ? $"hMin ({hMinDiameterMultiplier}D)"
+                                  : "35D")
+                              + $" leg requires {requiredBentTailMm:0.###} "
+                              + "mm, but only "
                               + $"{availableVerticalMm:0.###} mm is available "
                               + "inside the cover-reduced beam depth."
                             : string.Empty;
@@ -641,6 +721,12 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                             requiredAnchorageMm = Math.Round(
                                 requiredAnchorageMm,
                                 3),
+                            bentTailPolicy =
+                                bentTailPlan.Policy.ToString(),
+                            hMinDiameterMultiplier,
+                            requiredBentTailMm = Math.Round(
+                                requiredBentTailMm,
+                                3),
                             availableVerticalMm = Math.Round(
                                 availableVerticalMm,
                                 3),
@@ -650,22 +736,24 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         context,
                         stageName,
                         $"IndependentAnchor{planned.Failure}",
-                        $"Lane {laneIndex + 1} cannot satisfy the temporary "
-                        + $"35D anchorage rule.{measurement} "
+                        $"Lane {laneIndex + 1} cannot satisfy the independent "
+                        + $"anchorage policy.{measurement} "
                         + planned.Message);
                 }
             }
 
             var requiredLaneSeparationFt =
                 modelBarDiameterFt + 0.2.MmToFoot();
+            var originalBentLaneYs = lanes
+                .Select(lane => lane.BentLaneY)
+                .ToList();
+            var originalStraightLaneYs = lanes
+                .Select(lane => lane.StraightLaneY)
+                .ToList();
             var staggerInput =
                 new IndependentJointLaneStaggerInput(
-                    lanes
-                        .Select(lane => lane.BentLaneY)
-                        .ToList(),
-                    lanes
-                        .Select(lane => lane.StraightLaneY)
-                        .ToList(),
+                    originalBentLaneYs,
+                    originalStraightLaneYs,
                     bentMinY,
                     bentMaxY,
                     requiredLaneSeparationFt,
@@ -674,8 +762,92 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             var staggerPlan =
                 IndependentJointLaneStaggerGeometry.Plan(
                     staggerInput);
+            IReadOnlyList<double> shiftedBentLaneYs;
+            IReadOnlyList<double> shiftedStraightLaneYs;
+            double maximumBentLaneShiftFt;
+            double maximumStraightLaneShiftFt;
+            string laneLayoutMode;
             if (staggerPlan.Status
-                != IndependentJointLaneStaggerStatus.Planned)
+                == IndependentJointLaneStaggerStatus.Planned)
+            {
+                shiftedBentLaneYs = staggerPlan.ShiftedBentLaneYs;
+                shiftedStraightLaneYs = originalStraightLaneYs;
+                maximumBentLaneShiftFt =
+                    staggerPlan.MaximumAbsoluteDisplacement;
+                maximumStraightLaneShiftFt = 0.0;
+                laneLayoutMode = "FixedStraightBentOnly";
+            }
+            else if (staggerPlan.Failure
+                == IndependentJointLaneStaggerFailure.NoFeasibleLayout)
+            {
+                var dualInput =
+                    new IndependentJointDualLaneStaggerInput(
+                        originalBentLaneYs,
+                        originalStraightLaneYs,
+                        straightMinY,
+                        straightMaxY,
+                        requiredLaneSeparationFt,
+                        1.0,
+                        laneToleranceFt);
+                IndependentJointDualLaneStaggerResult dualPlan =
+                    IndependentJointDualLaneStaggerGeometry.Plan(
+                        dualInput);
+                if (dualPlan.Status
+                    != IndependentJointDualLaneStaggerStatus.Planned)
+                {
+                    throw Unsupported(
+                        context,
+                        stageName,
+                        $"IndependentAnchor{staggerPlan.Failure}",
+                        "The bent-side anchors cannot be staggered safely "
+                        + "with fixed straight lanes, and balanced "
+                        + "straight/bent interleaving also failed: "
+                        + dualPlan.Message);
+                }
+
+                shiftedBentLaneYs = dualPlan.ShiftedBentLaneYs;
+                shiftedStraightLaneYs = dualPlan.ShiftedStraightLaneYs;
+                maximumBentLaneShiftFt =
+                    dualPlan.MaximumBentDisplacement;
+                maximumStraightLaneShiftFt =
+                    dualPlan.MaximumStraightDisplacement;
+                laneLayoutMode = "BalancedStraightBentInterleaving";
+                context.DiagnosticLog?.Record(
+                    "main.independent-anchor.dual-lane-fallback.planned",
+                    new
+                    {
+                        stageName,
+                        requiredCenterlineSeparationMm = Math.Round(
+                            requiredLaneSeparationFt.FootToMm(),
+                            3),
+                        minimumAllowedYMm = Math.Round(
+                            straightMinY.FootToMm(),
+                            3),
+                        maximumAllowedYMm = Math.Round(
+                            straightMaxY.FootToMm(),
+                            3),
+                        originalStraightLaneYsMm =
+                            originalStraightLaneYs.Select(value =>
+                                Math.Round(value.FootToMm(), 3)),
+                        shiftedStraightLaneYsMm =
+                            shiftedStraightLaneYs.Select(value =>
+                                Math.Round(value.FootToMm(), 3)),
+                        originalBentLaneYsMm =
+                            originalBentLaneYs.Select(value =>
+                                Math.Round(value.FootToMm(), 3)),
+                        shiftedBentLaneYsMm =
+                            shiftedBentLaneYs.Select(value =>
+                                Math.Round(value.FootToMm(), 3)),
+                        maximumStraightLaneShiftMm = Math.Round(
+                            maximumStraightLaneShiftFt.FootToMm(),
+                            3),
+                        maximumBentLaneShiftMm = Math.Round(
+                            maximumBentLaneShiftFt.FootToMm(),
+                            3),
+                        coverPolicy = "ConfiguredCageBoundsPreserved"
+                    });
+            }
+            else
             {
                 throw Unsupported(
                     context,
@@ -697,14 +869,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             {
                 var lane = lanes[laneIndex];
                 var shiftedBentY =
-                    staggerPlan.ShiftedBentLaneYs[laneIndex];
+                    shiftedBentLaneYs[laneIndex];
+                var shiftedStraightY =
+                    shiftedStraightLaneYs[laneIndex];
                 var planned = anchoragePlans[laneIndex];
+                var bentTailPlan = bentTailPlans[laneIndex];
 
                 var straightOrderedPoints =
                     BuildIndependentOrderedPoints(
                         lane.StraightSide,
                         planned.StraightThroughPoints,
-                        lane.StraightLaneY,
+                        shiftedStraightY,
                         joint,
                         toleranceFt);
                 var bentOrderedPoints =
@@ -718,7 +893,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 ValidateIndependentContainment(
                     lane,
                     planned,
-                    lane.StraightLaneY,
+                    shiftedStraightY,
                     shiftedBentY,
                     bentBeam,
                     straightBeam,
@@ -762,7 +937,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         .Elevation
                     - planned.BentVerticalPoints[0].Elevation,
                     bendClearance.CenterlineBendRadiusFt,
-                    requiredAnchorageFt,
+                    bentTailPlan.RequiredBentTailLength,
                     planned.BentProvidedAnchorageLength);
 
                 foreach (var plannedRun in new[]
@@ -809,6 +984,13 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         requiredAnchorageMm = Math.Round(
                             requiredAnchorageFt.FootToMm(),
                             3),
+                        bentTailPolicy =
+                            bentTailPlan.Policy.ToString(),
+                        hMinDiameterMultiplier,
+                        requiredBentTailMm = Math.Round(
+                            bentTailPlan.RequiredBentTailLength
+                                .FootToMm(),
+                            3),
                         straightProvidedAnchorageMm = Math.Round(
                             planned.StraightProvidedAnchorageLength
                                 .FootToMm(),
@@ -817,8 +999,36 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                             planned.BentProvidedAnchorageLength
                                 .FootToMm(),
                             3),
+                        verticalTailCoverPolicy =
+                            "CoverReducedColumnBounds",
+                        beamCenterlineStepMm = Math.Round(
+                            Math.Abs(
+                                lane.StraightSide.CorePoint.Z
+                                - lane.BentSide.CorePoint.Z).FootToMm(),
+                            3),
+                        bentTailEndElevationMm = Math.Round(
+                            planned.BentVerticalPoints[
+                                planned.BentVerticalPoints.Count - 1]
+                                .Elevation.FootToMm(),
+                            3),
+                        bentTailEndsBeforeStraightElevation =
+                            planned.BentProvidedAnchorageLength
+                                + toleranceFt
+                            < Math.Abs(
+                                lane.StraightSide.CorePoint.Z
+                                - lane.BentSide.CorePoint.Z),
                         originalBentLaneYMm = Math.Round(
                             lane.BentLaneY.FootToMm(),
+                            3),
+                        originalStraightLaneYMm = Math.Round(
+                            lane.StraightLaneY.FootToMm(),
+                            3),
+                        shiftedStraightLaneYMm = Math.Round(
+                            shiftedStraightY.FootToMm(),
+                            3),
+                        straightLaneShiftMm = Math.Round(
+                            (shiftedStraightY - lane.StraightLaneY)
+                                .FootToMm(),
                             3),
                         shiftedBentLaneYMm = Math.Round(
                             shiftedBentY.FootToMm(),
@@ -827,7 +1037,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                             (shiftedBentY - lane.BentLaneY)
                                 .FootToMm(),
                             3),
-                        shiftScope = "EntireBentSideRun",
+                        shiftScope = laneLayoutMode,
                         straightAnchorageDatum =
                             "Straight-side column face to bent-side tail",
                         bentAnchorageDatum =
@@ -845,7 +1055,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 new
                 {
                     stageName,
-                    policy = "IndependentJointAnchorage35D",
+                    policy =
+                        "IndependentJointAnchorage35DWithHMinFallback",
                     policySource = "BarCenterlineDeltaZ",
                     barLevel = level.ToString(),
                     jointColumnId = joint.ColumnId,
@@ -856,9 +1067,14 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     requiredAnchorageMm = Math.Round(
                         requiredAnchorageFt.FootToMm(),
                         3),
+                    hMinDiameterMultiplier,
+                    hMinFallbackLaneCount = bentTailPlans.Count(
+                        plan => plan.UsesHMinFallback),
                     maximumBentLaneShiftMm = Math.Round(
-                        staggerPlan.MaximumAbsoluteDisplacement
-                            .FootToMm(),
+                        maximumBentLaneShiftFt.FootToMm(),
+                        3),
+                    maximumStraightLaneShiftMm = Math.Round(
+                        maximumStraightLaneShiftFt.FootToMm(),
                         3),
                     bentBeamLaneMinMm = Math.Round(
                         bentLaneEnvelope.MinY.FootToMm(),
@@ -872,7 +1088,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     straightBeamLaneMaxMm = Math.Round(
                         straightLaneEnvelope.MaxY.FootToMm(),
                         3),
-                    laneShiftScope = "EntireBentSideRun",
+                    laneShiftScope = laneLayoutMode,
                     straightAnchorageDatum =
                         "Straight-side column face to bent-side tail",
                     bentAnchorageDatum =
@@ -1292,42 +1508,51 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             var bentEnd =
                 planned.BentVerticalPoints[
                     planned.BentVerticalPoints.Count - 1];
-            if (!IsInside(
+            IndependentJointColumnVerticalCoverFailure verticalCoverFailure =
+                IndependentJointColumnVerticalCoverRule.Evaluate(
                     bentZ,
-                    joint.ColumnBottomZ
-                        + centerlineClearanceFt,
-                    joint.ColumnTopZ
-                        - centerlineClearanceFt,
-                    toleranceFt)
-                || !IsInside(
                     straightZ,
-                    joint.ColumnBottomZ
-                        + centerlineClearanceFt,
-                    joint.ColumnTopZ
-                        - centerlineClearanceFt,
-                    toleranceFt)
-                || !IsInside(
                     bentEnd.Elevation,
-                    Math.Max(
-                        joint.ColumnBottomZ,
-                        Math.Max(
-                            bentBeam.BottomZ,
-                            straightBeam.BottomZ))
-                    + centerlineClearanceFt,
-                    Math.Min(
-                        joint.ColumnTopZ,
-                        Math.Min(
-                            bentBeam.TopZ,
-                            straightBeam.TopZ))
-                    - centerlineClearanceFt,
-                    toleranceFt))
+                    joint.ColumnBottomZ,
+                    joint.ColumnTopZ,
+                    centerlineClearanceFt,
+                    toleranceFt);
+            if (verticalCoverFailure
+                != IndependentJointColumnVerticalCoverFailure.None)
             {
+                context.DiagnosticLog?.Record(
+                    "main.independent-anchor.vertical-cover.failed",
+                    new
+                    {
+                        stageName,
+                        lane = lane.LaneIndex + 1,
+                        failure = verticalCoverFailure.ToString(),
+                        policy = "CoverReducedColumnBounds",
+                        bentSourceElevationMm = Math.Round(
+                            bentZ.FootToMm(),
+                            3),
+                        straightSourceElevationMm = Math.Round(
+                            straightZ.FootToMm(),
+                            3),
+                        bentTailEndElevationMm = Math.Round(
+                            bentEnd.Elevation.FootToMm(),
+                            3),
+                        columnMinimumElevationMm = Math.Round(
+                            (joint.ColumnBottomZ + centerlineClearanceFt)
+                                .FootToMm(),
+                            3),
+                        columnMaximumElevationMm = Math.Round(
+                            (joint.ColumnTopZ - centerlineClearanceFt)
+                                .FootToMm(),
+                            3)
+                    });
                 throw Unsupported(
                     context,
                     stageName,
                     "IndependentAnchorOutsideColumnVerticalCover",
                     $"Independent lane {lane.LaneIndex + 1} leaves the "
-                    + "cover-reduced column/joint height.");
+                    + "cover-reduced column/joint height "
+                    + $"({verticalCoverFailure}).");
             }
         }
 

@@ -166,18 +166,25 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics
                     + "non-parallel beams in the same run.");
             }
 
-            if (ContainsAny(
+            if (Contains(combined, "InvalidRebarStandardHMin"))
+            {
+                return new UserGuidance(
+                    "The General Setting hMin value is missing or invalid.",
+                    "Open General Setting and enter a positive hMin value. "
+                    + "hMin is measured in bar diameters (for example, "
+                    + "10 means 10D), then run the command again.");
+            }
+
+            if (Contains(
                     combined,
-                    "temporary 35D anchorage rule",
                     "IndependentAnchorInsufficientBentAnchorAvailability"))
             {
                 return new UserGuidance(
-                    "The selected bar diameter requires more 35D anchorage "
-                    + "length than the cover-reduced beam geometry provides.",
-                    "This case cannot be generated under the current 35D "
-                    + "rule. Use an engineer-approved alternative anchorage "
-                    + "detail or revise the beam/rebar design before running "
-                    + "the command again.");
+                    "Even the configured hMin bent tail does not fit inside "
+                    + "the cover-reduced beam depth.",
+                    "Reduce hMin only if the revised detail is approved, or "
+                    + "revise the beam/rebar design before running the "
+                    + "command again.");
             }
 
             if (Contains(combined, "stirrup"))

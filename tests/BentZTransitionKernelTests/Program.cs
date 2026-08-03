@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry;
 
 internal static class Program
@@ -58,9 +59,19 @@ internal static class Program
             ColumnEnvelopeReportsEveryFailedSide,
             ColumnEnvelopeRejectsInvalidOrEmptyInput,
             IndependentAnchorageUsesCallerSuppliedThirtyFiveDiameters,
+            BentTailRuleKeepsFullAnchorageWhenItFits,
+            BentTailRuleFallsBackToHMinWhenFullAnchorageDoesNotFit,
+            BentTailRuleRejectsInvalidHMin,
+            ColumnVerticalCoverAllowsD13HMinBelowShallowBeamOverlap,
+            ColumnVerticalCoverMirrorsD13HMinBelowShallowBeamOverlap,
+            ColumnVerticalCoverRejectsTailOutsideColumn,
+            ColumnVerticalCoverRejectsEmptyCoverReducedColumn,
             IndependentAnchorageAllowsD6AcrossThreeHundredFiftyColumn,
             IndependentAnchorageAllowsD10With411Point89Vertical,
             IndependentAnchorageRejectsD25With411Point89Vertical,
+            IndependentAnchorageAllowsD25WithTenDiameterBentTail,
+            IndependentAnchorageAllowsD16WithTenDiameterBentTail,
+            IndependentAnchorageRejectsHMinTailBeyondVerticalLimit,
             IndependentAnchorageMirrorsBeamOrder,
             IndependentAnchorageSupportsOppositeVerticalDirection,
             IndependentAnchorageRejectsNonFiniteInput,
@@ -84,7 +95,11 @@ internal static class Program
             LaneStaggerMirrorsSymmetricLayoutWithOppositePreference,
             LaneStaggerValidationRejectsStraightLaneClash,
             LaneStaggerValidationRejectsBentLaneClash,
-            LaneStaggerValidationRejectsWrongCount
+            LaneStaggerValidationRejectsWrongCount,
+            DualLaneStaggerPlansD25ThreeLaneLayout,
+            DualLaneStaggerMirrorsOppositePreference,
+            DualLaneStaggerRejectsInsufficientD25Width,
+            DualLaneStaggerRejectsMismatchedCounts
         };
 
         try
@@ -1124,6 +1139,129 @@ internal static class Program
             "D6 350-column provided anchorage");
     }
 
+    private static void BentTailRuleKeepsFullAnchorageWhenItFits()
+    {
+        IndependentJointBentTailPlan result =
+            IndependentJointBentTailRule.Resolve(
+                350.0,
+                10.0,
+                10.0,
+                411.89,
+                1.0);
+
+        Equal(
+            IndependentJointBentTailPolicy.FullAnchorage,
+            result.Policy,
+            "full anchorage tail policy");
+        Near(350.0, result.RequiredBentTailLength, "full tail length");
+    }
+
+    private static void
+        BentTailRuleFallsBackToHMinWhenFullAnchorageDoesNotFit()
+    {
+        IndependentJointBentTailPlan result =
+            IndependentJointBentTailRule.Resolve(
+                875.0,
+                25.0,
+                10.0,
+                411.89,
+                1.0);
+
+        Equal(
+            IndependentJointBentTailPolicy
+                .LongestStraightThenHMin,
+            result.Policy,
+            "hMin fallback tail policy");
+        Near(250.0, result.RequiredBentTailLength, "hMin tail length");
+    }
+
+    private static void BentTailRuleRejectsInvalidHMin()
+    {
+        Throws<ArgumentOutOfRangeException>(() =>
+            IndependentJointBentTailRule.Resolve(
+                875.0,
+                25.0,
+                0.0,
+                411.89,
+                1.0));
+    }
+
+    private static void
+        ColumnVerticalCoverAllowsD13HMinBelowShallowBeamOverlap()
+    {
+        IndependentJointColumnVerticalCoverFailure failure =
+            IndependentJointColumnVerticalCoverRule.Evaluate(
+                500.0,
+                650.0,
+                627.0,
+                0.0,
+                4000.0,
+                20.0,
+                0.01);
+
+        Equal(
+            IndependentJointColumnVerticalCoverFailure.None,
+            failure,
+            "D13 hMin below shallow-beam overlap");
+    }
+
+    private static void
+        ColumnVerticalCoverMirrorsD13HMinBelowShallowBeamOverlap()
+    {
+        IndependentJointColumnVerticalCoverFailure failure =
+            IndependentJointColumnVerticalCoverRule.Evaluate(
+                3500.0,
+                3350.0,
+                3373.0,
+                0.0,
+                4000.0,
+                20.0,
+                0.01);
+
+        Equal(
+            IndependentJointColumnVerticalCoverFailure.None,
+            failure,
+            "mirrored D13 hMin below shallow-beam overlap");
+    }
+
+    private static void ColumnVerticalCoverRejectsTailOutsideColumn()
+    {
+        IndependentJointColumnVerticalCoverFailure failure =
+            IndependentJointColumnVerticalCoverRule.Evaluate(
+                200.0,
+                350.0,
+                15.0,
+                0.0,
+                4000.0,
+                20.0,
+                0.01);
+
+        Equal(
+            IndependentJointColumnVerticalCoverFailure
+                .BentTailEndOutsideColumn,
+            failure,
+            "tail outside column cover");
+    }
+
+    private static void ColumnVerticalCoverRejectsEmptyCoverReducedColumn()
+    {
+        IndependentJointColumnVerticalCoverFailure failure =
+            IndependentJointColumnVerticalCoverRule.Evaluate(
+                15.0,
+                15.0,
+                15.0,
+                0.0,
+                30.0,
+                20.0,
+                0.01);
+
+        Equal(
+            IndependentJointColumnVerticalCoverFailure
+                .EmptyCoverReducedColumn,
+            failure,
+            "empty cover-reduced column");
+    }
+
     private static void IndependentAnchorageAllowsD10With411Point89Vertical()
     {
         IndependentJointAnchorageResult result =
@@ -1157,11 +1295,76 @@ internal static class Program
             "D25 runtime-depth failure");
     }
 
+    private static void IndependentAnchorageAllowsD25WithTenDiameterBentTail()
+    {
+        IndependentJointAnchorageResult result =
+            IndependentJointAnchorageGeometry.Plan(
+                RuntimeDepthInput(
+                    35.0 * 25.0,
+                    10.0 * 25.0));
+
+        Equal(
+            IndependentJointAnchorageStatus.Planned,
+            result.Status,
+            "D25 hMin status");
+        Near(
+            875.0,
+            result.StraightProvidedAnchorageLength,
+            "D25 straight 35D");
+        Near(
+            250.0,
+            result.BentProvidedAnchorageLength,
+            "D25 bent hMin");
+    }
+
+    private static void IndependentAnchorageAllowsD16WithTenDiameterBentTail()
+    {
+        IndependentJointAnchorageResult result =
+            IndependentJointAnchorageGeometry.Plan(
+                RuntimeDepthInput(
+                    35.0 * 16.0,
+                    10.0 * 16.0));
+
+        Equal(
+            IndependentJointAnchorageStatus.Planned,
+            result.Status,
+            "D16 hMin status");
+        Near(
+            560.0,
+            result.StraightProvidedAnchorageLength,
+            "D16 straight 35D");
+        Near(
+            160.0,
+            result.BentProvidedAnchorageLength,
+            "D16 bent hMin");
+    }
+
+    private static void
+        IndependentAnchorageRejectsHMinTailBeyondVerticalLimit()
+    {
+        IndependentJointAnchorageResult result =
+            IndependentJointAnchorageGeometry.Plan(
+                RuntimeDepthInput(
+                    35.0 * 25.0,
+                    18.0 * 25.0));
+
+        Equal(
+            IndependentJointAnchorageStatus.Unsupported,
+            result.Status,
+            "oversized hMin status");
+        Equal(
+            IndependentJointAnchorageFailure
+                .InsufficientBentAnchorAvailability,
+            result.Failure,
+            "oversized hMin failure");
+    }
+
     private static void IndependentAnchorageMirrorsBeamOrder()
     {
         IndependentJointAnchorageResult forward =
             IndependentJointAnchorageGeometry.Plan(
-                IndependentInput());
+                IndependentInput(
+                    requiredBentAnchorageLength: 2.0));
         IndependentJointAnchorageResult reverse =
             IndependentJointAnchorageGeometry.Plan(
                 new IndependentJointAnchorageInput(
@@ -1177,7 +1380,8 @@ internal static class Program
                     0.25,
                     0.5,
                     0.25,
-                    0.001));
+                    0.001,
+                    2.0));
 
         Equal(
             IndependentJointAnchorageStatus.Planned,
@@ -1187,6 +1391,10 @@ internal static class Program
             IndependentJointAnchorageStatus.Planned,
             reverse.Status,
             "reverse status");
+        Near(
+            2.0,
+            reverse.BentProvidedAnchorageLength,
+            "reverse separate bent tail");
 
         for (int index = 0;
             index < forward.StraightThroughPoints.Count;
@@ -1233,14 +1441,15 @@ internal static class Program
                     0.25,
                     0.5,
                     0.25,
-                    0.001));
+                    0.001,
+                    2.0));
 
         Equal(
             IndependentJointAnchorageStatus.Planned,
             result.Status,
             "downward status");
         Near(
-            0.0,
+            3.0,
             result.BentVerticalPoints[2].Elevation,
             "downward bent endpoint");
     }
@@ -1776,6 +1985,164 @@ internal static class Program
             "wrong count failure");
     }
 
+    private static void DualLaneStaggerPlansD25ThreeLaneLayout()
+    {
+        var lanes = new[] { -70.25, 0.0, 70.25 };
+        IndependentJointDualLaneStaggerResult result =
+            IndependentJointDualLaneStaggerGeometry.Plan(
+                new IndependentJointDualLaneStaggerInput(
+                    lanes,
+                    lanes,
+                    -70.25,
+                    70.25,
+                    25.2,
+                    1.0,
+                    0.01));
+
+        Equal(
+            IndependentJointDualLaneStaggerStatus.Planned,
+            result.Status,
+            "D25 dual-lane status");
+        Equal(3, result.ShiftedStraightLaneYs.Count, "D25 straight count");
+        Equal(3, result.ShiftedBentLaneYs.Count, "D25 bent count");
+        Equal(true, result.MaximumStraightDisplacement > 0.0,
+            "D25 straight lanes moved");
+        Equal(true, result.MaximumBentDisplacement > 0.0,
+            "D25 bent lanes moved");
+        AssertSeparatedWithinBounds(
+            result.ShiftedStraightLaneYs
+                .Concat(result.ShiftedBentLaneYs)
+                .ToArray(),
+            -70.25,
+            70.25,
+            25.2,
+            0.01,
+            "D25 dual lanes");
+    }
+
+    private static void DualLaneStaggerMirrorsOppositePreference()
+    {
+        var lanes = new[] { -70.25, 0.0, 70.25 };
+        IndependentJointDualLaneStaggerResult positive =
+            IndependentJointDualLaneStaggerGeometry.Plan(
+                new IndependentJointDualLaneStaggerInput(
+                    lanes,
+                    lanes,
+                    -70.25,
+                    70.25,
+                    25.2,
+                    1.0,
+                    0.01));
+        IndependentJointDualLaneStaggerResult negative =
+            IndependentJointDualLaneStaggerGeometry.Plan(
+                new IndependentJointDualLaneStaggerInput(
+                    lanes,
+                    lanes,
+                    -70.25,
+                    70.25,
+                    25.2,
+                    -1.0,
+                    0.01));
+
+        Equal(
+            IndependentJointDualLaneStaggerStatus.Planned,
+            positive.Status,
+            "positive dual status");
+        Equal(
+            IndependentJointDualLaneStaggerStatus.Planned,
+            negative.Status,
+            "negative dual status");
+        for (int index = 0; index < lanes.Length; index++)
+        {
+            int mirrored = lanes.Length - 1 - index;
+            Near(
+                -positive.ShiftedStraightLaneYs[index],
+                negative.ShiftedStraightLaneYs[mirrored],
+                "mirrored dual straight " + index);
+            Near(
+                -positive.ShiftedBentLaneYs[index],
+                negative.ShiftedBentLaneYs[mirrored],
+                "mirrored dual bent " + index);
+        }
+    }
+
+    private static void DualLaneStaggerRejectsInsufficientD25Width()
+    {
+        var lanes = new[] { -60.0, 0.0, 60.0 };
+        IndependentJointDualLaneStaggerResult result =
+            IndependentJointDualLaneStaggerGeometry.Plan(
+                new IndependentJointDualLaneStaggerInput(
+                    lanes,
+                    lanes,
+                    -60.0,
+                    60.0,
+                    25.2,
+                    1.0,
+                    0.01));
+
+        Equal(
+            IndependentJointDualLaneStaggerStatus.Unsupported,
+            result.Status,
+            "narrow D25 dual status");
+        Equal(
+            IndependentJointDualLaneStaggerFailure.NoFeasibleLayout,
+            result.Failure,
+            "narrow D25 dual failure");
+    }
+
+    private static void DualLaneStaggerRejectsMismatchedCounts()
+    {
+        IndependentJointDualLaneStaggerResult result =
+            IndependentJointDualLaneStaggerGeometry.Plan(
+                new IndependentJointDualLaneStaggerInput(
+                    new[] { -1.0, 1.0 },
+                    new[] { 0.0 },
+                    -2.0,
+                    2.0,
+                    0.25,
+                    1.0,
+                    0.01));
+
+        Equal(
+            IndependentJointDualLaneStaggerStatus.Unsupported,
+            result.Status,
+            "dual count status");
+        Equal(
+            IndependentJointDualLaneStaggerFailure.CountMismatch,
+            result.Failure,
+            "dual count failure");
+    }
+
+    private static void AssertSeparatedWithinBounds(
+        IReadOnlyList<double> lanes,
+        double minimum,
+        double maximum,
+        double requiredSeparation,
+        double tolerance,
+        string label)
+    {
+        for (int first = 0; first < lanes.Count; first++)
+        {
+            if (lanes[first] < minimum - tolerance
+                || lanes[first] > maximum + tolerance)
+            {
+                throw new InvalidOperationException(
+                    label + ": lane outside bounds.");
+            }
+            for (int second = first + 1;
+                second < lanes.Count;
+                second++)
+            {
+                if (Math.Abs(lanes[first] - lanes[second]) + tolerance
+                    < requiredSeparation)
+                {
+                    throw new InvalidOperationException(
+                        label + ": insufficient separation.");
+                }
+            }
+        }
+    }
+
     private static IndependentJointLaneStaggerInput LaneStaggerInput(
         IReadOnlyList<double> bentLaneYs,
         IReadOnlyList<double> straightLaneYs,
@@ -1797,7 +2164,8 @@ internal static class Program
     private static IndependentJointAnchorageInput IndependentInput(
         double requiredAnchorageLength = 5.0,
         double bentVerticalLimitElevation = 10.0,
-        double bendInsetFromShallowFace = 1.0)
+        double bendInsetFromShallowFace = 1.0,
+        double? requiredBentAnchorageLength = null)
     {
         return new IndependentJointAnchorageInput(
             0.0,
@@ -1812,11 +2180,13 @@ internal static class Program
             0.25,
             0.5,
             0.25,
-            0.001);
+            0.001,
+            requiredBentAnchorageLength);
     }
 
     private static IndependentJointAnchorageInput RuntimeDepthInput(
-        double requiredAnchorageLength)
+        double requiredAnchorageLength,
+        double? requiredBentAnchorageLength = null)
     {
         return new IndependentJointAnchorageInput(
             0.0,
@@ -1831,7 +2201,8 @@ internal static class Program
             20.0,
             18.0,
             10.0,
-            1.0);
+            1.0,
+            requiredBentAnchorageLength);
     }
 
     private static BentZTransitionResult Plan(

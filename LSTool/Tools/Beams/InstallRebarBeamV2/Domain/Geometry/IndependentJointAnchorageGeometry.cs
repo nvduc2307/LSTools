@@ -46,9 +46,13 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
     /// when the beam order is mirrored. The historical Deep/Shallow property
     /// names now represent bent/straight source elevations respectively.
     /// RequiredAnchorageLength is measured from the bent-side joint face into
-    /// the bent-side beam. The joint width is crossed in addition to this
-    /// development length. The temporary 35-diameter rule belongs to the
-    /// caller rather than this geometry kernel.
+    /// the bent-side beam for the straight-through run. The joint width is
+    /// crossed in addition to this development length.
+    /// RequiredBentAnchorageLength is the vertical tail measured from the
+    /// sharp bend vertex. It defaults to RequiredAnchorageLength so existing
+    /// callers retain the original symmetric policy. Length-selection rules,
+    /// including the 35D/hMin fallback, belong to the caller rather than this
+    /// geometry kernel.
     /// </summary>
     public sealed class IndependentJointAnchorageInput
     {
@@ -60,6 +64,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
         public double ShallowBarElevation { get; }
         public double BentVerticalLimitElevation { get; }
         public double RequiredAnchorageLength { get; }
+        public double RequiredBentAnchorageLength { get; }
         public double BendInsetFromShallowFace { get; }
         public double CenterlineClearance { get; }
         public double CenterlineBendRadius { get; }
@@ -79,7 +84,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             double centerlineClearance,
             double centerlineBendRadius,
             double minimumStraightLength,
-            double tolerance)
+            double tolerance,
+            double? requiredBentAnchorageLength = null)
         {
             RunStartStation = runStartStation;
             JointStartStation = jointStartStation;
@@ -89,6 +95,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             ShallowBarElevation = shallowBarElevation;
             BentVerticalLimitElevation = bentVerticalLimitElevation;
             RequiredAnchorageLength = requiredAnchorageLength;
+            RequiredBentAnchorageLength =
+                requiredBentAnchorageLength ?? requiredAnchorageLength;
             BendInsetFromShallowFace = bendInsetFromShallowFace;
             CenterlineClearance = centerlineClearance;
             CenterlineBendRadius = centerlineBendRadius;
@@ -287,7 +295,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 input.BentVerticalLimitElevation
                 - input.DeepBarElevation) * verticalDirection;
             if (availableVertical + input.Tolerance <
-                input.RequiredAnchorageLength)
+                input.RequiredBentAnchorageLength)
             {
                 return IndependentJointAnchorageResult.Unsupported(
                     IndependentJointAnchorageFailure
@@ -338,7 +346,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             double remainingHorizontalStraight =
                 horizontalLength - tangentSetback;
             double remainingVerticalStraight =
-                input.RequiredAnchorageLength - tangentSetback;
+                input.RequiredBentAnchorageLength - tangentSetback;
             if (remainingHorizontalStraight + input.Tolerance <
                     input.MinimumStraightLength
                 || remainingVerticalStraight + input.Tolerance <
@@ -356,7 +364,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 - direction * input.RequiredAnchorageLength;
             double bentEndElevation =
                 input.DeepBarElevation
-                + verticalDirection * input.RequiredAnchorageLength;
+                + verticalDirection
+                    * input.RequiredBentAnchorageLength;
 
             var straightThroughPoints = new[]
             {
@@ -575,7 +584,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             double bentProvided = Math.Abs(
                 bentEnd.Elevation - bendVertex.Elevation);
             if (bentProvided + tolerance <
-                input.RequiredAnchorageLength)
+                input.RequiredBentAnchorageLength)
             {
                 return IndependentJointAnchorageValidationResult.Unsupported(
                     IndependentJointAnchorageFailure
@@ -635,6 +644,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                     "Tolerance cannot be negative.");
             }
             if (input.RequiredAnchorageLength <= 0.0
+                || input.RequiredBentAnchorageLength <= 0.0
                 || input.MinimumStraightLength <= 0.0
                 || input.BendInsetFromShallowFace < 0.0
                 || input.CenterlineClearance < 0.0)
@@ -719,6 +729,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 && IsFinite(input.ShallowBarElevation)
                 && IsFinite(input.BentVerticalLimitElevation)
                 && IsFinite(input.RequiredAnchorageLength)
+                && IsFinite(input.RequiredBentAnchorageLength)
                 && IsFinite(input.BendInsetFromShallowFace)
                 && IsFinite(input.CenterlineClearance)
                 && IsFinite(input.CenterlineBendRadius)

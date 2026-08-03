@@ -17,7 +17,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics
     public sealed class RebarDiagnosticLog : IDisposable
     {
         private const string DifferentSectionGeometryRevision =
-            "20260803.5-35d-preflight-type-sync";
+            "20260803.8-hmin-column-cover-validation";
         private readonly object _syncRoot = new();
         private readonly StreamWriter _writer;
         private readonly JsonSerializerSettings _serializerSettings = new()
