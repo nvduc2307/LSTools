@@ -66,6 +66,11 @@ internal static class Program
             ColumnVerticalCoverMirrorsD13HMinBelowShallowBeamOverlap,
             ColumnVerticalCoverRejectsTailOutsideColumn,
             ColumnVerticalCoverRejectsEmptyCoverReducedColumn,
+            CrossRunClashRuleAllowsStraightBentOverlap,
+            CrossRunClashRuleRejectsSameFamilyAndOtherOverlap,
+            Layer1DiameterSynchronizationCoversSameFaceAcrossSections,
+            Layer1QuantitySynchronizationKeepsMatchingSection,
+            Layer1SynchronizationNeverCrossesTopAndBottom,
             IndependentAnchorageAllowsD6AcrossThreeHundredFiftyColumn,
             IndependentAnchorageAllowsD10With411Point89Vertical,
             IndependentAnchorageRejectsD25With411Point89Vertical,
@@ -95,11 +100,7 @@ internal static class Program
             LaneStaggerMirrorsSymmetricLayoutWithOppositePreference,
             LaneStaggerValidationRejectsStraightLaneClash,
             LaneStaggerValidationRejectsBentLaneClash,
-            LaneStaggerValidationRejectsWrongCount,
-            DualLaneStaggerPlansD25ThreeLaneLayout,
-            DualLaneStaggerMirrorsOppositePreference,
-            DualLaneStaggerRejectsInsufficientD25Width,
-            DualLaneStaggerRejectsMismatchedCounts
+            LaneStaggerValidationRejectsWrongCount
         };
 
         try
@@ -289,6 +290,62 @@ internal static class Program
         }
 
         Equal(true, rejected, "missing clearance rejection");
+    }
+
+    private static void Layer1DiameterSynchronizationCoversSameFaceAcrossSections()
+    {
+        foreach (Layer1SectionSlot targetSection in
+                 Enum.GetValues<Layer1SectionSlot>())
+        {
+            Equal(
+                true,
+                Layer1SpanSynchronizationRule.IncludesTarget(
+                    Layer1BarFace.Top,
+                    Layer1SectionSlot.Mid,
+                    Layer1BarFace.Top,
+                    targetSection,
+                    Layer1SynchronizedValue.Diameter),
+                "Layer 1 diameter target " + targetSection);
+        }
+    }
+
+    private static void Layer1QuantitySynchronizationKeepsMatchingSection()
+    {
+        Equal(
+            true,
+            Layer1SpanSynchronizationRule.IncludesTarget(
+                Layer1BarFace.Bottom,
+                Layer1SectionSlot.End,
+                Layer1BarFace.Bottom,
+                Layer1SectionSlot.End,
+                Layer1SynchronizedValue.Quantity),
+            "Layer 1 matching quantity section");
+        Equal(
+            false,
+            Layer1SpanSynchronizationRule.IncludesTarget(
+                Layer1BarFace.Bottom,
+                Layer1SectionSlot.End,
+                Layer1BarFace.Bottom,
+                Layer1SectionSlot.Start,
+                Layer1SynchronizedValue.Quantity),
+            "Layer 1 different quantity section");
+    }
+
+    private static void Layer1SynchronizationNeverCrossesTopAndBottom()
+    {
+        foreach (Layer1SynchronizedValue value in
+                 Enum.GetValues<Layer1SynchronizedValue>())
+        {
+            Equal(
+                false,
+                Layer1SpanSynchronizationRule.IncludesTarget(
+                    Layer1BarFace.Top,
+                    Layer1SectionSlot.Start,
+                    Layer1BarFace.Bottom,
+                    Layer1SectionSlot.Start,
+                    value),
+                "Layer 1 top/bottom isolation " + value);
+        }
     }
 
     private static void CenterlineRadiusUsesModelDiameter()
@@ -1262,6 +1319,44 @@ internal static class Program
             "empty cover-reduced column");
     }
 
+    private static void CrossRunClashRuleAllowsStraightBentOverlap()
+    {
+        Equal(
+            true,
+            IndependentJointCrossRunClashRule.AllowsPhysicalOverlap(
+                IndependentJointAnchorRunFamily.StraightThroughAnchor,
+                IndependentJointAnchorRunFamily.BentJointAnchor),
+            "straight then bent overlap");
+        Equal(
+            true,
+            IndependentJointCrossRunClashRule.AllowsPhysicalOverlap(
+                IndependentJointAnchorRunFamily.BentJointAnchor,
+                IndependentJointAnchorRunFamily.StraightThroughAnchor),
+            "bent then straight overlap");
+    }
+
+    private static void CrossRunClashRuleRejectsSameFamilyAndOtherOverlap()
+    {
+        Equal(
+            false,
+            IndependentJointCrossRunClashRule.AllowsPhysicalOverlap(
+                IndependentJointAnchorRunFamily.StraightThroughAnchor,
+                IndependentJointAnchorRunFamily.StraightThroughAnchor),
+            "straight family self-overlap");
+        Equal(
+            false,
+            IndependentJointCrossRunClashRule.AllowsPhysicalOverlap(
+                IndependentJointAnchorRunFamily.BentJointAnchor,
+                IndependentJointAnchorRunFamily.BentJointAnchor),
+            "bent family self-overlap");
+        Equal(
+            false,
+            IndependentJointCrossRunClashRule.AllowsPhysicalOverlap(
+                IndependentJointAnchorRunFamily.Other,
+                IndependentJointAnchorRunFamily.BentJointAnchor),
+            "other family overlap");
+    }
+
     private static void IndependentAnchorageAllowsD10With411Point89Vertical()
     {
         IndependentJointAnchorageResult result =
@@ -1983,164 +2078,6 @@ internal static class Program
             IndependentJointLaneStaggerFailure.OutputCountMismatch,
             validation.Failure,
             "wrong count failure");
-    }
-
-    private static void DualLaneStaggerPlansD25ThreeLaneLayout()
-    {
-        var lanes = new[] { -70.25, 0.0, 70.25 };
-        IndependentJointDualLaneStaggerResult result =
-            IndependentJointDualLaneStaggerGeometry.Plan(
-                new IndependentJointDualLaneStaggerInput(
-                    lanes,
-                    lanes,
-                    -70.25,
-                    70.25,
-                    25.2,
-                    1.0,
-                    0.01));
-
-        Equal(
-            IndependentJointDualLaneStaggerStatus.Planned,
-            result.Status,
-            "D25 dual-lane status");
-        Equal(3, result.ShiftedStraightLaneYs.Count, "D25 straight count");
-        Equal(3, result.ShiftedBentLaneYs.Count, "D25 bent count");
-        Equal(true, result.MaximumStraightDisplacement > 0.0,
-            "D25 straight lanes moved");
-        Equal(true, result.MaximumBentDisplacement > 0.0,
-            "D25 bent lanes moved");
-        AssertSeparatedWithinBounds(
-            result.ShiftedStraightLaneYs
-                .Concat(result.ShiftedBentLaneYs)
-                .ToArray(),
-            -70.25,
-            70.25,
-            25.2,
-            0.01,
-            "D25 dual lanes");
-    }
-
-    private static void DualLaneStaggerMirrorsOppositePreference()
-    {
-        var lanes = new[] { -70.25, 0.0, 70.25 };
-        IndependentJointDualLaneStaggerResult positive =
-            IndependentJointDualLaneStaggerGeometry.Plan(
-                new IndependentJointDualLaneStaggerInput(
-                    lanes,
-                    lanes,
-                    -70.25,
-                    70.25,
-                    25.2,
-                    1.0,
-                    0.01));
-        IndependentJointDualLaneStaggerResult negative =
-            IndependentJointDualLaneStaggerGeometry.Plan(
-                new IndependentJointDualLaneStaggerInput(
-                    lanes,
-                    lanes,
-                    -70.25,
-                    70.25,
-                    25.2,
-                    -1.0,
-                    0.01));
-
-        Equal(
-            IndependentJointDualLaneStaggerStatus.Planned,
-            positive.Status,
-            "positive dual status");
-        Equal(
-            IndependentJointDualLaneStaggerStatus.Planned,
-            negative.Status,
-            "negative dual status");
-        for (int index = 0; index < lanes.Length; index++)
-        {
-            int mirrored = lanes.Length - 1 - index;
-            Near(
-                -positive.ShiftedStraightLaneYs[index],
-                negative.ShiftedStraightLaneYs[mirrored],
-                "mirrored dual straight " + index);
-            Near(
-                -positive.ShiftedBentLaneYs[index],
-                negative.ShiftedBentLaneYs[mirrored],
-                "mirrored dual bent " + index);
-        }
-    }
-
-    private static void DualLaneStaggerRejectsInsufficientD25Width()
-    {
-        var lanes = new[] { -60.0, 0.0, 60.0 };
-        IndependentJointDualLaneStaggerResult result =
-            IndependentJointDualLaneStaggerGeometry.Plan(
-                new IndependentJointDualLaneStaggerInput(
-                    lanes,
-                    lanes,
-                    -60.0,
-                    60.0,
-                    25.2,
-                    1.0,
-                    0.01));
-
-        Equal(
-            IndependentJointDualLaneStaggerStatus.Unsupported,
-            result.Status,
-            "narrow D25 dual status");
-        Equal(
-            IndependentJointDualLaneStaggerFailure.NoFeasibleLayout,
-            result.Failure,
-            "narrow D25 dual failure");
-    }
-
-    private static void DualLaneStaggerRejectsMismatchedCounts()
-    {
-        IndependentJointDualLaneStaggerResult result =
-            IndependentJointDualLaneStaggerGeometry.Plan(
-                new IndependentJointDualLaneStaggerInput(
-                    new[] { -1.0, 1.0 },
-                    new[] { 0.0 },
-                    -2.0,
-                    2.0,
-                    0.25,
-                    1.0,
-                    0.01));
-
-        Equal(
-            IndependentJointDualLaneStaggerStatus.Unsupported,
-            result.Status,
-            "dual count status");
-        Equal(
-            IndependentJointDualLaneStaggerFailure.CountMismatch,
-            result.Failure,
-            "dual count failure");
-    }
-
-    private static void AssertSeparatedWithinBounds(
-        IReadOnlyList<double> lanes,
-        double minimum,
-        double maximum,
-        double requiredSeparation,
-        double tolerance,
-        string label)
-    {
-        for (int first = 0; first < lanes.Count; first++)
-        {
-            if (lanes[first] < minimum - tolerance
-                || lanes[first] > maximum + tolerance)
-            {
-                throw new InvalidOperationException(
-                    label + ": lane outside bounds.");
-            }
-            for (int second = first + 1;
-                second < lanes.Count;
-                second++)
-            {
-                if (Math.Abs(lanes[first] - lanes[second]) + tolerance
-                    < requiredSeparation)
-                {
-                    throw new InvalidOperationException(
-                        label + ": insufficient separation.");
-                }
-            }
-        }
     }
 
     private static IndependentJointLaneStaggerInput LaneStaggerInput(

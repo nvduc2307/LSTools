@@ -56,8 +56,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
         public double RequiredCenterlineSeparation { get; }
         public double PreferredShiftDirection { get; }
         public double Tolerance { get; }
-        public bool AllowDuplicateOriginalLanes { get; }
-        public bool PreserveInputOrder { get; }
 
         public IndependentJointLaneStaggerInput(
             IReadOnlyList<double>? originalBentLaneYs,
@@ -66,9 +64,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             double maxAllowedY,
             double requiredCenterlineSeparation,
             double preferredShiftDirection,
-            double tolerance,
-            bool allowDuplicateOriginalLanes = false,
-            bool preserveInputOrder = false)
+            double tolerance)
         {
             OriginalBentLaneYs = originalBentLaneYs;
             StraightThroughLaneYs = straightThroughLaneYs;
@@ -78,9 +74,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 requiredCenterlineSeparation;
             PreferredShiftDirection = preferredShiftDirection;
             Tolerance = tolerance;
-            AllowDuplicateOriginalLanes =
-                allowDuplicateOriginalLanes;
-            PreserveInputOrder = preserveInputOrder;
         }
     }
 
@@ -206,17 +199,13 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             }
 
             double numericalEpsilon = NumericalEpsilon(snapshot.Tolerance);
-            IEnumerable<IndexedLane> indexedBentLanes =
-                snapshot.BentLaneYs.Select(
+            List<IndexedLane> orderedBentLanes = snapshot.BentLaneYs
+                .Select(
                     (laneY, originalIndex) =>
-                        new IndexedLane(laneY, originalIndex));
-            List<IndexedLane> orderedBentLanes =
-                snapshot.PreserveInputOrder
-                    ? indexedBentLanes.ToList()
-                    : indexedBentLanes
-                        .OrderBy(lane => lane.Y)
-                        .ThenBy(lane => lane.OriginalIndex)
-                        .ToList();
+                        new IndexedLane(laneY, originalIndex))
+                .OrderBy(lane => lane.Y)
+                .ThenBy(lane => lane.OriginalIndex)
+                .ToList();
             List<double> candidates = CreateCandidates(
                 snapshot,
                 orderedBentLanes.Count,
@@ -612,25 +601,22 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                     + "centerline bounds.");
             }
 
-            if (!input.AllowDuplicateOriginalLanes)
+            double[] orderedOriginals = bentLanes
+                .OrderBy(laneY => laneY)
+                .ToArray();
+            for (int index = 1;
+                index < orderedOriginals.Length;
+                index++)
             {
-                double[] orderedOriginals = bentLanes
-                    .OrderBy(laneY => laneY)
-                    .ToArray();
-                for (int index = 1;
-                    index < orderedOriginals.Length;
-                    index++)
+                if (orderedOriginals[index]
+                        - orderedOriginals[index - 1]
+                    <= input.Tolerance)
                 {
-                    if (orderedOriginals[index]
-                            - orderedOriginals[index - 1]
-                        <= input.Tolerance)
-                    {
-                        return IndependentJointLaneStaggerResult.Unsupported(
-                            IndependentJointLaneStaggerFailure
-                                .DuplicateOriginalLane,
-                            "Original bent lanes must be unique within "
-                            + "tolerance.");
-                    }
+                    return IndependentJointLaneStaggerResult.Unsupported(
+                        IndependentJointLaneStaggerFailure
+                            .DuplicateOriginalLane,
+                        "Original bent lanes must be unique within "
+                        + "tolerance.");
                 }
             }
 
@@ -641,8 +627,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 input.MaxAllowedY,
                 input.RequiredCenterlineSeparation,
                 Math.Sign(input.PreferredShiftDirection),
-                input.Tolerance,
-                input.PreserveInputOrder);
+                input.Tolerance);
             return null;
         }
 
@@ -764,7 +749,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             public double RequiredSeparation { get; }
             public double PreferredDirection { get; }
             public double Tolerance { get; }
-            public bool PreserveInputOrder { get; }
 
             public InputSnapshot(
                 double[] bentLaneYs,
@@ -773,8 +757,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 double maxAllowedY,
                 double requiredSeparation,
                 double preferredDirection,
-                double tolerance,
-                bool preserveInputOrder)
+                double tolerance)
             {
                 BentLaneYs = bentLaneYs;
                 StraightLaneYs = straightLaneYs;
@@ -783,7 +766,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 RequiredSeparation = requiredSeparation;
                 PreferredDirection = preferredDirection;
                 Tolerance = tolerance;
-                PreserveInputOrder = preserveInputOrder;
             }
         }
     }

@@ -742,121 +742,42 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 }
             }
 
-            var requiredLaneSeparationFt =
-                modelBarDiameterFt + 0.2.MmToFoot();
             var originalBentLaneYs = lanes
                 .Select(lane => lane.BentLaneY)
                 .ToList();
             var originalStraightLaneYs = lanes
                 .Select(lane => lane.StraightLaneY)
                 .ToList();
-            var staggerInput =
-                new IndependentJointLaneStaggerInput(
-                    originalBentLaneYs,
-                    originalStraightLaneYs,
-                    bentMinY,
-                    bentMaxY,
-                    requiredLaneSeparationFt,
-                    1.0,
-                    laneToleranceFt);
-            var staggerPlan =
-                IndependentJointLaneStaggerGeometry.Plan(
-                    staggerInput);
-            IReadOnlyList<double> shiftedBentLaneYs;
-            IReadOnlyList<double> shiftedStraightLaneYs;
-            double maximumBentLaneShiftFt;
-            double maximumStraightLaneShiftFt;
-            string laneLayoutMode;
-            if (staggerPlan.Status
-                == IndependentJointLaneStaggerStatus.Planned)
-            {
-                shiftedBentLaneYs = staggerPlan.ShiftedBentLaneYs;
-                shiftedStraightLaneYs = originalStraightLaneYs;
-                maximumBentLaneShiftFt =
-                    staggerPlan.MaximumAbsoluteDisplacement;
-                maximumStraightLaneShiftFt = 0.0;
-                laneLayoutMode = "FixedStraightBentOnly";
-            }
-            else if (staggerPlan.Failure
-                == IndependentJointLaneStaggerFailure.NoFeasibleLayout)
-            {
-                var dualInput =
-                    new IndependentJointDualLaneStaggerInput(
-                        originalBentLaneYs,
-                        originalStraightLaneYs,
-                        straightMinY,
-                        straightMaxY,
-                        requiredLaneSeparationFt,
-                        1.0,
-                        laneToleranceFt);
-                IndependentJointDualLaneStaggerResult dualPlan =
-                    IndependentJointDualLaneStaggerGeometry.Plan(
-                        dualInput);
-                if (dualPlan.Status
-                    != IndependentJointDualLaneStaggerStatus.Planned)
+            IReadOnlyList<double> shiftedBentLaneYs =
+                originalBentLaneYs;
+            IReadOnlyList<double> shiftedStraightLaneYs =
+                originalStraightLaneYs;
+            const double maximumBentLaneShiftFt = 0.0;
+            const double maximumStraightLaneShiftFt = 0.0;
+            const string laneLayoutMode =
+                "OriginalLanesPhysicalOverlapAllowed";
+            context.DiagnosticLog?.Record(
+                "main.independent-anchor.physical-overlap.policy.applied",
+                new
                 {
-                    throw Unsupported(
-                        context,
-                        stageName,
-                        $"IndependentAnchor{staggerPlan.Failure}",
-                        "The bent-side anchors cannot be staggered safely "
-                        + "with fixed straight lanes, and balanced "
-                        + "straight/bent interleaving also failed: "
-                        + dualPlan.Message);
-                }
-
-                shiftedBentLaneYs = dualPlan.ShiftedBentLaneYs;
-                shiftedStraightLaneYs = dualPlan.ShiftedStraightLaneYs;
-                maximumBentLaneShiftFt =
-                    dualPlan.MaximumBentDisplacement;
-                maximumStraightLaneShiftFt =
-                    dualPlan.MaximumStraightDisplacement;
-                laneLayoutMode = "BalancedStraightBentInterleaving";
-                context.DiagnosticLog?.Record(
-                    "main.independent-anchor.dual-lane-fallback.planned",
-                    new
-                    {
-                        stageName,
-                        requiredCenterlineSeparationMm = Math.Round(
-                            requiredLaneSeparationFt.FootToMm(),
-                            3),
-                        minimumAllowedYMm = Math.Round(
-                            straightMinY.FootToMm(),
-                            3),
-                        maximumAllowedYMm = Math.Round(
-                            straightMaxY.FootToMm(),
-                            3),
-                        originalStraightLaneYsMm =
-                            originalStraightLaneYs.Select(value =>
-                                Math.Round(value.FootToMm(), 3)),
-                        shiftedStraightLaneYsMm =
-                            shiftedStraightLaneYs.Select(value =>
-                                Math.Round(value.FootToMm(), 3)),
-                        originalBentLaneYsMm =
-                            originalBentLaneYs.Select(value =>
-                                Math.Round(value.FootToMm(), 3)),
-                        shiftedBentLaneYsMm =
-                            shiftedBentLaneYs.Select(value =>
-                                Math.Round(value.FootToMm(), 3)),
-                        maximumStraightLaneShiftMm = Math.Round(
-                            maximumStraightLaneShiftFt.FootToMm(),
-                            3),
-                        maximumBentLaneShiftMm = Math.Round(
-                            maximumBentLaneShiftFt.FootToMm(),
-                            3),
-                        coverPolicy = "ConfiguredCageBoundsPreserved"
-                    });
-            }
-            else
-            {
-                throw Unsupported(
-                    context,
                     stageName,
-                    $"IndependentAnchor{staggerPlan.Failure}",
-                    "The bent-side anchors cannot be staggered safely "
-                    + "from the straight-through anchors: "
-                    + staggerPlan.Message);
-            }
+                    scope = "SameStageStraightBentOnly",
+                    laneAvoidanceApplied = false,
+                    physicalIntersectionAllowed = true,
+                    originalStraightLaneYsMm =
+                        originalStraightLaneYs.Select(value =>
+                            Math.Round(value.FootToMm(), 3)),
+                    originalBentLaneYsMm =
+                        originalBentLaneYs.Select(value =>
+                            Math.Round(value.FootToMm(), 3)),
+                    retainedWithinFamilyChecks = new[]
+                    {
+                        "SourceLaneUniqueness",
+                        "SourceLaneSeparation",
+                        "BeamAndColumnCover",
+                        "ModeledColumnRebarClash"
+                    }
+                });
 
             var runs = new List<MainBarRunPlan>(
                 lanes.Count * 2);
@@ -2444,6 +2365,22 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 {
                     continue;
                 }
+                if (AllowsIndependentCrossRunPhysicalOverlap(
+                        firstRun,
+                        secondRun))
+                {
+                    context.DiagnosticLog?.Record(
+                        "main.separation.pair.skipped",
+                        new
+                        {
+                            stageName,
+                            firstRunId = firstRun.RunId,
+                            secondRunId = secondRun.RunId,
+                            reason =
+                                "SameStageIndependentStraightBentPhysicalOverlapAllowed"
+                        });
+                    continue;
+                }
                 if (firstRun.Level != secondRun.Level
                     && (firstRun.Kind == MainBarRunKind.Legacy
                         || secondRun.Kind == MainBarRunKind.Legacy))
@@ -3826,6 +3763,36 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     $"{ex.GetType().FullName}: {ex.Message}",
                     "OriginalGeometry");
             }
+        }
+
+        private static bool AllowsIndependentCrossRunPhysicalOverlap(
+            MainBarRunPlan firstRun,
+            MainBarRunPlan secondRun)
+        {
+            if (firstRun.Level != secondRun.Level
+                || firstRun.Group != secondRun.Group
+                || !firstRun.JointElementId.HasValue
+                || firstRun.JointElementId != secondRun.JointElementId)
+            {
+                return false;
+            }
+            return IndependentJointCrossRunClashRule.AllowsPhysicalOverlap(
+                ToIndependentAnchorRunFamily(firstRun.Kind),
+                ToIndependentAnchorRunFamily(secondRun.Kind));
+        }
+
+        private static IndependentJointAnchorRunFamily
+            ToIndependentAnchorRunFamily(MainBarRunKind kind)
+        {
+            return kind switch
+            {
+                MainBarRunKind.IndependentStraightThroughAnchor =>
+                    IndependentJointAnchorRunFamily
+                        .StraightThroughAnchor,
+                MainBarRunKind.IndependentBentJointAnchor =>
+                    IndependentJointAnchorRunFamily.BentJointAnchor,
+                _ => IndependentJointAnchorRunFamily.Other
+            };
         }
 
         private static void CollectPositiveSolids(

@@ -20,10 +20,12 @@
              Link="IndependentJointBentTailRule.cs" />
     <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\IndependentJointColumnVerticalCoverRule.cs"
              Link="IndependentJointColumnVerticalCoverRule.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\IndependentJointCrossRunClashRule.cs"
+             Link="IndependentJointCrossRunClashRule.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\Layer1SpanSynchronizationRule.cs"
+             Link="Layer1SpanSynchronizationRule.cs" />
     <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\IndependentJointLaneStaggerGeometry.cs"
              Link="IndependentJointLaneStaggerGeometry.cs" />
-    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\IndependentJointDualLaneStaggerGeometry.cs"
-             Link="IndependentJointDualLaneStaggerGeometry.cs" />
     <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\TemporaryIndependentJointAnchorageRule.cs"
              Link="TemporaryIndependentJointAnchorageRule.cs" />
     <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\TemporaryJointStirrupFallbackRule.cs"
