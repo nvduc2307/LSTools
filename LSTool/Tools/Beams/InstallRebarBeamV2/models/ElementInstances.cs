@@ -3,6 +3,7 @@ using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
 using CommunityToolkit.Mvvm.ComponentModel;
 using LSTool.Compatibility;
+using LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry;
 using Newtonsoft.Json;
 using LSTool.Tools.Generals.SettingDiameters.models;
 using LSTool.Tools.Beams.InstallRebarBeamV2.exceptions;
@@ -22,6 +23,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
     {
         private Document _document;
         private UIDocument _uiDocument;
+        private bool _isSynchronizingLayer1AcrossSpans;
         public static string DIR_TOOL = $"{PathUtils.AppDataRimT}\\CreateRebarBeam";
         public string PathRebarBeamType { get; set; }
         public double DistanceRebarToRebarMm { get; set; }
@@ -122,6 +124,31 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
                 .Select(x => new RebarBarTypeCustom(x))
                 .Where(x => x.NameStyle.Contains("D"))
                 .ToList();
+            var inconsistentDiameters = RebarBarTypeCustoms
+                .Select(type => new
+                {
+                    Type = type,
+                    NominalMm = type.BarDiameter.FootToMm(),
+                    ModeledMm = type.ModelBarDiameter.FootToMm()
+                })
+                .Where(item =>
+                    item.NominalMm <= 0.0
+                    || item.ModeledMm <= 0.0
+                    || Math.Abs(item.NominalMm - item.ModeledMm) > 1.0)
+                .ToList();
+            if (inconsistentDiameters.Count > 0)
+            {
+                var details = string.Join(
+                    ", ",
+                    inconsistentDiameters.Select(item =>
+                        $"{item.Type.NameStyle}: nominal "
+                        + $"{item.NominalMm:0.###} mm / modeled "
+                        + $"{item.ModeledMm:0.###} mm"));
+                throw new InvalidOperationException(
+                    "Rebar Bar Types have inconsistent nominal/model "
+                    + $"diameters ({details}). Synchronize the configured "
+                    + "diameter database before generating reinforcement.");
+            }
             var duplicateBarTypeNames = RebarBarTypeCustoms
                 .GroupBy(type => type.NameStyle, StringComparer.OrdinalIgnoreCase)
                 .Where(group => group.Count() > 1)
@@ -550,26 +577,92 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             RebarBeam rebarBeam,
             RebarBeamMainBarLevelType level)
         {
-            var sourceBar = GetLayer1Bar(sourceSection, level);
-            if (sourceBar == null || rebarBeam == null)
+            if (rebarBeam == null)
                 return;
 
-            var sections = new RebarBeamSection[]
+            SynchronizeLayer1ValueAcrossSpans(
+                sourceSection,
+                level,
+                Layer1SynchronizedValue.Diameter);
+        }
+
+        internal void SynchronizeLayer1QuantityAcrossSpans(
+            RebarBeamSection sourceSection,
+            RebarBeamMainBarLevelType level)
+        {
+            SynchronizeLayer1ValueAcrossSpans(
+                sourceSection,
+                level,
+                Layer1SynchronizedValue.Quantity);
+        }
+
+        private void SynchronizeLayer1ValueAcrossSpans(
+            RebarBeamSection sourceSection,
+            RebarBeamMainBarLevelType level,
+            Layer1SynchronizedValue value)
+        {
+            if (_isSynchronizingLayer1AcrossSpans)
+                return;
+
+            var sourceBar = GetLayer1Bar(sourceSection, level);
+            if (sourceBar == null || RebarBeams == null)
+                return;
+
+            var sourceFace = GetLayer1Face(level);
+            var sourceSlot = GetLayer1SectionSlot(sourceSection);
+            var targetBars = new List<RebarBeamMainBar>();
+            foreach (var beam in RebarBeams)
             {
-                rebarBeam.RebarBeamSectionStart,
-                rebarBeam.RebarBeamSectionMid,
-                rebarBeam.RebarBeamSectionEnd
-            };
-            var bars = sections
-                .Select(section => GetLayer1Bar(section, level))
-                .Where(bar => bar != null)
-                .ToList();
-            foreach (var bar in bars)
-                bar.DiameterChange = null;
-            foreach (var bar in bars)
-                bar.Diameter = sourceBar.Diameter;
-            foreach (var section in sections)
-                AttachLayer1DiameterSynchronization(section, rebarBeam);
+                var sections = new RebarBeamSection[]
+                {
+                    beam?.RebarBeamSectionStart,
+                    beam?.RebarBeamSectionMid,
+                    beam?.RebarBeamSectionEnd
+                };
+                foreach (var section in sections.Where(item => item != null))
+                {
+                    var targetSlot = GetLayer1SectionSlot(section);
+                    AddTarget(
+                        section.RebarBeamTop?.RebarBeamTopLevel1,
+                        Layer1BarFace.Top,
+                        targetSlot);
+                    AddTarget(
+                        section.RebarBeamBot?.RebarBeamBotLevel1,
+                        Layer1BarFace.Bottom,
+                        targetSlot);
+                }
+            }
+
+            _isSynchronizingLayer1AcrossSpans = true;
+            try
+            {
+                foreach (var targetBar in targetBars)
+                {
+                    if (value == Layer1SynchronizedValue.Diameter)
+                        targetBar.Diameter = sourceBar.Diameter;
+                    else
+                        targetBar.Quantity = sourceBar.Quantity;
+                }
+            }
+            finally
+            {
+                _isSynchronizingLayer1AcrossSpans = false;
+            }
+
+            void AddTarget(
+                RebarBeamMainBar targetBar,
+                Layer1BarFace targetFace,
+                Layer1SectionSlot targetSlot)
+            {
+                if (targetBar != null
+                    && Layer1SpanSynchronizationRule.IncludesTarget(
+                        sourceFace,
+                        sourceSlot,
+                        targetFace,
+                        targetSlot,
+                        value))
+                    targetBars.Add(targetBar);
+            }
         }
 
         private void AttachSynchronizationCallbacks(RebarBeam rebarBeam)
@@ -681,6 +774,39 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             return level == RebarBeamMainBarLevelType.RebarTop
                 ? section.RebarBeamTop?.RebarBeamTopLevel1
                 : section.RebarBeamBot?.RebarBeamBotLevel1;
+        }
+
+        private static Layer1BarFace GetLayer1Face(
+            RebarBeamMainBarLevelType level)
+        {
+            switch (level)
+            {
+                case RebarBeamMainBarLevelType.RebarTop:
+                    return Layer1BarFace.Top;
+                case RebarBeamMainBarLevelType.RebarBot:
+                    return Layer1BarFace.Bottom;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(level));
+            }
+        }
+
+        private static Layer1SectionSlot GetLayer1SectionSlot(
+            RebarBeamSection section)
+        {
+            switch ((RebarBeamSectionType)section.RebarBeamSectionType)
+            {
+                case RebarBeamSectionType.SectionStart:
+                    return Layer1SectionSlot.Start;
+                case RebarBeamSectionType.SectionMid:
+                    return Layer1SectionSlot.Mid;
+                case RebarBeamSectionType.SectionEnd:
+                    return Layer1SectionSlot.End;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(section),
+                        section.RebarBeamSectionType,
+                        "Unsupported beam section type.");
+            }
         }
         private void InitDataRebarBeamSection(RebarBeam rebarBeam, RebarBeamSection rebarBeamSection)
         {

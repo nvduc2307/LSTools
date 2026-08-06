@@ -218,8 +218,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 var rebarPositionNext = rebarPositions[index + 1];
                 var rebarPositionPrev = index == 0 ? null : rebarPositions[index - 1];
                 var isLapDiffTop = IsDifferentFace(face, faces[index + 1]);
-                var isLapDiffBot = index == 0 
-                    ? false 
+                var isLapDiffBot = index == 0
+                    ? false
                     : IsDifferentFace(faces[index - 1], face);
                 var rbCount = rebarPosition.Count;
                 foreach (var item in rebarPosition)
@@ -240,8 +240,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     var condit1Prev = numberOfPrev % 2 == 0;
                     var isSolePrev = rebarPositionPrevTarget != null
                         && (!condit1Prev && !isOddPrev ? true : condit1Prev && isOddPrev ? true : false);
-                    var lapLengthGapPrev = isSolePrev 
-                        ? lapLengthPrev + gapLapPrev 
+                    var lapLengthGapPrev = isSolePrev
+                        ? lapLengthPrev + gapLapPrev
                         : 0;
                     if (isLapDiffTop)
                     {

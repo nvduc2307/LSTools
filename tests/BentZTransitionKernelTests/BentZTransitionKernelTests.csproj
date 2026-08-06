@@ -16,11 +16,23 @@
              Link="MainBarTransitionPolicyClassifier.cs" />
     <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\IndependentJointAnchorageGeometry.cs"
              Link="IndependentJointAnchorageGeometry.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\IndependentJointBentTailRule.cs"
+             Link="IndependentJointBentTailRule.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\IndependentJointColumnVerticalCoverRule.cs"
+             Link="IndependentJointColumnVerticalCoverRule.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\IndependentJointCrossRunClashRule.cs"
+             Link="IndependentJointCrossRunClashRule.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\Layer1SpanSynchronizationRule.cs"
+             Link="Layer1SpanSynchronizationRule.cs" />
     <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\IndependentJointLaneStaggerGeometry.cs"
              Link="IndependentJointLaneStaggerGeometry.cs" />
     <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\TemporaryIndependentJointAnchorageRule.cs"
              Link="TemporaryIndependentJointAnchorageRule.cs" />
     <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\TemporaryJointStirrupFallbackRule.cs"
              Link="TemporaryJointStirrupFallbackRule.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\RectangularColumnPostProcessingFallbackRule.cs"
+             Link="RectangularColumnPostProcessingFallbackRule.cs" />
+    <Compile Include="..\..\LSTool\Tools\Beams\InstallRebarBeamV2\Domain\Geometry\RebarCenterlineBendRadiusRule.cs"
+             Link="RebarCenterlineBendRadiusRule.cs" />
   </ItemGroup>
 </Project>

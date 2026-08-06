@@ -86,6 +86,19 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
             rebarBeam.RebarBeamSectionMid.RebarBeamBot.RebarBeamBotLevel1.Hooks2 = new();
             rebarBeam.RebarBeamSectionEnd.RebarBeamBot.RebarBeamBotLevel1.Hooks2 = new();
         }
+
+        private void SynchronizeLayer1QuantityAndRefresh(
+            RebarBeam sourceSpan,
+            RebarBeamSection sourceSection,
+            RebarBeamMainBarLevelType level)
+        {
+            ElementInstances.SynchronizeLayer1QuantityAcrossSpans(
+                sourceSection,
+                level);
+            RefreshAllVerticalStirrup(sourceSpan);
+            QueueMainBarPreview();
+        }
+
         private void InitAction()
         {
             ElementInstances.RebarBeamAnchorTypeChange = () =>
@@ -124,18 +137,24 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
 
                 rebarBeam.RebarBeamSectionStart.RebarBeamTop.RebarBeamTopLevel1.QuantityChange = () =>
                 {
-                    RefreshAllVerticalStirrup(rebarBeam);
-                    QueueMainBarPreview();
+                    SynchronizeLayer1QuantityAndRefresh(
+                        rebarBeam,
+                        rebarBeam.RebarBeamSectionStart,
+                        RebarBeamMainBarLevelType.RebarTop);
                 };
                 rebarBeam.RebarBeamSectionMid.RebarBeamTop.RebarBeamTopLevel1.QuantityChange = () =>
                 {
-                    RefreshAllVerticalStirrup(rebarBeam);
-                    QueueMainBarPreview();
+                    SynchronizeLayer1QuantityAndRefresh(
+                        rebarBeam,
+                        rebarBeam.RebarBeamSectionMid,
+                        RebarBeamMainBarLevelType.RebarTop);
                 };
                 rebarBeam.RebarBeamSectionEnd.RebarBeamTop.RebarBeamTopLevel1.QuantityChange = () =>
                 {
-                    RefreshAllVerticalStirrup(rebarBeam);
-                    QueueMainBarPreview();
+                    SynchronizeLayer1QuantityAndRefresh(
+                        rebarBeam,
+                        rebarBeam.RebarBeamSectionEnd,
+                        RebarBeamMainBarLevelType.RebarTop);
                 };
 
                 rebarBeam.RebarBeamSectionStart.RebarBeamTop.RebarBeamTopLevel2.QuantityChange = () =>
@@ -166,18 +185,24 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
 
                 rebarBeam.RebarBeamSectionStart.RebarBeamBot.RebarBeamBotLevel1.QuantityChange = () =>
                 {
-                    RefreshAllVerticalStirrup(rebarBeam);
-                    QueueMainBarPreview();
+                    SynchronizeLayer1QuantityAndRefresh(
+                        rebarBeam,
+                        rebarBeam.RebarBeamSectionStart,
+                        RebarBeamMainBarLevelType.RebarBot);
                 };
                 rebarBeam.RebarBeamSectionMid.RebarBeamBot.RebarBeamBotLevel1.QuantityChange = () =>
                 {
-                    RefreshAllVerticalStirrup(rebarBeam);
-                    QueueMainBarPreview();
+                    SynchronizeLayer1QuantityAndRefresh(
+                        rebarBeam,
+                        rebarBeam.RebarBeamSectionMid,
+                        RebarBeamMainBarLevelType.RebarBot);
                 };
                 rebarBeam.RebarBeamSectionEnd.RebarBeamBot.RebarBeamBotLevel1.QuantityChange = () =>
                 {
-                    RefreshAllVerticalStirrup(rebarBeam);
-                    QueueMainBarPreview();
+                    SynchronizeLayer1QuantityAndRefresh(
+                        rebarBeam,
+                        rebarBeam.RebarBeamSectionEnd,
+                        RebarBeamMainBarLevelType.RebarBot);
                 };
 
                 rebarBeam.RebarBeamSectionStart.RebarBeamBot.RebarBeamBotLevel2.QuantityChange = () =>

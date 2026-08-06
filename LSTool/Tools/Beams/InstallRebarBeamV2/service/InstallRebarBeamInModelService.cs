@@ -45,12 +45,31 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 Metrics = context.Metrics
             };
 
-            result.TopLevel1 = CreateMainBars(installRebarBeamV2ViewModel, context, RebarBeamMainBarLevelType.RebarTop, RebarBeamMainBarGroupType.GroupLevel1, "main.top.1");
-            result.TopLevel2 = CreateMainBars(installRebarBeamV2ViewModel, context, RebarBeamMainBarLevelType.RebarTop, RebarBeamMainBarGroupType.GroupLevel2, "main.top.2");
-            result.TopLevel3 = CreateMainBars(installRebarBeamV2ViewModel, context, RebarBeamMainBarLevelType.RebarTop, RebarBeamMainBarGroupType.GroupLevel3, "main.top.3");
-            result.BottomLevel1 = CreateMainBars(installRebarBeamV2ViewModel, context, RebarBeamMainBarLevelType.RebarBot, RebarBeamMainBarGroupType.GroupLevel1, "main.bottom.1");
-            result.BottomLevel2 = CreateMainBars(installRebarBeamV2ViewModel, context, RebarBeamMainBarLevelType.RebarBot, RebarBeamMainBarGroupType.GroupLevel2, "main.bottom.2");
-            result.BottomLevel3 = CreateMainBars(installRebarBeamV2ViewModel, context, RebarBeamMainBarLevelType.RebarBot, RebarBeamMainBarGroupType.GroupLevel3, "main.bottom.3");
+            PlanAllMainBars(installRebarBeamV2ViewModel, context);
+            result.TopLevel1 = WriteMainBars(
+                context,
+                RebarBeamMainBarLevelType.RebarTop,
+                RebarBeamMainBarGroupType.GroupLevel1);
+            result.TopLevel2 = WriteMainBars(
+                context,
+                RebarBeamMainBarLevelType.RebarTop,
+                RebarBeamMainBarGroupType.GroupLevel2);
+            result.TopLevel3 = WriteMainBars(
+                context,
+                RebarBeamMainBarLevelType.RebarTop,
+                RebarBeamMainBarGroupType.GroupLevel3);
+            result.BottomLevel1 = WriteMainBars(
+                context,
+                RebarBeamMainBarLevelType.RebarBot,
+                RebarBeamMainBarGroupType.GroupLevel1);
+            result.BottomLevel2 = WriteMainBars(
+                context,
+                RebarBeamMainBarLevelType.RebarBot,
+                RebarBeamMainBarGroupType.GroupLevel2);
+            result.BottomLevel3 = WriteMainBars(
+                context,
+                RebarBeamMainBarLevelType.RebarBot,
+                RebarBeamMainBarGroupType.GroupLevel3);
             using (context.Metrics.Measure("side"))
                 result.SideBars = InstallRebarSide(installRebarBeamV2ViewModel, context);
             using (context.Metrics.Measure("stirrup.main"))
@@ -67,18 +86,97 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
             return result;
         }
 
-        private List<Rebar> CreateMainBars(
+        private void PlanAllMainBars(
             InstallRebarBeamV2ViewModel viewModel,
+            RebarExecutionContext context)
+        {
+            var stages = new[]
+            {
+                new
+                {
+                    Level = RebarBeamMainBarLevelType.RebarTop,
+                    Group = RebarBeamMainBarGroupType.GroupLevel1,
+                    Name = "main.top.1"
+                },
+                new
+                {
+                    Level = RebarBeamMainBarLevelType.RebarTop,
+                    Group = RebarBeamMainBarGroupType.GroupLevel2,
+                    Name = "main.top.2"
+                },
+                new
+                {
+                    Level = RebarBeamMainBarLevelType.RebarTop,
+                    Group = RebarBeamMainBarGroupType.GroupLevel3,
+                    Name = "main.top.3"
+                },
+                new
+                {
+                    Level = RebarBeamMainBarLevelType.RebarBot,
+                    Group = RebarBeamMainBarGroupType.GroupLevel1,
+                    Name = "main.bottom.1"
+                },
+                new
+                {
+                    Level = RebarBeamMainBarLevelType.RebarBot,
+                    Group = RebarBeamMainBarGroupType.GroupLevel2,
+                    Name = "main.bottom.2"
+                },
+                new
+                {
+                    Level = RebarBeamMainBarLevelType.RebarBot,
+                    Group = RebarBeamMainBarGroupType.GroupLevel3,
+                    Name = "main.bottom.3"
+                }
+            };
+            var failures = new List<Exception>();
+            foreach (var stage in stages)
+            {
+                try
+                {
+                    MainBarCreationPlan plan;
+                    using (context.Metrics.Measure($"{stage.Name}.plan"))
+                    {
+                        plan = _mainBarPlanner.Plan(
+                            viewModel,
+                            context,
+                            stage.Level,
+                            stage.Group);
+                    }
+                    context.RegisterMainBarPlan(
+                        stage.Level,
+                        stage.Group,
+                        plan);
+                }
+                catch (Exception exception)
+                {
+                    context.DiagnosticLog?.RecordException(
+                        $"{stage.Name}.plan.failed",
+                        exception);
+                    failures.Add(new InvalidOperationException(
+                        $"Main-bar geometry planning failed for "
+                        + $"{stage.Name}.",
+                        exception));
+                }
+            }
+
+            if (failures.Count == 1) throw failures[0];
+            if (failures.Count > 1)
+            {
+                throw new AggregateException(
+                    $"Main-bar geometry planning failed for "
+                    + $"{failures.Count} stages before any rebar was created.",
+                    failures);
+            }
+        }
+
+        private List<Rebar> WriteMainBars(
             RebarExecutionContext context,
             RebarBeamMainBarLevelType level,
-            RebarBeamMainBarGroupType group,
-            string stageName)
+            RebarBeamMainBarGroupType group)
         {
-            MainBarCreationPlan plan;
-            using (context.Metrics.Measure($"{stageName}.plan"))
-                plan = _mainBarPlanner.Plan(viewModel, context, level, group);
-            context.RegisterMainBarPlan(level, group, plan);
-            using (context.Metrics.Measure($"{stageName}.write"))
+            var plan = context.GetMainBarPlan(level, group);
+            using (context.Metrics.Measure($"{plan.StageName}.write"))
                 return _mainBarWriter.Create(plan, context);
         }
 

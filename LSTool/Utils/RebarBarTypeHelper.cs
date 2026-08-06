@@ -16,15 +16,29 @@ namespace LSTool.Utils
         {
             if (rebarBarType == null || diameter <= 0)
                 return;
-            if (Math.Abs(rebarBarType.get_Parameter(BuiltInParameter.REBAR_BAR_DIAMETER).AsDouble().ToMillimeters() - diameter.ToMillimeters()) > 1)
+            SetDiameterParameter(
+                rebarBarType,
+                BuiltInParameter.REBAR_BAR_DIAMETER,
+                diameter);
+            SetDiameterParameter(
+                rebarBarType,
+                BuiltInParameter.REBAR_MODEL_BAR_DIAMETER,
+                diameter);
+        }
+
+        private static void SetDiameterParameter(
+            RebarBarType rebarBarType,
+            BuiltInParameter parameterId,
+            double diameter)
+        {
+            var parameter = rebarBarType.get_Parameter(parameterId);
+            if (parameter == null || parameter.IsReadOnly) return;
+            if (Math.Abs(
+                    parameter.AsDouble().ToMillimeters()
+                    - diameter.ToMillimeters()) > 1)
             {
-                rebarBarType.get_Parameter(BuiltInParameter.REBAR_BAR_DIAMETER).Set(diameter);
-                rebarBarType.get_Parameter(BuiltInParameter.REBAR_MODEL_BAR_DIAMETER).Set(diameter);
+                parameter.Set(diameter);
             }
-#if REVIT2022 || REVIT2023 || REVIT2024
-            if (Math.Abs(rebarBarType.BarModelDiameter.ToMillimeters() - diameter.ToMillimeters()) > 1)
-                rebarBarType.BarModelDiameter = diameter;
-#endif
         }
         public static void SetRebarBendDiameter(RebarBarType rebarBarType, double bendDiameter)
         {

@@ -378,6 +378,17 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     + $"diameter for the temporary 35D rule: "
                     + exception.Message);
             }
+            var hMinDiameterMultiplier =
+                viewModel.SettingRebarStandardModel?.HMin ?? 0;
+            if (hMinDiameterMultiplier <= 0)
+            {
+                throw Unsupported(
+                    context,
+                    stageName,
+                    "InvalidRebarStandardHMin",
+                    "General Setting hMin must be greater than zero. "
+                    + "Its unit is the nominal bar diameter (hMin x D).");
+            }
 
             var bendClearance = CalculateBendClearance(
                 viewModel,
@@ -506,35 +517,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     bentMaxY,
                     lanes.Max(lane => lane.BentLaneY));
             }
-            var requiredLaneSeparationFt =
-                modelBarDiameterFt + 0.2.MmToFoot();
-            var staggerInput =
-                new IndependentJointLaneStaggerInput(
-                    lanes
-                        .Select(lane => lane.BentLaneY)
-                        .ToList(),
-                    lanes
-                        .Select(lane => lane.StraightLaneY)
-                        .ToList(),
-                    bentMinY,
-                    bentMaxY,
-                    requiredLaneSeparationFt,
-                    1.0,
-                    laneToleranceFt);
-            var staggerPlan =
-                IndependentJointLaneStaggerGeometry.Plan(
-                    staggerInput);
-            if (staggerPlan.Status
-                != IndependentJointLaneStaggerStatus.Planned)
-            {
-                throw Unsupported(
-                    context,
-                    stageName,
-                    $"IndependentAnchor{staggerPlan.Failure}",
-                    "The bent-side anchors cannot be staggered safely "
-                    + "from the straight-through anchors: "
-                    + staggerPlan.Message);
-            }
 
             var verticalLimitZ =
                 level == RebarBeamMainBarLevelType.RebarBot
@@ -546,18 +528,15 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                           bentBeam.BottomZ,
                           straightBeam.BottomZ)
                       + bendClearance.CenterlineClearanceFt;
-            var runs = new List<MainBarRunPlan>(
-                lanes.Count * 2);
-            var closestModeledClearancesMm =
-                new List<double>();
-
+            var anchoragePlans =
+                new List<IndependentJointAnchorageResult>(lanes.Count);
+            var bentTailPlans =
+                new List<IndependentJointBentTailPlan>(lanes.Count);
             for (var laneIndex = 0;
                  laneIndex < lanes.Count;
                  laneIndex++)
             {
                 var lane = lanes[laneIndex];
-                var shiftedBentY =
-                    staggerPlan.ShiftedBentLaneYs[laneIndex];
                 var direction =
                     lane.StraightSide.Station
                     >= lane.BentSide.Station
@@ -569,6 +548,32 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 var jointEnd = direction > 0.0
                     ? joint.ColumnEnd
                     : joint.ColumnStart;
+                var verticalDirection = Math.Sign(
+                    lane.StraightSide.CorePoint.Z
+                    - lane.BentSide.CorePoint.Z);
+                var verticalAvailableFt =
+                    (verticalLimitZ - lane.BentSide.CorePoint.Z)
+                    * verticalDirection;
+                IndependentJointBentTailPlan bentTailPlan;
+                try
+                {
+                    bentTailPlan = IndependentJointBentTailRule.Resolve(
+                        requiredAnchorageFt,
+                        nominalBarDiameterFt,
+                        hMinDiameterMultiplier,
+                        verticalAvailableFt,
+                        toleranceFt);
+                }
+                catch (Exception exception)
+                {
+                    throw Unsupported(
+                        context,
+                        stageName,
+                        "InvalidRebarStandardHMin",
+                        "The hMin anchorage fallback could not be resolved "
+                        + "from General Setting: "
+                        + exception.Message);
+                }
                 var input =
                     new IndependentJointAnchorageInput(
                         lane.BentSide.Station,
@@ -583,26 +588,219 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         bendClearance.CenterlineClearanceFt,
                         bendClearance.CenterlineBendRadiusFt,
                         minimumStraightLengthFt,
-                        toleranceFt);
+                        toleranceFt,
+                        bentTailPlan.RequiredBentTailLength);
+                bentTailPlans.Add(bentTailPlan);
+                context.DiagnosticLog?.Record(
+                    "main.independent-anchor.input",
+                    new
+                    {
+                        stageName,
+                        lane = laneIndex + 1,
+                        bentBeamId = bentBeam.Id,
+                        straightBeamId = straightBeam.Id,
+                        requiredAnchorageMm = Math.Round(
+                            requiredAnchorageFt.FootToMm(),
+                            3),
+                        bentTailPolicy =
+                            bentTailPlan.Policy.ToString(),
+                        hMinDiameterMultiplier,
+                        hMinLengthMm = Math.Round(
+                            (hMinDiameterMultiplier
+                                * nominalBarDiameterFt).FootToMm(),
+                            3),
+                        requiredBentTailMm = Math.Round(
+                            bentTailPlan.RequiredBentTailLength
+                                .FootToMm(),
+                            3),
+                        measurementOrigin = "BentSideJointFace",
+                        jointWidthMm = Math.Round(
+                            Math.Abs(jointEnd - jointStart).FootToMm(),
+                            3),
+                        bentSideDevelopmentAvailableMm = Math.Round(
+                            ((jointStart - lane.BentSide.Station)
+                                * direction).FootToMm(),
+                            3),
+                        totalStraightThroughLengthMm = Math.Round(
+                            (Math.Abs(jointEnd - jointStart)
+                                + requiredAnchorageFt).FootToMm(),
+                            3),
+                        verticalAvailableMm = Math.Round(
+                            verticalAvailableFt.FootToMm(),
+                            3),
+                        bentSideStationMm = Math.Round(
+                            lane.BentSide.Station.FootToMm(),
+                            3),
+                        jointStartStationMm = Math.Round(
+                            jointStart.FootToMm(),
+                            3),
+                        jointEndStationMm = Math.Round(
+                            jointEnd.FootToMm(),
+                            3),
+                        straightSideStationMm = Math.Round(
+                            lane.StraightSide.Station.FootToMm(),
+                            3)
+                    });
                 var planned =
-                    IndependentJointAnchorageGeometry.Plan(
-                        input);
+                    IndependentJointAnchorageGeometry.Plan(input);
+                anchoragePlans.Add(planned);
+                context.DiagnosticLog?.Record(
+                    "main.independent-anchor.outcome",
+                    new
+                    {
+                        stageName,
+                        lane = laneIndex + 1,
+                        status = planned.Status.ToString(),
+                        failure = planned.Failure.ToString(),
+                        planned.Message,
+                        straightProvidedAnchorageMm = Math.Round(
+                            planned.StraightProvidedAnchorageLength
+                                .FootToMm(),
+                            3),
+                        bentProvidedAnchorageMm = Math.Round(
+                            planned.BentProvidedAnchorageLength
+                                .FootToMm(),
+                            3),
+                        bentTailPolicy =
+                            bentTailPlan.Policy.ToString()
+                    });
+                if (planned.Status
+                        == IndependentJointAnchorageStatus.Planned
+                    && bentTailPlan.UsesHMinFallback)
+                {
+                    context.DiagnosticLog?.Record(
+                        "main.independent-anchor.hmin-fallback.planned",
+                        new
+                        {
+                            stageName,
+                            lane = laneIndex + 1,
+                            hMinDiameterMultiplier,
+                            requiredFullAnchorageMm = Math.Round(
+                                requiredAnchorageFt.FootToMm(),
+                                3),
+                            requiredBentTailMm = Math.Round(
+                                bentTailPlan.RequiredBentTailLength
+                                    .FootToMm(),
+                                3),
+                            availableVerticalMm = Math.Round(
+                                Math.Max(0.0, verticalAvailableFt)
+                                    .FootToMm(),
+                                3),
+                            horizontalPolicy =
+                                "LongestGeometryPermitted"
+                        });
+                }
                 if (planned.Status
                     != IndependentJointAnchorageStatus.Planned)
                 {
+                    var requiredAnchorageMm =
+                        requiredAnchorageFt.FootToMm();
+                    var requiredBentTailMm =
+                        bentTailPlan.RequiredBentTailLength.FootToMm();
+                    var availableVerticalMm =
+                        Math.Max(0.0, verticalAvailableFt).FootToMm();
+                    var measurement = planned.Failure
+                        == IndependentJointAnchorageFailure
+                            .InsufficientBentAnchorAvailability
+                            ? $" The vertical "
+                              + (bentTailPlan.UsesHMinFallback
+                                  ? $"hMin ({hMinDiameterMultiplier}D)"
+                                  : "35D")
+                              + $" leg requires {requiredBentTailMm:0.###} "
+                              + "mm, but only "
+                              + $"{availableVerticalMm:0.###} mm is available "
+                              + "inside the cover-reduced beam depth."
+                            : string.Empty;
+                    context.DiagnosticLog?.Record(
+                        "main.independent-anchor.preflight.failed",
+                        new
+                        {
+                            stageName,
+                            lane = laneIndex + 1,
+                            failure = planned.Failure.ToString(),
+                            requiredAnchorageMm = Math.Round(
+                                requiredAnchorageMm,
+                                3),
+                            bentTailPolicy =
+                                bentTailPlan.Policy.ToString(),
+                            hMinDiameterMultiplier,
+                            requiredBentTailMm = Math.Round(
+                                requiredBentTailMm,
+                                3),
+                            availableVerticalMm = Math.Round(
+                                availableVerticalMm,
+                                3),
+                            planned.Message
+                        });
                     throw Unsupported(
                         context,
                         stageName,
                         $"IndependentAnchor{planned.Failure}",
-                        $"Lane {laneIndex + 1} cannot satisfy the temporary "
-                        + $"35D anchorage rule: {planned.Message}");
+                        $"Lane {laneIndex + 1} cannot satisfy the independent "
+                        + $"anchorage policy.{measurement} "
+                        + planned.Message);
                 }
+            }
+
+            var originalBentLaneYs = lanes
+                .Select(lane => lane.BentLaneY)
+                .ToList();
+            var originalStraightLaneYs = lanes
+                .Select(lane => lane.StraightLaneY)
+                .ToList();
+            IReadOnlyList<double> shiftedBentLaneYs =
+                originalBentLaneYs;
+            IReadOnlyList<double> shiftedStraightLaneYs =
+                originalStraightLaneYs;
+            const double maximumBentLaneShiftFt = 0.0;
+            const double maximumStraightLaneShiftFt = 0.0;
+            const string laneLayoutMode =
+                "OriginalLanesPhysicalOverlapAllowed";
+            context.DiagnosticLog?.Record(
+                "main.independent-anchor.physical-overlap.policy.applied",
+                new
+                {
+                    stageName,
+                    scope = "SameStageStraightBentOnly",
+                    laneAvoidanceApplied = false,
+                    physicalIntersectionAllowed = true,
+                    originalStraightLaneYsMm =
+                        originalStraightLaneYs.Select(value =>
+                            Math.Round(value.FootToMm(), 3)),
+                    originalBentLaneYsMm =
+                        originalBentLaneYs.Select(value =>
+                            Math.Round(value.FootToMm(), 3)),
+                    retainedWithinFamilyChecks = new[]
+                    {
+                        "SourceLaneUniqueness",
+                        "SourceLaneSeparation",
+                        "BeamAndColumnCover",
+                        "ModeledColumnRebarClash"
+                    }
+                });
+
+            var runs = new List<MainBarRunPlan>(
+                lanes.Count * 2);
+            var closestModeledClearancesMm =
+                new List<double>();
+
+            for (var laneIndex = 0;
+                 laneIndex < lanes.Count;
+                 laneIndex++)
+            {
+                var lane = lanes[laneIndex];
+                var shiftedBentY =
+                    shiftedBentLaneYs[laneIndex];
+                var shiftedStraightY =
+                    shiftedStraightLaneYs[laneIndex];
+                var planned = anchoragePlans[laneIndex];
+                var bentTailPlan = bentTailPlans[laneIndex];
 
                 var straightOrderedPoints =
                     BuildIndependentOrderedPoints(
                         lane.StraightSide,
                         planned.StraightThroughPoints,
-                        lane.StraightLaneY,
+                        shiftedStraightY,
                         joint,
                         toleranceFt);
                 var bentOrderedPoints =
@@ -616,7 +814,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 ValidateIndependentContainment(
                     lane,
                     planned,
-                    lane.StraightLaneY,
+                    shiftedStraightY,
                     shiftedBentY,
                     bentBeam,
                     straightBeam,
@@ -660,7 +858,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         .Elevation
                     - planned.BentVerticalPoints[0].Elevation,
                     bendClearance.CenterlineBendRadiusFt,
-                    requiredAnchorageFt,
+                    bentTailPlan.RequiredBentTailLength,
                     planned.BentProvidedAnchorageLength);
 
                 foreach (var plannedRun in new[]
@@ -707,6 +905,13 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         requiredAnchorageMm = Math.Round(
                             requiredAnchorageFt.FootToMm(),
                             3),
+                        bentTailPolicy =
+                            bentTailPlan.Policy.ToString(),
+                        hMinDiameterMultiplier,
+                        requiredBentTailMm = Math.Round(
+                            bentTailPlan.RequiredBentTailLength
+                                .FootToMm(),
+                            3),
                         straightProvidedAnchorageMm = Math.Round(
                             planned.StraightProvidedAnchorageLength
                                 .FootToMm(),
@@ -715,8 +920,36 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                             planned.BentProvidedAnchorageLength
                                 .FootToMm(),
                             3),
+                        verticalTailCoverPolicy =
+                            "CoverReducedColumnBounds",
+                        beamCenterlineStepMm = Math.Round(
+                            Math.Abs(
+                                lane.StraightSide.CorePoint.Z
+                                - lane.BentSide.CorePoint.Z).FootToMm(),
+                            3),
+                        bentTailEndElevationMm = Math.Round(
+                            planned.BentVerticalPoints[
+                                planned.BentVerticalPoints.Count - 1]
+                                .Elevation.FootToMm(),
+                            3),
+                        bentTailEndsBeforeStraightElevation =
+                            planned.BentProvidedAnchorageLength
+                                + toleranceFt
+                            < Math.Abs(
+                                lane.StraightSide.CorePoint.Z
+                                - lane.BentSide.CorePoint.Z),
                         originalBentLaneYMm = Math.Round(
                             lane.BentLaneY.FootToMm(),
+                            3),
+                        originalStraightLaneYMm = Math.Round(
+                            lane.StraightLaneY.FootToMm(),
+                            3),
+                        shiftedStraightLaneYMm = Math.Round(
+                            shiftedStraightY.FootToMm(),
+                            3),
+                        straightLaneShiftMm = Math.Round(
+                            (shiftedStraightY - lane.StraightLaneY)
+                                .FootToMm(),
                             3),
                         shiftedBentLaneYMm = Math.Round(
                             shiftedBentY.FootToMm(),
@@ -725,7 +958,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                             (shiftedBentY - lane.BentLaneY)
                                 .FootToMm(),
                             3),
-                        shiftScope = "EntireBentSideRun",
+                        shiftScope = laneLayoutMode,
                         straightAnchorageDatum =
                             "Straight-side column face to bent-side tail",
                         bentAnchorageDatum =
@@ -743,7 +976,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 new
                 {
                     stageName,
-                    policy = "IndependentJointAnchorage35D",
+                    policy =
+                        "IndependentJointAnchorage35DWithHMinFallback",
                     policySource = "BarCenterlineDeltaZ",
                     barLevel = level.ToString(),
                     jointColumnId = joint.ColumnId,
@@ -754,9 +988,14 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     requiredAnchorageMm = Math.Round(
                         requiredAnchorageFt.FootToMm(),
                         3),
+                    hMinDiameterMultiplier,
+                    hMinFallbackLaneCount = bentTailPlans.Count(
+                        plan => plan.UsesHMinFallback),
                     maximumBentLaneShiftMm = Math.Round(
-                        staggerPlan.MaximumAbsoluteDisplacement
-                            .FootToMm(),
+                        maximumBentLaneShiftFt.FootToMm(),
+                        3),
+                    maximumStraightLaneShiftMm = Math.Round(
+                        maximumStraightLaneShiftFt.FootToMm(),
                         3),
                     bentBeamLaneMinMm = Math.Round(
                         bentLaneEnvelope.MinY.FootToMm(),
@@ -770,7 +1009,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     straightBeamLaneMaxMm = Math.Round(
                         straightLaneEnvelope.MaxY.FootToMm(),
                         3),
-                    laneShiftScope = "EntireBentSideRun",
+                    laneShiftScope = laneLayoutMode,
                     straightAnchorageDatum =
                         "Straight-side column face to bent-side tail",
                     bentAnchorageDatum =
@@ -1190,42 +1429,51 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             var bentEnd =
                 planned.BentVerticalPoints[
                     planned.BentVerticalPoints.Count - 1];
-            if (!IsInside(
+            IndependentJointColumnVerticalCoverFailure verticalCoverFailure =
+                IndependentJointColumnVerticalCoverRule.Evaluate(
                     bentZ,
-                    joint.ColumnBottomZ
-                        + centerlineClearanceFt,
-                    joint.ColumnTopZ
-                        - centerlineClearanceFt,
-                    toleranceFt)
-                || !IsInside(
                     straightZ,
-                    joint.ColumnBottomZ
-                        + centerlineClearanceFt,
-                    joint.ColumnTopZ
-                        - centerlineClearanceFt,
-                    toleranceFt)
-                || !IsInside(
                     bentEnd.Elevation,
-                    Math.Max(
-                        joint.ColumnBottomZ,
-                        Math.Max(
-                            bentBeam.BottomZ,
-                            straightBeam.BottomZ))
-                    + centerlineClearanceFt,
-                    Math.Min(
-                        joint.ColumnTopZ,
-                        Math.Min(
-                            bentBeam.TopZ,
-                            straightBeam.TopZ))
-                    - centerlineClearanceFt,
-                    toleranceFt))
+                    joint.ColumnBottomZ,
+                    joint.ColumnTopZ,
+                    centerlineClearanceFt,
+                    toleranceFt);
+            if (verticalCoverFailure
+                != IndependentJointColumnVerticalCoverFailure.None)
             {
+                context.DiagnosticLog?.Record(
+                    "main.independent-anchor.vertical-cover.failed",
+                    new
+                    {
+                        stageName,
+                        lane = lane.LaneIndex + 1,
+                        failure = verticalCoverFailure.ToString(),
+                        policy = "CoverReducedColumnBounds",
+                        bentSourceElevationMm = Math.Round(
+                            bentZ.FootToMm(),
+                            3),
+                        straightSourceElevationMm = Math.Round(
+                            straightZ.FootToMm(),
+                            3),
+                        bentTailEndElevationMm = Math.Round(
+                            bentEnd.Elevation.FootToMm(),
+                            3),
+                        columnMinimumElevationMm = Math.Round(
+                            (joint.ColumnBottomZ + centerlineClearanceFt)
+                                .FootToMm(),
+                            3),
+                        columnMaximumElevationMm = Math.Round(
+                            (joint.ColumnTopZ - centerlineClearanceFt)
+                                .FootToMm(),
+                            3)
+                    });
                 throw Unsupported(
                     context,
                     stageName,
                     "IndependentAnchorOutsideColumnVerticalCover",
                     $"Independent lane {lane.LaneIndex + 1} leaves the "
-                    + "cover-reduced column/joint height.");
+                    + "cover-reduced column/joint height "
+                    + $"({verticalCoverFailure}).");
             }
         }
 
@@ -2117,6 +2365,22 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 {
                     continue;
                 }
+                if (AllowsIndependentCrossRunPhysicalOverlap(
+                        firstRun,
+                        secondRun))
+                {
+                    context.DiagnosticLog?.Record(
+                        "main.separation.pair.skipped",
+                        new
+                        {
+                            stageName,
+                            firstRunId = firstRun.RunId,
+                            secondRunId = secondRun.RunId,
+                            reason =
+                                "SameStageIndependentStraightBentPhysicalOverlapAllowed"
+                        });
+                    continue;
+                }
                 if (firstRun.Level != secondRun.Level
                     && (firstRun.Kind == MainBarRunKind.Legacy
                         || secondRun.Kind == MainBarRunKind.Legacy))
@@ -2626,10 +2890,63 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 {
                     continue;
                 }
-                if (!IsRectangularAlignedColumn(
-                        column,
-                        axisX,
-                        axisY))
+                var geometryAssessment = AssessColumnGeometry(
+                    column,
+                    axisX,
+                    axisY,
+                    toleranceFt);
+                var familyInstance = column as FamilyInstance;
+                var locationPoint = column.Location as LocationPoint;
+                context.DiagnosticLog?.Record(
+                    "main.joint-column.geometry-assessed",
+                    new
+                    {
+                        columnId = column.Id.Value,
+                        familyName = familyInstance?.Symbol?.FamilyName,
+                        typeName = column.Name,
+                        structuralType = familyInstance?
+                            .StructuralType.ToString(),
+                        isSlantedColumn = familyInstance?.IsSlantedColumn,
+                        rotationDegrees = locationPoint == null
+                            ? (double?)null
+                            : Math.Round(
+                                locationPoint.Rotation * 180.0 / Math.PI,
+                                6),
+                        envelope = new
+                        {
+                            sizeXmm = Math.Round(
+                                (envelope.MaxX - envelope.MinX).FootToMm(),
+                                3),
+                            sizeYmm = Math.Round(
+                                (envelope.MaxY - envelope.MinY).FootToMm(),
+                                3),
+                            heightMm = Math.Round(
+                                (envelope.TopZ - envelope.BottomZ).FootToMm(),
+                                3)
+                        },
+                        isSupported = geometryAssessment.IsSupported,
+                        acceptanceMode = geometryAssessment.AcceptanceMode,
+                        fallback = geometryAssessment.Fallback,
+                        currentGeometry = geometryAssessment.Current,
+                        originalGeometry = geometryAssessment.Original
+                    });
+                if (geometryAssessment.Fallback.IsAllowed)
+                {
+                    context.DiagnosticLog?.Record(
+                        "main.joint-column.geometry-fallback.accepted",
+                        new
+                        {
+                            columnId = column.Id.Value,
+                            acceptanceMode =
+                                geometryAssessment.AcceptanceMode,
+                            currentEdgeCount =
+                                geometryAssessment.Current.EdgeCount,
+                            originalEdgeCount =
+                                geometryAssessment.Original.EdgeCount,
+                            message = geometryAssessment.Fallback.Message
+                        });
+                }
+                if (!geometryAssessment.IsSupported)
                 {
                     unsupportedCandidateIds.Add(column.Id.Value);
                     continue;
@@ -2912,7 +3229,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     + "not substitute column cover.");
             }
             var centerlineBendRadiusFt =
-                bendDiameterFt / 2.0 + barDiameterFt / 2.0;
+                RebarCenterlineBendRadiusRule.Resolve(
+                    bendDiameterFt,
+                    barType.ModelBarDiameter,
+                    barType.BarDiameter);
             var centerlineClearanceFt =
                 coverFt + jointReinforcementDiameterFt
                 + barDiameterFt / 2.0
@@ -3168,8 +3488,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             var centerlineBendRadiusFt =
                 barType.StandardBendDiameter > 0.0
                 && modelDiameterFt > 0.0
-                    ? barType.StandardBendDiameter / 2.0
-                      + modelDiameterFt / 2.0
+                    ? RebarCenterlineBendRadiusRule.Resolve(
+                        barType.StandardBendDiameter,
+                        barType.ModelBarDiameter,
+                        barType.BarDiameter)
                     : 0.0;
             return geometry
                 .Select((item, index) => new MainBarRunPlan(
@@ -3364,67 +3686,286 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             return result;
         }
 
-        private static bool IsRectangularAlignedColumn(
+        private static ColumnGeometryAssessment AssessColumnGeometry(
             Element column,
             XYZ axisX,
-            XYZ axisY)
+            XYZ axisY,
+            double toleranceFt)
         {
+            var current = AssessSolidSet(
+                GetCurrentColumnSolids(column),
+                axisX,
+                axisY,
+                "CurrentGeometry");
+            var original = AssessOriginalColumnGeometry(
+                column,
+                axisX,
+                axisY);
+            return new ColumnGeometryAssessment(
+                current,
+                original,
+                toleranceFt.FootToMm());
+        }
+
+        private static IReadOnlyList<Solid> GetCurrentColumnSolids(
+            Element column)
+        {
+            return column.GetSolidsExtensions()
+                .Where(solid => solid != null && solid.Volume > 0.0)
+                .ToList();
+        }
+
+        private static ColumnSolidGeometryAssessment
+            AssessOriginalColumnGeometry(
+                Element column,
+                XYZ axisX,
+                XYZ axisY)
+        {
+            if (!(column is FamilyInstance familyInstance))
+            {
+                return ColumnSolidGeometryAssessment.Unavailable(
+                    "OriginalGeometryNotFamilyInstance",
+                    "The column is not a FamilyInstance.",
+                    "OriginalGeometry");
+            }
+
             try
             {
-                var hasHorizontalEdge = false;
-                var solids = column.GetSolidsExtensions()
-                    .Where(solid => solid != null && solid.Volume > 0.0)
-                    .ToList();
-                if (solids.Count != 1 || solids[0].Edges.Size != 12)
-                    return false;
+                var options = new Options
+                {
+                    ComputeReferences = false,
+                    DetailLevel = ViewDetailLevel.Fine
+                };
+                var originalGeometry =
+                    familyInstance.GetOriginalGeometry(options);
+                if (originalGeometry == null)
+                {
+                    return ColumnSolidGeometryAssessment.Unavailable(
+                        "OriginalGeometryNull",
+                        "FamilyInstance.GetOriginalGeometry returned null.",
+                        "OriginalGeometry");
+                }
+
+                var transformedGeometry = originalGeometry.GetTransformed(
+                    familyInstance.GetTransform());
+                var solids = new List<Solid>();
+                CollectPositiveSolids(transformedGeometry, solids);
+                return AssessSolidSet(
+                    solids,
+                    axisX,
+                    axisY,
+                    "OriginalGeometry");
+            }
+            catch (Exception ex)
+            {
+                return ColumnSolidGeometryAssessment.Unavailable(
+                    "OriginalGeometryException",
+                    $"{ex.GetType().FullName}: {ex.Message}",
+                    "OriginalGeometry");
+            }
+        }
+
+        private static bool AllowsIndependentCrossRunPhysicalOverlap(
+            MainBarRunPlan firstRun,
+            MainBarRunPlan secondRun)
+        {
+            if (firstRun.Level != secondRun.Level
+                || firstRun.Group != secondRun.Group
+                || !firstRun.JointElementId.HasValue
+                || firstRun.JointElementId != secondRun.JointElementId)
+            {
+                return false;
+            }
+            return IndependentJointCrossRunClashRule.AllowsPhysicalOverlap(
+                ToIndependentAnchorRunFamily(firstRun.Kind),
+                ToIndependentAnchorRunFamily(secondRun.Kind));
+        }
+
+        private static IndependentJointAnchorRunFamily
+            ToIndependentAnchorRunFamily(MainBarRunKind kind)
+        {
+            return kind switch
+            {
+                MainBarRunKind.IndependentStraightThroughAnchor =>
+                    IndependentJointAnchorRunFamily
+                        .StraightThroughAnchor,
+                MainBarRunKind.IndependentBentJointAnchor =>
+                    IndependentJointAnchorRunFamily.BentJointAnchor,
+                _ => IndependentJointAnchorRunFamily.Other
+            };
+        }
+
+        private static void CollectPositiveSolids(
+            GeometryElement geometry,
+            ICollection<Solid> result)
+        {
+            if (geometry == null || result == null) return;
+            foreach (var geometryObject in geometry)
+            {
+                if (geometryObject is Solid solid)
+                {
+                    if (solid.Volume > 0.0) result.Add(solid);
+                    continue;
+                }
+                if (geometryObject is GeometryInstance geometryInstance)
+                {
+                    CollectPositiveSolids(
+                        geometryInstance.GetInstanceGeometry(),
+                        result);
+                }
+            }
+        }
+
+        private static ColumnSolidGeometryAssessment AssessSolidSet(
+            IReadOnlyList<Solid> solids,
+            XYZ axisX,
+            XYZ axisY,
+            string source)
+        {
+            var result = new ColumnSolidGeometryAssessment
+            {
+                IsAvailable = true,
+                Source = source,
+                SolidCount = solids?.Count ?? 0
+            };
+            try
+            {
+                if (solids == null || solids.Count != 1)
+                {
+                    return result.Fail(
+                        "SolidCountNotOne",
+                        $"Expected one positive-volume solid; found "
+                        + $"{result.SolidCount}.");
+                }
 
                 var solid = solids[0];
+                result.EdgeCount = solid.Edges.Size;
+                result.SolidVolumeCubicFt = solid.Volume;
                 var points = solid.GetPoints()
                     .Where(point => point != null)
                     .ToList();
-                if (points.Count == 0) return false;
-                var expectedBoxVolume =
-                    (points.Max(point => point.DotProduct(axisX))
-                     - points.Min(point => point.DotProduct(axisX)))
-                    * (points.Max(point => point.DotProduct(axisY))
-                       - points.Min(point => point.DotProduct(axisY)))
-                    * (points.Max(point => point.Z)
-                       - points.Min(point => point.Z));
+                result.PointCount = points.Count;
+                if (points.Count == 0)
+                {
+                    return result.Fail(
+                        "NoSolidPoints",
+                        "The solid returned no vertices.");
+                }
+
+                var sizeX =
+                    points.Max(point => point.DotProduct(axisX))
+                    - points.Min(point => point.DotProduct(axisX));
+                var sizeY =
+                    points.Max(point => point.DotProduct(axisY))
+                    - points.Min(point => point.DotProduct(axisY));
+                var height =
+                    points.Max(point => point.Z)
+                    - points.Min(point => point.Z);
+                result.SizeXmm = Math.Round(sizeX.FootToMm(), 3);
+                result.SizeYmm = Math.Round(sizeY.FootToMm(), 3);
+                result.HeightMm = Math.Round(height.FootToMm(), 3);
+                var expectedBoxVolume = sizeX * sizeY * height;
+                result.ExpectedBoxVolumeCubicFt = expectedBoxVolume;
+                result.VolumeDifferenceCubicFt =
+                    Math.Abs(solid.Volume - expectedBoxVolume);
+                result.VolumeRelativeDifference = expectedBoxVolume > 0.0
+                    ? result.VolumeDifferenceCubicFt / expectedBoxVolume
+                    : (double?)null;
                 var volumeTolerance = Math.Max(
                     1e-9,
                     expectedBoxVolume
                     * RectangularVolumeRelativeTolerance);
-                if (expectedBoxVolume <= 0.0
-                    || Math.Abs(solid.Volume - expectedBoxVolume)
-                    > volumeTolerance)
+                if (expectedBoxVolume <= 0.0)
                 {
-                    return false;
+                    return result.Fail(
+                        "DegenerateEnvelope",
+                        "The projected box has a non-positive volume.");
+                }
+                if (result.VolumeDifferenceCubicFt > volumeTolerance)
+                {
+                    return result.Fail(
+                        "VolumeMismatch",
+                        "The solid volume does not match its projected "
+                        + "rectangular box volume.");
+                }
+                if (result.EdgeCount != 12)
+                {
+                    return result.Fail(
+                        "EdgeCountNotTwelve",
+                        $"Expected 12 solid edges; found "
+                        + $"{result.EdgeCount}.");
                 }
 
+                var hasHorizontalEdge = false;
+                var edgeIndex = -1;
                 foreach (Edge edge in solid.Edges)
                 {
-                    var line = edge.AsCurve() as Line;
-                    if (line == null) return false;
+                    edgeIndex++;
+                    var curve = edge.AsCurve();
+                    result.RejectedEdgeIndex = edgeIndex;
+                    result.RejectedCurveType = curve?.GetType().Name;
+                    if (!(curve is Line line))
+                    {
+                        return result.Fail(
+                            "NonLinearEdge",
+                            $"Edge {edgeIndex} is not a line.");
+                    }
+
                     var direction = line.Direction;
+                    result.RejectedDirectionX = direction.X;
+                    result.RejectedDirectionY = direction.Y;
+                    result.RejectedDirectionZ = direction.Z;
+                    result.RejectedAbsoluteDotAxisX = Math.Abs(
+                        direction.DotProduct(axisX));
+                    result.RejectedAbsoluteDotAxisY = Math.Abs(
+                        direction.DotProduct(axisY));
                     if (Math.Abs(direction.Z)
                         >= 1.0 - DirectionTolerance)
+                    {
                         continue;
+                    }
                     if (Math.Abs(direction.Z) > DirectionTolerance)
-                        return false;
-                    var isAlongX =
-                        Math.Abs(Math.Abs(direction.DotProduct(axisX)) - 1.0)
+                    {
+                        return result.Fail(
+                            "SlopedEdge",
+                            $"Edge {edgeIndex} is neither vertical nor "
+                            + "horizontal.");
+                    }
+
+                    var isAlongX = Math.Abs(
+                        result.RejectedAbsoluteDotAxisX.Value - 1.0)
                         <= DirectionTolerance;
-                    var isAlongY =
-                        Math.Abs(Math.Abs(direction.DotProduct(axisY)) - 1.0)
+                    var isAlongY = Math.Abs(
+                        result.RejectedAbsoluteDotAxisY.Value - 1.0)
                         <= DirectionTolerance;
-                    if (!isAlongX && !isAlongY) return false;
+                    if (!isAlongX && !isAlongY)
+                    {
+                        return result.Fail(
+                            "HorizontalEdgeNotAligned",
+                            $"Horizontal edge {edgeIndex} is not aligned "
+                            + "with either beam-run axis.");
+                    }
                     hasHorizontalEdge = true;
                 }
-                return hasHorizontalEdge;
+
+                if (!hasHorizontalEdge)
+                {
+                    return result.Fail(
+                        "NoHorizontalEdge",
+                        "The solid has no horizontal edge.");
+                }
+
+                result.IsSupported = true;
+                result.FailureCode = "None";
+                result.FailureMessage = null;
+                result.ClearRejectedEdge();
+                return result;
             }
-            catch
+            catch (Exception ex)
             {
-                return false;
+                return result.Fail(
+                    "AssessmentException",
+                    $"{ex.GetType().FullName}: {ex.Message}");
             }
         }
 
@@ -3733,6 +4274,111 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 Id = id;
                 MinY = minY;
                 MaxY = maxY;
+            }
+        }
+
+        private sealed class ColumnGeometryAssessment
+        {
+            public ColumnSolidGeometryAssessment Current { get; }
+            public ColumnSolidGeometryAssessment Original { get; }
+            public RectangularColumnFallbackResult Fallback { get; }
+            public bool IsSupported =>
+                Current.IsSupported || Fallback.IsAllowed;
+            public string AcceptanceMode { get; }
+
+            public ColumnGeometryAssessment(
+                ColumnSolidGeometryAssessment current,
+                ColumnSolidGeometryAssessment original,
+                double dimensionToleranceMm)
+            {
+                Current = current;
+                Original = original;
+                Fallback = RectangularColumnPostProcessingFallbackRule
+                    .Evaluate(
+                        string.Equals(
+                            current?.FailureCode,
+                            "EdgeCountNotTwelve",
+                            StringComparison.Ordinal),
+                        current?.SolidCount ?? 0,
+                        current?.SolidVolumeCubicFt ?? double.NaN,
+                        current?.ExpectedBoxVolumeCubicFt ?? double.NaN,
+                        current?.SizeXmm ?? double.NaN,
+                        current?.SizeYmm ?? double.NaN,
+                        current?.HeightMm ?? double.NaN,
+                        original?.IsSupported == true,
+                        original?.SizeXmm ?? double.NaN,
+                        original?.SizeYmm ?? double.NaN,
+                        original?.HeightMm ?? double.NaN,
+                        dimensionToleranceMm,
+                        RectangularVolumeRelativeTolerance,
+                        1e-9);
+                AcceptanceMode = Current.IsSupported
+                    ? "CurrentGeometry"
+                    : Fallback.IsAllowed
+                        ? "OriginalGeometryPostProcessedEdges"
+                        : "Rejected";
+            }
+        }
+
+        private sealed class ColumnSolidGeometryAssessment
+        {
+            public bool IsAvailable { get; set; }
+            public bool IsSupported { get; set; }
+            public string Source { get; set; }
+            public string FailureCode { get; set; }
+            public string FailureMessage { get; set; }
+            public int SolidCount { get; set; }
+            public int? EdgeCount { get; set; }
+            public int? PointCount { get; set; }
+            public double? SizeXmm { get; set; }
+            public double? SizeYmm { get; set; }
+            public double? HeightMm { get; set; }
+            public double? SolidVolumeCubicFt { get; set; }
+            public double? ExpectedBoxVolumeCubicFt { get; set; }
+            public double? VolumeDifferenceCubicFt { get; set; }
+            public double? VolumeRelativeDifference { get; set; }
+            public int? RejectedEdgeIndex { get; set; }
+            public string RejectedCurveType { get; set; }
+            public double? RejectedDirectionX { get; set; }
+            public double? RejectedDirectionY { get; set; }
+            public double? RejectedDirectionZ { get; set; }
+            public double? RejectedAbsoluteDotAxisX { get; set; }
+            public double? RejectedAbsoluteDotAxisY { get; set; }
+
+            public ColumnSolidGeometryAssessment Fail(
+                string failureCode,
+                string failureMessage)
+            {
+                IsSupported = false;
+                FailureCode = failureCode;
+                FailureMessage = failureMessage;
+                return this;
+            }
+
+            public void ClearRejectedEdge()
+            {
+                RejectedEdgeIndex = null;
+                RejectedCurveType = null;
+                RejectedDirectionX = null;
+                RejectedDirectionY = null;
+                RejectedDirectionZ = null;
+                RejectedAbsoluteDotAxisX = null;
+                RejectedAbsoluteDotAxisY = null;
+            }
+
+            public static ColumnSolidGeometryAssessment Unavailable(
+                string failureCode,
+                string failureMessage,
+                string source)
+            {
+                return new ColumnSolidGeometryAssessment
+                {
+                    IsAvailable = false,
+                    IsSupported = false,
+                    Source = source,
+                    FailureCode = failureCode,
+                    FailureMessage = failureMessage
+                };
             }
         }
 

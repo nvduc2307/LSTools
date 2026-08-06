@@ -118,6 +118,20 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics
 
             if (ContainsAny(
                     combined,
+                    "inconsistent nominal/model diameters",
+                    "remains inconsistent after synchronization"))
+            {
+                return new UserGuidance(
+                    "One or more Rebar Bar Types use different nominal and "
+                    + "modeled diameters, so Revit geometry would not match "
+                    + "the selected bar size.",
+                    "Open Rebar Diameter Settings and save once to "
+                    + "synchronize the configured types, then run the beam "
+                    + "reinforcement command again.");
+            }
+
+            if (ContainsAny(
+                    combined,
                     "active section without a bar type",
                     "bar types have not been initialized",
                     "rebar type name is required",
@@ -150,6 +164,27 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics
                     "Select connected structural framing elements in "
                     + "their physical order. Do not mix unrelated or "
                     + "non-parallel beams in the same run.");
+            }
+
+            if (Contains(combined, "InvalidRebarStandardHMin"))
+            {
+                return new UserGuidance(
+                    "The General Setting hMin value is missing or invalid.",
+                    "Open General Setting and enter a positive hMin value. "
+                    + "hMin is measured in bar diameters (for example, "
+                    + "10 means 10D), then run the command again.");
+            }
+
+            if (Contains(
+                    combined,
+                    "IndependentAnchorInsufficientBentAnchorAvailability"))
+            {
+                return new UserGuidance(
+                    "Even the configured hMin bent tail does not fit inside "
+                    + "the cover-reduced beam depth.",
+                    "Reduce hMin only if the revised detail is approved, or "
+                    + "revise the beam/rebar design before running the "
+                    + "command again.");
             }
 
             if (Contains(combined, "stirrup"))

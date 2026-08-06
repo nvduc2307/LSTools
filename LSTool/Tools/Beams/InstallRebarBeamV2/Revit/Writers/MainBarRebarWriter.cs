@@ -45,6 +45,18 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Revit.Writers
                             kind = run.Kind.ToString(),
                             run.LaneIndex,
                             barType = run.BarType.NameStyle,
+                            nominalBarDiameterMm = Math.Round(
+                                run.BarType.BarDiameter * 304.8,
+                                3),
+                            modelBarDiameterMm = Math.Round(
+                                run.BarType.ModelBarDiameter * 304.8,
+                                3),
+                            standardBendDiameterMm = Math.Round(
+                                run.BarType.StandardBendDiameter * 304.8,
+                                3),
+                            plannedCenterlineBendRadiusMm = Math.Round(
+                                run.CenterlineBendRadiusFt * 304.8,
+                                3),
                             run.TargetHostBeamId,
                             targetHostId = targetHostId.Value,
                             run.JointElementId,
