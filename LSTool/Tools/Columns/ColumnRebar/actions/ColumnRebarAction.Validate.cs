@@ -37,20 +37,18 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private void ValidateQtyRebar()
         {
             if (_viewModel.ColumnConcreteModels == null) return;
-            foreach (var columnStack in ColumnRebarStackGrouping.Group(
-                _viewModel.ColumnConcreteModels))
+            var qty = _viewModel.ColumnConcreteModels.Count;
+            foreach (var col in _viewModel.ColumnConcreteModels)
             {
-                for (var index = 0; index < columnStack.Count - 1; index++)
-                {
-                    var currentColumn = columnStack[index];
-                    var nextColumn = columnStack[index + 1];
-                    if (nextColumn.SpacingDX > currentColumn.SpacingDX)
-                        throw new Exception(
-                            $"Số lượng X của {nextColumn.Name} nhiều hơn cột bên dưới");
-                    if (nextColumn.SpacingDY > currentColumn.SpacingDY)
-                        throw new Exception(
-                            $"Số lượng Y của {nextColumn.Name} nhiều hơn cột bên dưới");
-                }
+                var index = _viewModel.ColumnConcreteModels.IndexOf(col);
+                if (index == qty - 1) continue;
+                var nextColumn = _viewModel.ColumnConcreteModels[index + 1];
+                if (nextColumn.SpacingDX > col.SpacingDX)
+                    throw new Exception(
+                        $"Số lượng X của {nextColumn.Name} nhiều hơn cột bên dưới");
+                if (nextColumn.SpacingDY > col.SpacingDY)
+                    throw new Exception(
+                        $"Số lượng Y của {nextColumn.Name} nhiều hơn cột bên dưới");
             }
         }
     }

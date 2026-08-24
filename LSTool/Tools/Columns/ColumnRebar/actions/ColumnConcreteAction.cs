@@ -1,5 +1,6 @@
 ﻿using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
+using LSTool.Compatibility;
 using LSTool.Tools.Columns.ColumnRebar.models;
 using LSTool.Tools.Generals.SettingRebarStandard.models;
 using LSTool.Utils;
@@ -9,6 +10,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
 {
     public class ColumnConcreteAction
     {
+        private double _distanceGap = 300;
         private double _cover = 50;
         private UIDocument _uidocument;
         private Document _document;
@@ -450,11 +452,13 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             var columns = elements
                 .Cast<FamilyInstance>()
                 .ToList();
-            foreach (var column in columns)
-            {
-                if (!column.GetTransform().BasisZ.IsParallel(XYZ.BasisZ))
-                    throw new Exception("Tool chỉ hỗ trợ cột đứng");
-            }
+            if (!columns.Any())
+                throw new Exception();
+            if(!columns.Any(x=> GeometryHelper.IsParallel(x.GetTransform().BasisZ, XYZ.BasisZ)))
+                throw new Exception("Tool chỉ hỗ trợ cột đứng");
+            var originF = columns.FirstOrDefault()?.GetTransform().Origin;
+            if (columns.Any(x => x.GetTransform().Origin.Distance(originF).ToMillimeters() > _distanceGap))
+                throw new Exception("cột không cùng 1 group");
             return columns;
         }
     }

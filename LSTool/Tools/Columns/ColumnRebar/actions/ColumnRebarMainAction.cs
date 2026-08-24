@@ -80,27 +80,24 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 cModel.FaceBottom.Diameter = cModel.DiameterDX.FindInterger();
                 cModel.FaceBottom.HeightBeamZone = cModel.HeightBeamZone;
             }
-            foreach (var columnStack in ColumnRebarStackGrouping.Group(cCols))
+            var faceLefts = cCols.Select(x => x.FaceLeft).ToList();
+            var faceTops = cCols.Select(x => x.FaceTop).ToList();
+            var faceRights = cCols.Select(x => x.FaceRight).ToList();
+            var faceBots = cCols.Select(x => x.FaceBottom).ToList();
+            var rebarPositions = new List<List<ColumnRebarPositionModel>>();
+
+            rebarPositions.AddRange(InstallRebarFace(faceLefts, true));
+            rebarPositions.AddRange(InstallRebarFace(faceBots));
+            rebarPositions.AddRange(InstallRebarFace(faceRights, true));
+            rebarPositions.AddRange(InstallRebarFace(faceTops));
+
+            foreach (var col in cCols)
             {
-                var faceLefts = columnStack.Select(x => x.FaceLeft).ToList();
-                var faceTops = columnStack.Select(x => x.FaceTop).ToList();
-                var faceRights = columnStack.Select(x => x.FaceRight).ToList();
-                var faceBots = columnStack.Select(x => x.FaceBottom).ToList();
-                var rebarPositions = new List<List<ColumnRebarPositionModel>>();
-
-                rebarPositions.AddRange(InstallRebarFace(faceLefts, true));
-                rebarPositions.AddRange(InstallRebarFace(faceBots));
-                rebarPositions.AddRange(InstallRebarFace(faceRights, true));
-                rebarPositions.AddRange(InstallRebarFace(faceTops));
-
-                foreach (var col in columnStack)
-                {
-                    var positions = rebarPositions
-                        .Where(x => x.FirstOrDefault()?.HostId == col.Id)
-                        .ToList();
-                    if (!positions.Any()) continue;
-                    col.RebarMainPositionss = positions;
-                }
+                var positions = rebarPositions
+                    .Where(x => x.FirstOrDefault()?.HostId == col.Id)
+                    .ToList();
+                if (!positions.Any()) continue;
+                col.RebarMainPositionss = positions;
             }
         }
         private List<List<ColumnRebarPositionModel>> InstallRebarFace(List<ColumnFaceModel> faces, bool ignoreFirstEnd = false)
