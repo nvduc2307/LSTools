@@ -1,5 +1,6 @@
 ﻿using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
+using LSTool.Compatibility;
 using LSTool.Tools.Columns.ColumnRebar.models;
 using LSTool.Tools.Generals.SettingRebarStandard.models;
 using LSTool.Utils;
@@ -9,6 +10,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
 {
     public class ColumnConcreteAction
     {
+        private double _distanceGap = 300;
         private double _cover = 50;
         private UIDocument _uidocument;
         private Document _document;
@@ -51,10 +53,12 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     var vtz = transform.BasisZ;
                     var vty = vtx.CrossProduct(vtz);
                     var index = columns.IndexOf(cl) + 1;
+                    var heightBeamZone = GetHeightBeamZone(cl);
                     var ccM = new ColumnConcreteModel
                     {
                         Name = $"Item{index}",
                         Id = cl.UniqueId,
+                        HeightBeamZone = heightBeamZone == 0 ? 400 : heightBeamZone,
                         Cover = _cover,
                         VTX = vtx,
                         VTY = vty,
@@ -136,6 +140,9 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 {
                     IO.ShowWarning(ex.Message);
                 }
+                results = results
+                    .OrderBy(x => x.Center.DotProduct(XYZ.BasisZ))
+                    .ToList();
             }
             return results;
         }
@@ -202,6 +209,64 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 _document.Regenerate();
                 ts.Commit();
             }
+        }
+
+        private double GetHeightBeamZone(FamilyInstance col)
+        {
+            var tolerance = 100.MmToFoot();
+            double result = 0;
+            var bb = col.get_BoundingBox(_document.ActiveView);
+            if(bb == null) return result;
+            var outLine = new Outline(bb.Min, bb.Max);
+            var bbFilter = new BoundingBoxIntersectsFilter(outLine, tolerance);
+            var beams = new FilteredElementCollector(_document, _document.ActiveView.Id)
+                .WhereElementIsNotElementType()
+                .WherePasses(bbFilter)
+                .OfClass(typeof(FamilyInstance))
+                .OfCategory(BuiltInCategory.OST_StructuralFraming)
+                .Cast<FamilyInstance>()
+                .ToList();
+            if (!beams.Any()) return result;
+            var colSolids = col.GetSolid();
+            var colPs = col.GetSolid().Select(x=>x.GetPoints())
+                .Aggregate((a,b) => a.Concat(b).ToList())
+                .Distinct(new ComparePoint())
+                .ToList();
+            if (!colPs.Any()) return result;
+            colPs = colPs
+                .OrderBy(x => x.DotProduct(XYZ.BasisZ))
+                .ToList();
+            var colCenter = colPs.GetCenter();
+            var planMin = Plane.CreateByNormalAndOrigin(XYZ.BasisZ, bb.Min);
+            var planMax = Plane.CreateByNormalAndOrigin(XYZ.BasisZ, bb.Max);
+            var min = colCenter.RayIntersectPlane(planMin.Normal, planMin);
+            var max = colCenter.RayIntersectPlane(planMax.Normal, planMax);
+            var beamValids = beams.Where(x =>
+            {
+                var trans = x.GetTransform();
+                var dTop = trans.Origin.RayIntersectPlane(planMax.Normal, planMax).DistanceTo(trans.Origin).FootToMm();
+                var dBot = trans.Origin.RayIntersectPlane(planMin.Normal, planMin).DistanceTo(trans.Origin).FootToMm();
+                return dTop < dBot;
+            })
+            .ToList();
+            if (!beamValids.Any()) return result;
+            var beamHeights = beamValids
+                .Select(x=>
+                {
+                    var beamTrans = x.GetTransform();
+                    var beamSolids = x.GetSolid();
+                    var beamBB = x.get_BoundingBox(_document.ActiveView);
+                    if (beamBB == null) return 0;
+                    var planBeamMin = Plane.CreateByNormalAndOrigin(beamTrans.BasisZ, beamBB.Min);
+                    var planBeamMax = Plane.CreateByNormalAndOrigin(beamTrans.BasisZ, beamBB.Max);
+                    var beamPBot = beamTrans.Origin.RayIntersectPlane(planBeamMin.Normal, planBeamMin);
+                    var beamPTop = beamTrans.Origin.RayIntersectPlane(planBeamMax.Normal, planBeamMax);
+                    return Math.Round(beamPBot.DistanceTo(beamPTop).FootToMm(), 0);
+                })
+                .OrderBy(x=>x)
+                .ToList();
+            result = beamHeights.LastOrDefault();
+            return result;
         }
         private void GetRebarSetting(
             FamilyInstance cl,
@@ -450,11 +515,13 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             var columns = elements
                 .Cast<FamilyInstance>()
                 .ToList();
-            foreach (var column in columns)
-            {
-                if (!column.GetTransform().BasisZ.IsParallel(XYZ.BasisZ))
-                    throw new Exception("Tool chỉ hỗ trợ cột đứng");
-            }
+            if (!columns.Any())
+                throw new Exception();
+            if(!columns.Any(x=> GeometryHelper.IsParallel(x.GetTransform().BasisZ, XYZ.BasisZ)))
+                throw new Exception("Tool chỉ hỗ trợ cột đứng");
+            var originF = columns.FirstOrDefault()?.GetTransform().Origin;
+            if (columns.Any(x => x.GetTransform().Origin.Distance(originF).ToMillimeters() > _distanceGap))
+                throw new Exception("cột không cùng 1 group");
             return columns;
         }
     }
