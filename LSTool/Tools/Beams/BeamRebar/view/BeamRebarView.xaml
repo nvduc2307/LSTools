@@ -7,9 +7,9 @@
         mc:Ignorable="d"
         Title="BeamRebarView" 
         WindowStartupLocation="CenterScreen"
+        SizeToContent="Height"
         MinHeight="550" 
-        Height="600" 
-        Width="800">
+        Width="1500">
     <Window.Resources>
         <Style TargetType="TextBox">
             <Setter Property="Height" Value="25"/>
@@ -49,7 +49,12 @@
                             Padding="10"
                             Grid.Column="0"
                             Header="Section Start">
-                            <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
                                 <GroupBox Header="Top 1">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -90,7 +95,46 @@
                                         </StackPanel>
                                     </Grid>
                                 </GroupBox>
-
+                                <GroupBox Margin="0,10,0,0" Header="Top 3">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition/>
+                                            <ColumnDefinition/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,5,0">
+                                            <TextBlock Text="Diameter"/>
+                                            <ComboBox
+                                                Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                        <StackPanel 
+                                            Margin="5,0,0,0" 
+                                            Grid.Column="1">
+                                            <TextBlock Text="Quantity"/>
+                                            <TextBox
+                                                Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </GroupBox>
+                                <GroupBox Margin="0,10,0,0" Header="Side Bar">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition/>
+                                            <ColumnDefinition/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,5,0">
+                                            <TextBlock Text="Diameter"/>
+                                            <ComboBox
+                                                Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                        <StackPanel 
+                                            Margin="5,0,0,0" 
+                                            Grid.Column="1">
+                                            <TextBlock Text="Quantity"/>
+                                            <TextBox
+                                                Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </GroupBox>
                                 <GroupBox Margin="0,10,0,0" Header="Stirrup">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -111,7 +155,26 @@
                                         </StackPanel>
                                     </Grid>
                                 </GroupBox>
-
+                                <GroupBox Margin="0,10,0,0" Header="Bot 3">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition/>
+                                            <ColumnDefinition/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,5,0">
+                                            <TextBlock Text="Diameter"/>
+                                            <ComboBox
+                                                Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                        <StackPanel 
+                                            Margin="5,0,0,0" 
+                                            Grid.Column="1">
+                                            <TextBlock Text="Quantity"/>
+                                            <TextBox
+                                                Margin="0,5,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </GroupBox>
                                 <GroupBox Margin="0,10,0,0" Header="Bot 2">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -153,265 +216,379 @@
                                     </Grid>
                                 </GroupBox>
                             </StackPanel>
+                                <StackPanel 
+                                    VerticalAlignment="Center"
+                                    Margin="10"
+                                    Grid.Column="1">
+                                    <Canvas
+                                        x:Name="canvas_start"
+                                        Height="300"/>
+                                </StackPanel>
+                            </Grid>
                         </GroupBox>
                         <GroupBox 
                             Padding="10"
                             Grid.Column="1"
                             Header="Section Middle">
-                            <StackPanel>
-                                <GroupBox Header="Top 1">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,5,0">
-                                            <TextBlock Text="Diameter"/>
-                                            <ComboBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                        <StackPanel 
-                                            Margin="5,0,0,0" 
-                                            Grid.Column="1">
-                                            <TextBlock Text="Quantity"/>
-                                            <TextBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </GroupBox>
-                                <GroupBox Margin="0,10,0,0" Header="Top 2">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,5,0">
-                                            <TextBlock Text="Diameter"/>
-                                            <ComboBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                        <StackPanel 
-                                            Margin="5,0,0,0" 
-                                            Grid.Column="1">
-                                            <TextBlock Text="Quantity"/>
-                                            <TextBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </GroupBox>
-
-                                <GroupBox Margin="0,10,0,0" Header="Stirrup">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,5,0">
-                                            <TextBlock Text="Diameter"/>
-                                            <ComboBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                        <StackPanel 
-                                            Margin="5,0,0,0" 
-                                            Grid.Column="1">
-                                            <TextBlock Text="Spacing"/>
-                                            <TextBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </GroupBox>
-
-                                <GroupBox Margin="0,10,0,0" Header="Bot 2">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,5,0">
-                                            <TextBlock Text="Diameter"/>
-                                            <ComboBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                        <StackPanel 
-                                            Margin="5,0,0,0" 
-                                            Grid.Column="1">
-                                            <TextBlock Text="Quantity"/>
-                                            <TextBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </GroupBox>
-                                <GroupBox Margin="0,10,0,0" Header="Bot 1">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,5,0">
-                                            <TextBlock Text="Diameter"/>
-                                            <ComboBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                        <StackPanel 
-                                            Margin="5,0,0,0" 
-                                            Grid.Column="1">
-                                            <TextBlock Text="Quantity"/>
-                                            <TextBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </GroupBox>
-                            </StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <GroupBox Header="Top 1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel 
+                Margin="5,0,0,0" 
+                Grid.Column="1">
+                                                <TextBlock Text="Quantity"/>
+                                                <TextBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                    <GroupBox Margin="0,10,0,0" Header="Top 2">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel 
+                Margin="5,0,0,0" 
+                Grid.Column="1">
+                                                <TextBlock Text="Quantity"/>
+                                                <TextBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                    <GroupBox Margin="0,10,0,0" Header="Top 3">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel 
+                Margin="5,0,0,0" 
+                Grid.Column="1">
+                                                <TextBlock Text="Quantity"/>
+                                                <TextBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                    <GroupBox Margin="0,10,0,0" Header="Side Bar">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel 
+                Margin="5,0,0,0" 
+                Grid.Column="1">
+                                                <TextBlock Text="Quantity"/>
+                                                <TextBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                    <GroupBox Margin="0,10,0,0" Header="Stirrup">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel 
+                Margin="5,0,0,0" 
+                Grid.Column="1">
+                                                <TextBlock Text="Spacing"/>
+                                                <TextBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                    <GroupBox Margin="0,10,0,0" Header="Bot 3">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel 
+                Margin="5,0,0,0" 
+                Grid.Column="1">
+                                                <TextBlock Text="Quantity"/>
+                                                <TextBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                    <GroupBox Margin="0,10,0,0" Header="Bot 2">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel 
+                Margin="5,0,0,0" 
+                Grid.Column="1">
+                                                <TextBlock Text="Quantity"/>
+                                                <TextBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                    <GroupBox Margin="0,10,0,0" Header="Bot 1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel 
+                Margin="5,0,0,0" 
+                Grid.Column="1">
+                                                <TextBlock Text="Quantity"/>
+                                                <TextBox
+                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                </StackPanel>
+                                <StackPanel 
+                                    VerticalAlignment="Center"
+                                    Margin="10"
+                                    Grid.Column="1">
+                                    <Canvas
+                                        x:Name="canvas_mid"
+                                        Height="300"/>
+                                </StackPanel>
+                            </Grid>
                         </GroupBox>
                         <GroupBox 
                             Padding="10"
                             Grid.Column="2"
                             Header="Section End">
-                            <StackPanel>
-                                <GroupBox Header="Top 1">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,5,0">
-                                            <TextBlock Text="Diameter"/>
-                                            <ComboBox
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <GroupBox Header="Top 1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
+                                                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel 
+                                                Margin="5,0,0,0" 
+                                                Grid.Column="1">
+                                                <TextBlock Text="Quantity"/>
+                                                <TextBox
+                                                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                    <GroupBox Margin="0,10,0,0" Header="Top 2">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
+                                                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel 
+                                                Margin="5,0,0,0" 
+                                                Grid.Column="1">
+                                                <TextBlock Text="Quantity"/>
+                                                <TextBox
+                                                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                    <GroupBox Margin="0,10,0,0" Header="Top 3">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
+                                                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel 
+                                                Margin="5,0,0,0" 
+                                                Grid.Column="1">
+                                                <TextBlock Text="Quantity"/>
+                                                <TextBox
+                                                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                    <GroupBox Margin="0,10,0,0" Header="Side Bar">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
                                                 Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                        <StackPanel 
-                                            Margin="5,0,0,0" 
-                                            Grid.Column="1">
-                                            <TextBlock Text="Quantity"/>
-                                            <TextBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </GroupBox>
-                                <GroupBox Margin="0,10,0,0" Header="Top 2">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,5,0">
-                                            <TextBlock Text="Diameter"/>
-                                            <ComboBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                        <StackPanel 
-                                            Margin="5,0,0,0" 
-                                            Grid.Column="1">
-                                            <TextBlock Text="Quantity"/>
-                                            <TextBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </GroupBox>
-
-                                <GroupBox Margin="0,10,0,0" Header="Stirrup">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,5,0">
-                                            <TextBlock Text="Diameter"/>
-                                            <ComboBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                        <StackPanel 
-                                            Margin="5,0,0,0" 
-                                            Grid.Column="1">
-                                            <TextBlock Text="Spacing"/>
-                                            <TextBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </GroupBox>
-
-                                <GroupBox Margin="0,10,0,0" Header="Bot 2">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,5,0">
-                                            <TextBlock Text="Diameter"/>
-                                            <ComboBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                        <StackPanel 
-                                            Margin="5,0,0,0" 
-                                            Grid.Column="1">
-                                            <TextBlock Text="Quantity"/>
-                                            <TextBox
-                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </GroupBox>
-                                <GroupBox Margin="0,10,0,0" Header="Bot 1">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Margin="0,0,5,0">
-                                            <TextBlock Text="Diameter"/>
-                                            <ComboBox
-                                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                        <StackPanel 
-                                            Margin="5,0,0,0" 
-                                            Grid.Column="1">
-                                            <TextBlock Text="Quantity"/>
-                                            <TextBox
-                                Margin="0,5,0,0"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </GroupBox>
-                            </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel 
+                                                Margin="5,0,0,0" 
+                                                Grid.Column="1">
+                                                <TextBlock Text="Quantity"/>
+                                                <TextBox
+                                                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                    <GroupBox Margin="0,10,0,0" Header="Stirrup">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
+                                                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel 
+                                                Margin="5,0,0,0" 
+                                                Grid.Column="1">
+                                                <TextBlock Text="Spacing"/>
+                                                <TextBox
+                                                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                    <GroupBox Margin="0,10,0,0" Header="Bot 3">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
+                                                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel 
+                                                Margin="5,0,0,0" 
+                                                Grid.Column="1">
+                                                <TextBlock Text="Quantity"/>
+                                                <TextBox
+                                                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                    <GroupBox Margin="0,10,0,0" Header="Bot 2">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
+                                                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel 
+                                                Margin="5,0,0,0" 
+                                                Grid.Column="1">
+                                                <TextBlock Text="Quantity"/>
+                                                <TextBox
+                                                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                    <GroupBox Margin="0,10,0,0" Header="Bot 1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,5,0">
+                                                <TextBlock Text="Diameter"/>
+                                                <ComboBox
+                                                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel 
+                                                Margin="5,0,0,0" 
+                                                Grid.Column="1">
+                                                <TextBlock Text="Quantity"/>
+                                                <TextBox
+                                                    Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
+                                </StackPanel>
+                                <StackPanel 
+                                    VerticalAlignment="Center"
+                                    Margin="10"
+                                    Grid.Column="1">
+                                    <Canvas
+                                        x:Name="canvas_end"
+                                        Height="300"/>
+                                </StackPanel>
+                            </Grid>
                         </GroupBox>
                     </Grid>
-                </Grid>
-            </TabItem>
-            <TabItem Header="Anchol Info">
-                <Grid Margin="10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="300"/>
-                        <ColumnDefinition/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel 
-                        Margin="0,0,10,0">
-                        <StackPanel>
-                            <TextBlock
-                                Text="L1ST"/>
-                            <TextBox
-                                Text="{Binding L1ST}"/>
-                        </StackPanel>
-                        <StackPanel Margin="0,5,0,0">
-                            <TextBlock
-                                Text="L3SB"/>
-                            <TextBox
-                                Text="{Binding L3SB}"/>
-                        </StackPanel>
-
-                        <StackPanel Margin="0,5,0,0">
-                            <TextBlock
-                                Text="L1ET"/>
-                            <TextBox
-                                Text="{Binding L1ST}"/>
-                        </StackPanel>
-                        <StackPanel Margin="0,5,0,0">
-                            <TextBlock
-                                Text="L3EB"/>
-                            <TextBox
-                                Text="{Binding L3SB}"/>
-                        </StackPanel>
-                    </StackPanel>
-                    <Image 
-                        Grid.Column="1"
-                        Source="/LSTool;component/Tools/Beams/BeamRebar/imgs/Setting_Develop.png"/>
                 </Grid>
             </TabItem>
         </TabControl>

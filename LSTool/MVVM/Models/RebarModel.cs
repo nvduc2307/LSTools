@@ -1,10 +1,24 @@
 ﻿namespace LSTool.MVVM.Models
 {
-    public class RebarModel
+    public partial class RebarModel : ObservableObject
     {
-        public string Name { get; set; }
-        public int Diameter { get; set; }
-        public int Spacing { get; set; }
+        private string _name;
+        public List<string> Diameters { get; set; }
+        [ObservableProperty]
+        private int _diameter;
+        [ObservableProperty]
+        private int _spacing;
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                _name = value;
+                OnPropertyChanged();
+                NameChangeAction?.Invoke(this);
+            }
+        }
+        public Action<RebarModel> NameChangeAction { get; set; }
         public int RebarSectionType { get; set; }
     }
 }
