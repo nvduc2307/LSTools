@@ -679,6 +679,27 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models
             foreach (var section in sections)
             {
                 AttachLayer1DiameterSynchronization(section, rebarBeam);
+
+                // RebarBeam.ResetActionChange xoá cả hai handler này, nhưng
+                // trước đây không có chỗ nào gắn lại. Thiếu chúng thì combobox
+                // chọn lớp vẫn đổi giá trị mà RebarBeamTopLevelActive không đổi
+                // theo, nên ô đường kính và số lượng nằm lại ở lớp 1. Gắn giống
+                // hệt như InitDataRebarBeamSection đã làm lúc khởi tạo.
+                if (section?.RebarBeamTop != null)
+                {
+                    section.RebarBeamTop.RebarGroupTypeChange = () =>
+                    {
+                        RebarBeamTop.TopRebarGroupTypeChangeFunc(section, rebarBeam);
+                    };
+                }
+                if (section?.RebarBeamBot != null)
+                {
+                    section.RebarBeamBot.RebarGroupTypeChange = () =>
+                    {
+                        RebarBeamBot.BotRebarGroupTypeChangeFunc(section, rebarBeam);
+                    };
+                }
+
                 if (section?.RebarBeamStirrup == null)
                     continue;
                 section.RebarBeamStirrup.SpacingChange = () =>
