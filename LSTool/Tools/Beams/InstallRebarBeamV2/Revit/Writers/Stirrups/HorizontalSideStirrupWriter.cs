@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using LSTool.Compatibility;
 using LSTool.Tools.Beams.InstallRebarBeamV2.viewModels;
