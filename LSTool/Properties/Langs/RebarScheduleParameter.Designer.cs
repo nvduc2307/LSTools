@@ -19,7 +19,7 @@ namespace LSTool.Properties.Langs {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class RebarScheduleParameter {
@@ -142,7 +142,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to SCHEDULE_REBAR_GEOMETRI_SHAPE.
+        ///   Looks up a localized string similar to SCHEDULE_REBAR_GEOMETRY_SHAPE.
         /// </summary>
         public static string SCHEDULE_REBAR_GEOMETRI_SHAPE {
             get {

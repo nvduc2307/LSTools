@@ -7,7 +7,7 @@
         xmlns:userControl ="clr-namespace:LSTool.Tools.Beams.InstallRebarBeamV2.views"
         xmlns:langs ="clr-namespace:LSTool.Properties.Langs"
         mc:Ignorable="d"
-        Title="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_COMMAND_NAME}"
+        Title="rebar beam"
         Width="1280"
         Height="840"
         WindowStartupLocation="CenterScreen"

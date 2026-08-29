@@ -517,13 +517,13 @@
                             <TextBlock Style="{StaticResource FieldLabel}"
                                        Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_DIAMETER}"/>
                             <ComboBox ItemsSource="{Binding ElementInstances.RebarDiameters}"
-                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionMid.RebarBeamSideBar.Diameter}"/>
+                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamSideBar.Diameter}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4,0,0,0">
                             <TextBlock Style="{StaticResource FieldLabel}"
                                        Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_QUANTITY}"/>
                             <TextBox behaviors:TextBoxBehavior.SelectAllTextOnFocus="True"
-                                     Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionMid.RebarBeamSideBar.QuantitySide, UpdateSourceTrigger=PropertyChanged, Delay=500}"/>
+                                     Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamSideBar.QuantitySide, UpdateSourceTrigger=PropertyChanged, Delay=500}"/>
                         </StackPanel>
                     </Grid>
 
@@ -665,13 +665,13 @@
                             <TextBlock Style="{StaticResource FieldLabel}"
                                        Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_DIAMETER}"/>
                             <ComboBox ItemsSource="{Binding ElementInstances.RebarDiameters}"
-                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionEnd.RebarBeamSideBar.Diameter}"/>
+                                      SelectedItem="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamSideBar.Diameter}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4,0,0,0">
                             <TextBlock Style="{StaticResource FieldLabel}"
                                        Text="{x:Static langs:InstallRebarBeamV2Langs.IRBV2_SETTING_REBAR_QUANTITY}"/>
                             <TextBox behaviors:TextBoxBehavior.SelectAllTextOnFocus="True"
-                                     Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionEnd.RebarBeamSideBar.QuantitySide, UpdateSourceTrigger=PropertyChanged, Delay=500}"/>
+                                     Text="{Binding ElementInstances.RebarBeamActive.RebarBeamSectionStart.RebarBeamSideBar.QuantitySide, UpdateSourceTrigger=PropertyChanged, Delay=500}"/>
                         </StackPanel>
                     </Grid>
 

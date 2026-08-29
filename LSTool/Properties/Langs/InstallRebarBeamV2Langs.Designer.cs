@@ -19,7 +19,7 @@ namespace LSTool.Properties.Langs {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class InstallRebarBeamV2Langs {
@@ -61,7 +61,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to InstallRebarBeamView.
+        ///   Looks up a localized string similar to Install Beam Reinforcement.
         /// </summary>
         public static string IRBV2_COMMAND_NAME {
             get {
@@ -124,7 +124,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Setting Anchor.
+        ///   Looks up a localized string similar to Anchor Settings.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_ANCHOR {
             get {
@@ -133,7 +133,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Setting Beam.
+        ///   Looks up a localized string similar to Beam Settings.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_BEAM {
             get {
@@ -142,7 +142,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Setting Rebar Bot.
+        ///   Looks up a localized string similar to Bottom Reinforcement.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_REBAR_BOT {
             get {
@@ -151,7 +151,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to SideBar.
+        ///   Looks up a localized string similar to Side Bars.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_REBAR_SIDE {
             get {
@@ -169,7 +169,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Setting Rebar Top.
+        ///   Looks up a localized string similar to Top Reinforcement.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_REBAR_TOP {
             get {
@@ -178,7 +178,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Section End.
+        ///   Looks up a localized string similar to End Section.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_SECTION_END {
             get {
@@ -187,7 +187,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Section Mid.
+        ///   Looks up a localized string similar to Middle Section.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_SECTION_MID {
             get {
@@ -196,7 +196,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Section Start.
+        ///   Looks up a localized string similar to Start Section.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_SECTION_START {
             get {
@@ -205,7 +205,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Setting Cover.
+        ///   Looks up a localized string similar to Concrete Cover.
         /// </summary>
         public static string IRBV2_SETTING_COVER {
             get {
@@ -214,7 +214,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to DISTANCE_R_TO_R.
+        ///   Looks up a localized string similar to Rebar Spacing.
         /// </summary>
         public static string IRBV2_SETTING_DISTANCE_R_TO_R {
             get {
@@ -250,7 +250,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Setting Span.
+        ///   Looks up a localized string similar to Span.
         /// </summary>
         public static string IRBV2_SETTING_SPAN {
             get {
@@ -259,7 +259,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Setting Beam.
+        ///   Looks up a localized string similar to Beam Settings.
         /// </summary>
         public static string IRBV2_TAB_SETTING_BEAM {
             get {
@@ -268,7 +268,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Setting Section.
+        ///   Looks up a localized string similar to Rebar Settings.
         /// </summary>
         public static string IRBV2_TAB_SETTING_SECTION {
             get {
@@ -277,15 +277,12 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Stirrup Type.
+        ///   Looks up a localized string similar to Stirrup Settings.
         /// </summary>
         public static string IRBV2_TAB_SETTING_STIRRUP_TYPE {
             get {
                 return ResourceManager.GetString("IRBV2_TAB_SETTING_STIRRUP_TYPE", resourceCulture);
             }
         }
-        
     }
 }
-
-
