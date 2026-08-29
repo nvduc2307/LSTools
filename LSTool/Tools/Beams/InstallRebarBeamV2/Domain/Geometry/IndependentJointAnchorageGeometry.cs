@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -71,6 +71,13 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
         public double MinimumStraightLength { get; }
         public double Tolerance { get; }
 
+        /// <summary>
+        /// Bật thì thanh bên không chênh cũng gập vào nút, cùng phía và cùng
+        /// chiều dài neo với thanh bên chênh, thay vì chạy thẳng xuyên nút và
+        /// neo bằng chiều dài chôn trong dầm bên kia.
+        /// </summary>
+        public bool BendBothBars { get; }
+
         public IndependentJointAnchorageInput(
             double runStartStation,
             double jointStartStation,
@@ -85,7 +92,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             double centerlineBendRadius,
             double minimumStraightLength,
             double tolerance,
-            double? requiredBentAnchorageLength = null)
+            double? requiredBentAnchorageLength = null,
+            bool bendBothBars = false)
         {
             RunStartStation = runStartStation;
             JointStartStation = jointStartStation;
@@ -102,6 +110,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             CenterlineBendRadius = centerlineBendRadius;
             MinimumStraightLength = minimumStraightLength;
             Tolerance = tolerance;
+            BendBothBars = bendBothBars;
         }
     }
 
@@ -280,8 +289,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 input.JointStartStation,
                 direction);
 
-            if (input.RequiredAnchorageLength >
-                straightAvailable + input.Tolerance)
+            if (!input.BendBothBars
+                && input.RequiredAnchorageLength >
+                    straightAvailable + input.Tolerance)
             {
                 return IndependentJointAnchorageResult.Unsupported(
                     IndependentJointAnchorageFailure
@@ -289,6 +299,23 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                     "The bent-side beam concrete envelope is shorter than "
                     + "the required straight-through development length "
                     + "measured from the bent-side joint face.");
+            }
+            if (input.BendBothBars)
+            {
+                // Thanh này bắt đầu từ cao độ bên không chênh, tức đã lệch sẵn
+                // về phía gập, nên chỗ đứng còn lại ít hơn thanh bên kia.
+                double straightAvailableVertical = (
+                    input.BentVerticalLimitElevation
+                    - input.ShallowBarElevation) * verticalDirection;
+                if (straightAvailableVertical + input.Tolerance <
+                    input.RequiredBentAnchorageLength)
+                {
+                    return IndependentJointAnchorageResult.Unsupported(
+                        IndependentJointAnchorageFailure
+                            .InsufficientBentAnchorAvailability,
+                        "The joint has insufficient vertical room to bend the "
+                        + "level-side bar as well.");
+                }
             }
 
             double availableVertical = (
@@ -367,15 +394,48 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                 + verticalDirection
                     * input.RequiredBentAnchorageLength;
 
-            var straightThroughPoints = new[]
+            // Điểm uốn của thanh này đối xứng gương với thanh bên chênh: cùng
+            // khoảng lùi, nhưng đo từ mặt nút phía bên kia. Hai chân đứng nhờ
+            // vậy nằm cách nhau, không chồng lên nhau.
+            double straightBendStation =
+                input.JointStartStation
+                + direction * input.BendInsetFromShallowFace;
+            double straightBentEndElevation =
+                input.ShallowBarElevation
+                + verticalDirection * input.RequiredBentAnchorageLength;
+            var straightThroughPoints = input.BendBothBars
+                ? new[]
+                {
+                    new BentZStationPoint(
+                        input.RunEndStation,
+                        input.ShallowBarElevation),
+                    new BentZStationPoint(
+                        straightBendStation,
+                        input.ShallowBarElevation),
+                    new BentZStationPoint(
+                        straightBendStation,
+                        straightBentEndElevation)
+                }
+                : new[]
+                {
+                    new BentZStationPoint(
+                        input.RunEndStation,
+                        input.ShallowBarElevation),
+                    new BentZStationPoint(
+                        straightAnchorEndStation,
+                        input.ShallowBarElevation)
+                };
+            if (input.BendBothBars
+                && DirectedDistance(
+                    straightBendStation,
+                    bendStation,
+                    direction) <= input.Tolerance)
             {
-                new BentZStationPoint(
-                    input.RunEndStation,
-                    input.ShallowBarElevation),
-                new BentZStationPoint(
-                    straightAnchorEndStation,
-                    input.ShallowBarElevation)
-            };
+                return IndependentJointAnchorageResult.Unsupported(
+                    IndependentJointAnchorageFailure.BendOutsideJoint,
+                    "The joint is too narrow to fit both bend vertices "
+                    + "without them meeting.");
+            }
             var bentVerticalPoints = new[]
             {
                 new BentZStationPoint(
@@ -430,15 +490,19 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                     inputFailure.Failure,
                     inputFailure.Message);
             }
+            int expectedStraightPointCount = input.BendBothBars ? 3 : 2;
             if (straightThroughPoints == null
-                || straightThroughPoints.Count != 2
+                || straightThroughPoints.Count != expectedStraightPointCount
                 || bentVerticalPoints == null
                 || bentVerticalPoints.Count != 3)
             {
                 return IndependentJointAnchorageValidationResult.Unsupported(
                     IndependentJointAnchorageFailure.InvalidPointChain,
-                    "Independent anchorage requires a two-point straight run "
-                    + "and a three-point horizontal-vertical run.");
+                    input.BendBothBars
+                        ? "Independent anchorage with both bars bent requires "
+                          + "two three-point horizontal-vertical runs."
+                        : "Independent anchorage requires a two-point straight "
+                          + "run and a three-point horizontal-vertical run.");
             }
             if (straightThroughPoints.Any(point => !IsFinitePoint(point))
                 || bentVerticalPoints.Any(point => !IsFinitePoint(point)))
@@ -454,121 +518,177 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             double verticalDirection = Math.Sign(
                 input.ShallowBarElevation - input.DeepBarElevation);
 
-            BentZStationPoint straightStart = straightThroughPoints[0];
-            BentZStationPoint straightEnd = straightThroughPoints[1];
-            if (!Near(
-                    straightStart.Station,
-                    input.RunEndStation,
-                    tolerance)
-                || !Near(
-                    straightStart.Elevation,
-                    input.ShallowBarElevation,
-                    tolerance)
-                || !Near(
-                    straightEnd.Elevation,
-                    input.ShallowBarElevation,
-                    tolerance)
-                || DirectedDistance(
-                    straightEnd.Station,
-                    straightStart.Station,
-                    direction) <= tolerance)
+            double straightProvided;
+            if (input.BendBothBars)
             {
-                return IndependentJointAnchorageValidationResult.Unsupported(
-                    IndependentJointAnchorageFailure.InvalidPointChain,
-                    "The straight-through run must remain horizontal and be "
-                    + "ordered from the straight-side beam towards the "
-                    + "bent-side beam.");
+                // Thanh bên không chênh giờ cũng là một chuỗi gập, chỉ soi
+                // gương: nó đi vào nút từ mặt bên kia. Dùng chung đúng bộ luật
+                // của thanh bên chênh nên không phát sinh luật kiểm tra mới.
+                IndependentJointAnchorageValidationResult? straightFailure =
+                    ValidateBentChain(
+                        input,
+                        straightThroughPoints,
+                        input.RunEndStation,
+                        input.ShallowBarElevation,
+                        -direction,
+                        verticalDirection,
+                        input.JointEndStation,
+                        input.JointStartStation,
+                        out straightProvided,
+                        out _);
+                if (straightFailure != null) return straightFailure;
             }
+            else
+            {
+                BentZStationPoint straightStart = straightThroughPoints[0];
+                BentZStationPoint straightEnd = straightThroughPoints[1];
+                if (!Near(
+                        straightStart.Station,
+                        input.RunEndStation,
+                        tolerance)
+                    || !Near(
+                        straightStart.Elevation,
+                        input.ShallowBarElevation,
+                        tolerance)
+                    || !Near(
+                        straightEnd.Elevation,
+                        input.ShallowBarElevation,
+                        tolerance)
+                    || DirectedDistance(
+                        straightEnd.Station,
+                        straightStart.Station,
+                        direction) <= tolerance)
+                {
+                    return IndependentJointAnchorageValidationResult.Unsupported(
+                        IndependentJointAnchorageFailure.InvalidPointChain,
+                        "The straight-through run must remain horizontal and be "
+                        + "ordered from the straight-side beam towards the "
+                        + "bent-side beam.");
+                }
 
-            double straightProvided = DirectedDistance(
-                straightEnd.Station,
-                input.JointStartStation,
-                direction);
-            if (straightProvided + tolerance <
-                input.RequiredAnchorageLength)
-            {
-                return IndependentJointAnchorageValidationResult.Unsupported(
-                    IndependentJointAnchorageFailure
-                        .InsufficientProvidedAnchorage,
-                    "The straight-through run is shorter than the required "
-                    + "anchorage length.");
-            }
-            if (DirectedDistance(
+                straightProvided = DirectedDistance(
                     straightEnd.Station,
                     input.JointStartStation,
-                    direction) <= tolerance)
-            {
-                return IndependentJointAnchorageValidationResult.Unsupported(
-                    IndependentJointAnchorageFailure
-                        .StraightAnchorDoesNotCrossJoint,
-                    "The straight-through run does not enter the bent-side "
-                    + "beam.");
-            }
-            if (DirectedDistance(
-                    input.RunStartStation,
-                    straightEnd.Station,
-                    direction) < -tolerance)
-            {
-                return IndependentJointAnchorageValidationResult.Unsupported(
-                    IndependentJointAnchorageFailure
-                        .InsufficientStraightAnchorAvailability,
-                    "The straight-through run leaves the available bent-side "
-                    + "concrete envelope.");
+                    direction);
+                if (straightProvided + tolerance <
+                    input.RequiredAnchorageLength)
+                {
+                    return IndependentJointAnchorageValidationResult.Unsupported(
+                        IndependentJointAnchorageFailure
+                            .InsufficientProvidedAnchorage,
+                        "The straight-through run is shorter than the required "
+                        + "anchorage length.");
+                }
+                if (DirectedDistance(
+                        straightEnd.Station,
+                        input.JointStartStation,
+                        direction) <= tolerance)
+                {
+                    return IndependentJointAnchorageValidationResult.Unsupported(
+                        IndependentJointAnchorageFailure
+                            .StraightAnchorDoesNotCrossJoint,
+                        "The straight-through run does not enter the bent-side "
+                        + "beam.");
+                }
+                if (DirectedDistance(
+                        input.RunStartStation,
+                        straightEnd.Station,
+                        direction) < -tolerance)
+                {
+                    return IndependentJointAnchorageValidationResult.Unsupported(
+                        IndependentJointAnchorageFailure
+                            .InsufficientStraightAnchorAvailability,
+                        "The straight-through run leaves the available bent-side "
+                        + "concrete envelope.");
+                }
             }
 
-            BentZStationPoint bentStart = bentVerticalPoints[0];
-            BentZStationPoint bendVertex = bentVerticalPoints[1];
-            BentZStationPoint bentEnd = bentVerticalPoints[2];
-            if (!Near(
-                    bentStart.Station,
+            IndependentJointAnchorageValidationResult? bentFailure =
+                ValidateBentChain(
+                    input,
+                    bentVerticalPoints,
                     input.RunStartStation,
-                    tolerance)
-                || !Near(
-                    bentStart.Elevation,
                     input.DeepBarElevation,
-                    tolerance)
-                || !Near(
-                    bendVertex.Elevation,
-                    input.DeepBarElevation,
-                    tolerance)
-                || !Near(
-                    bentEnd.Station,
-                    bendVertex.Station,
-                    tolerance)
+                    direction,
+                    verticalDirection,
+                    input.JointStartStation,
+                    input.JointEndStation,
+                    out double bentProvided,
+                    out double tangentSetback);
+            if (bentFailure != null) return bentFailure;
+
+            return IndependentJointAnchorageValidationResult.Valid(
+                straightProvided,
+                bentProvided,
+                tangentSetback);
+        }
+
+        /// <summary>
+        /// Kiểm tra một chuỗi ba điểm dạng ngang rồi gập đứng: từ đầu ngoài của
+        /// dầm, chạy ngang vào nút, uốn tại một đỉnh nằm hẳn trong nút rồi gập
+        /// đứng về phía neo.
+        ///
+        /// Dùng chung cho cả hai thanh. Thanh bên chênh đi vào nút theo chiều
+        /// dương, thanh bên không chênh đi ngược lại và vào qua mặt nút bên kia,
+        /// nên chỉ khác nhau ở tham số chứ không khác luật.
+        ///
+        /// Trả về null nghĩa là hợp lệ.
+        /// </summary>
+        private static IndependentJointAnchorageValidationResult? ValidateBentChain(
+            IndependentJointAnchorageInput input,
+            IReadOnlyList<BentZStationPoint> points,
+            double outerStation,
+            double barElevation,
+            double travelDirection,
+            double verticalDirection,
+            double nearFaceStation,
+            double farFaceStation,
+            out double providedAnchorage,
+            out double tangentSetback)
+        {
+            double tolerance = input.Tolerance;
+            providedAnchorage = 0.0;
+            tangentSetback = input.CenterlineBendRadius;
+
+            BentZStationPoint start = points[0];
+            BentZStationPoint bendVertex = points[1];
+            BentZStationPoint end = points[2];
+            if (!Near(start.Station, outerStation, tolerance)
+                || !Near(start.Elevation, barElevation, tolerance)
+                || !Near(bendVertex.Elevation, barElevation, tolerance)
+                || !Near(end.Station, bendVertex.Station, tolerance)
                 || DirectedDistance(
-                    bentStart.Station,
+                    start.Station,
                     bendVertex.Station,
-                    direction) <= tolerance
-                || (bentEnd.Elevation - bendVertex.Elevation)
+                    travelDirection) <= tolerance
+                || (end.Elevation - bendVertex.Elevation)
                     * verticalDirection <= tolerance)
             {
                 return IndependentJointAnchorageValidationResult.Unsupported(
                     IndependentJointAnchorageFailure.InvalidPointChain,
                     "The bent run must be horizontal into the joint and then "
-                    + "vertical towards the straight-side elevation.");
+                    + "vertical towards the anchoring side.");
             }
 
-            double bendFromDeepFace = DirectedDistance(
-                input.JointStartStation,
+            double bendFromNearFace = DirectedDistance(
+                nearFaceStation,
                 bendVertex.Station,
-                direction);
-            double bendFromShallowFace = DirectedDistance(
+                travelDirection);
+            double bendFromFarFace = DirectedDistance(
                 bendVertex.Station,
-                input.JointEndStation,
-                direction);
-            if (bendFromDeepFace <= tolerance
-                || bendFromShallowFace <= tolerance)
+                farFaceStation,
+                travelDirection);
+            if (bendFromNearFace <= tolerance || bendFromFarFace <= tolerance)
             {
                 return IndependentJointAnchorageValidationResult.Unsupported(
                     IndependentJointAnchorageFailure.BendOutsideJoint,
                     "The bend vertex is outside the joint.");
             }
 
-            double tangentSetback = input.CenterlineBendRadius;
             double requiredFaceInset =
                 input.CenterlineClearance + tangentSetback;
-            if (bendFromDeepFace + tolerance < requiredFaceInset
-                || bendFromShallowFace + tolerance < requiredFaceInset)
+            if (bendFromNearFace + tolerance < requiredFaceInset
+                || bendFromFarFace + tolerance < requiredFaceInset)
             {
                 return IndependentJointAnchorageValidationResult.Unsupported(
                     IndependentJointAnchorageFailure
@@ -578,12 +698,12 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             }
 
             double horizontalLength = DirectedDistance(
-                bentStart.Station,
+                start.Station,
                 bendVertex.Station,
-                direction);
-            double bentProvided = Math.Abs(
-                bentEnd.Elevation - bendVertex.Elevation);
-            if (bentProvided + tolerance <
+                travelDirection);
+            providedAnchorage = Math.Abs(
+                end.Elevation - bendVertex.Elevation);
+            if (providedAnchorage + tolerance <
                 input.RequiredBentAnchorageLength)
             {
                 return IndependentJointAnchorageValidationResult.Unsupported(
@@ -594,7 +714,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             }
             if (horizontalLength - tangentSetback + tolerance <
                     input.MinimumStraightLength
-                || bentProvided - tangentSetback + tolerance <
+                || providedAnchorage - tangentSetback + tolerance <
                     input.MinimumStraightLength)
             {
                 return IndependentJointAnchorageValidationResult.Unsupported(
@@ -606,8 +726,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
 
             double availableVertical = (
                 input.BentVerticalLimitElevation
-                - input.DeepBarElevation) * verticalDirection;
-            if (bentProvided > availableVertical + tolerance)
+                - barElevation) * verticalDirection;
+            if (providedAnchorage > availableVertical + tolerance)
             {
                 return IndependentJointAnchorageValidationResult.Unsupported(
                     IndependentJointAnchorageFailure
@@ -616,10 +736,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
                     + "envelope.");
             }
 
-            return IndependentJointAnchorageValidationResult.Valid(
-                straightProvided,
-                bentProvided,
-                tangentSetback);
+            return null;
         }
 
         private static IndependentJointAnchorageResult? ValidateInput(

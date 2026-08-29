@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB.Structure;
+﻿using Autodesk.Revit.DB.Structure;
 using LSTool.Compatibility;
 using LSTool.Tools.Beams.InstallRebarBeamV2.models.SecondaryStirrups;
 using RIMT.Utils.RevRebars;
@@ -14,7 +14,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.SubHorizontalStirrup
             var origin = point1;
             var xVec = point2 - point1;
             var yVec = lineDto.DirectionToInside;
-            if (chanLe % 2 == 1)
+            if (SubStirrupDto.StaggerHooks && chanLe % 2 == 1)
             {
                 origin = point2;
                 xVec = point1 - point2;

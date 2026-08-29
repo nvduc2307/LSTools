@@ -14,6 +14,7 @@ using LSTool.Tools.Beams.InstallRebarBeamV2.UI.Preview;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Application;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Plans;
+using LSTool.Tools.Beams.InstallRebarBeamV2.Revit.Grouping;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Revit.Writers;
 using RIMT.Utils;
 using RIMT.Utils.canvass;
@@ -106,17 +107,10 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                         SetRebarType(installRebarSubHorizontalStirrupForSideRebar, LSTool.Properties.Langs.RebarStructureType.BEAM_SECONDARY_STP_REBAR);
                     }
                     #endregion
-                    #region Create Rebar Beam Assembly
-                    AssemblyInstance rebarBeamAss;
-                    using (installResult.Metrics.Measure("assembly.create"))
-                    {
-                        var rebarIds = allCreatedRebars.Select(rebar => rebar.Id).ToList();
-                        rebarBeamAss = AssemblyInstance.Create(
-                            AC.Document,
-                            rebarIds,
-                            Category.GetCategory(AC.Document, BuiltInCategory.OST_Rebar).Id);
-                    }
-                    #endregion
+                    // Thép được giữ dưới dạng các rebar set bố trí Fixed Number,
+                    // không gom vào assembly nữa. Các bước sau làm việc trực
+                    // tiếp trên danh sách thanh còn sống trong mô hình.
+                    var holeReplacementRebars = new List<Rebar>();
                     #region Write Rebar Beam Info
                     using (installResult.Metrics.Measure("metadata.schema"))
                     {
@@ -146,23 +140,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                                 rebar,
                                 ElementInstances.RebarBeamSchemal.SchemaField);
                         }
-                    }
-                    #endregion
-                    #region write rebar beam assembly info
-                    using (installResult.Metrics.Measure("assembly.metadata"))
-                    {
-                        var assemblyInfoUtils =
-                            new AssemblyInfoUtils(
-                                ElementInstances.Beam.ElementSubs.Select(member => member.Element),
-                                AC.Document);
-                        RebarSharedParameterSupport.SetRequiredStringParameter(
-                            rebarBeamAss,
-                            BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS,
-                            assemblyInfoUtils.GridName);
-                        RebarSharedParameterSupport.SetRequiredStringParameter(
-                            rebarBeamAss,
-                            BuiltInParameter.ALL_MODEL_MARK,
-                            assemblyInfoUtils.TypeName);
                     }
                     #endregion
                     #region Resetting host
@@ -317,32 +294,43 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     {
                         var rebarsSTP = installResult.AllStirrups.ToList();
                         var rbsHole = BypassOpening(
-                                rebarsSTP,
-                                ElementInstances.RebarBeamActive,
-                                out List<Rebar> rebarDeletes)
-                            .Select(rebar => rebar.Id)
-                            .ToList();
+                            rebarsSTP,
+                            ElementInstances.RebarBeamActive,
+                            out List<Rebar> rebarDeletes);
                         diagnosticLog.Record("opening.processed", new
                         {
                             inputStirrupCount = rebarsSTP.Count,
                             replacementCount = rbsHole.Count,
                             deletedOriginalCount = rebarDeletes.Count,
-                            replacementIds = rbsHole.Select(id => id.Value).ToList(),
+                            replacementIds = rbsHole.Select(rebar => rebar.Id.Value).ToList(),
                             deletedOriginalIds = rebarDeletes.Select(rebar => rebar.Id.Value).ToList()
                         });
                         if (rbsHole.Count != 0)
                         {
-                            rebarBeamAss.AddMemberIds(rbsHole);
+                            holeReplacementRebars.AddRange(rbsHole);
                             AC.Document.Delete(rebarDeletes.Select(rebar => rebar.Id).ToList());
+                        }
+                    }
+                    //group identical bars into fixed-number rebar sets
+                    using (installResult.Metrics.Measure("grouping"))
+                    {
+                        var groupingResult = new RebarLayoutGroupingService().Apply(
+                            AC.Document,
+                            CollectLiveRebars(installResult, holeReplacementRebars),
+                            RebarGrouping,
+                            diagnosticLog);
+                        if (groupingResult.RemovedRebarIds.Count > 0)
+                        {
+                            PruneRemovedRebars(
+                                installResult,
+                                groupingResult.RemovedRebarIds);
                         }
                     }
                     //init segment
                     using (installResult.Metrics.Measure("segments"))
                     {
-                        var rebarInAss = rebarBeamAss.GetMemberIds()
-                            .Select(id => AC.Document.GetElement(id) as Rebar)
-                            .ToList();
-                        rebarInAss.InitSegment();
+                        CollectLiveRebars(installResult, holeReplacementRebars)
+                            .InitSegment();
                     }
                     foreach (var sideRebar in installRebarSide)
                     {
@@ -360,8 +348,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     diagnosticLog.Record("transaction.committing", new
                     {
                         metrics = installResult.Metrics.ToSummary(),
-                        assemblyId = rebarBeamAss.Id.Value,
-                        assemblyMemberCount = rebarBeamAss.GetMemberIds().Count,
+                        finalRebarCount = CollectLiveRebars(
+                            installResult,
+                            holeReplacementRebars).Count,
                         finalSideRebarCount = installRebarSide.Count
                     });
                     //--------
@@ -457,6 +446,58 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
                     RebarBeamGroup = (int)group
                 };
             }).ToList();
+        }
+
+        /// <summary>
+        /// Tập hợp mọi thanh thép của lượt chạy còn sống trong mô hình: thép
+        /// dựng ban đầu cộng thép thay thế quanh lỗ mở, trừ đi thanh đã bị xoá.
+        /// Thay cho danh sách member của assembly trước đây.
+        /// </summary>
+        private static List<Rebar> CollectLiveRebars(
+            RebarInstallationResult installResult,
+            IEnumerable<Rebar> extraRebars)
+        {
+            var seen = new HashSet<long>();
+            var results = new List<Rebar>();
+            foreach (var rebar in installResult.AllRebars
+                         .Concat(extraRebars ?? Enumerable.Empty<Rebar>()))
+            {
+                if (rebar == null || !rebar.IsValidObject) continue;
+                if (!seen.Add(rebar.Id.Value)) continue;
+                results.Add(rebar);
+            }
+            return results;
+        }
+
+        /// <summary>
+        /// Loại khỏi kết quả cài đặt những thanh đã bị gom vào rebar set và
+        /// bị xoá, để các bước phía sau không chạm vào element đã chết.
+        /// </summary>
+        private static void PruneRemovedRebars(
+            RebarInstallationResult installResult,
+            ICollection<long> removedRebarIds)
+        {
+            var lists = new[]
+            {
+                installResult.TopLevel1,
+                installResult.TopLevel2,
+                installResult.TopLevel3,
+                installResult.BottomLevel1,
+                installResult.BottomLevel2,
+                installResult.BottomLevel3,
+                installResult.SideBars,
+                installResult.MainStirrups,
+                installResult.SecondaryVerticalStirrups,
+                installResult.SecondaryHorizontalMainStirrups,
+                installResult.SecondaryHorizontalSideStirrups
+            };
+            foreach (var list in lists)
+            {
+                list.RemoveAll(rebar =>
+                    rebar == null
+                    || !rebar.IsValidObject
+                    || removedRebarIds.Contains(rebar.Id.Value));
+            }
         }
 
         private static ElementId GetRegisteredTargetHostId(

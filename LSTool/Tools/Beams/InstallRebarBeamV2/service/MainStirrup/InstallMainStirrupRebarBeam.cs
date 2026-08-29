@@ -30,8 +30,6 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.MainStirrup
             }
 
             var quantity = length / MainStirrupDto.Spacing;
-            var phanDu = quantity - (int)quantity;
-            var remainderLength = phanDu * MainStirrupDto.Spacing;
 
             var topLeft = MainStirrupDto.BoxElementPoint.P6;
             var topRight = MainStirrupDto.BoxElementPoint.P5;
@@ -73,20 +71,16 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.MainStirrup
                 }
             }
 
-            if (remainderLength > MainStirrupDto.Spacing * 0.5)
+            // Không chèn thanh bù ở mép đoạn nữa. Thanh đó nằm lệch bước so với
+            // phần còn lại nên không thể nằm chung một rebar set bố trí Fixed
+            // Number, khiến mỗi đoạn bị tách thành nhiều nhóm rời rạc. Bỏ nó đi
+            // thì cả đoạn cách đều và gom được đúng một nhóm; đánh đổi là khoảng
+            // hở ở mép đoạn rộng hơn bước thiết kế, tối đa gần một bước.
+            if (last == null)
             {
-                var transform = Transform.CreateTranslation(
-                    length * MainStirrupDto.Direction);
-                var rectangleDto = new RectangleDto
-                {
-                    BottomLeft = bottomLeft,
-                    BottomRight = bottomRight,
-                    TopLeft = topLeft,
-                    TopRight = topRight,
-                    Transform = transform
-                };
-                PlaceRebar(rectangleDto, ++chanLe);
-                last = new Tuple<RectangleDto, int>(rectangleDto, chanLe);
+                throw new InvalidOperationException(
+                    "Main stirrup segment is shorter than one spacing, so no "
+                    + "bar could be placed.");
             }
             return last;
         }

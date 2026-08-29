@@ -26,6 +26,13 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.models.SecondaryStirrups
         /// Sử dụng để biết hướng hook vào trong hay ra ngoài cho thép đai
         /// </summary>
         public XYZ DirectionInside { get; set; }
+
+        /// <summary>
+        /// Bật thì hai đầu móc đổi bên ở thanh chẵn và thanh lẻ. Mặc định tắt:
+        /// mọi thanh cùng một chiều nên giống hệt nhau về hình học và gom được
+        /// chung một rebar set bố trí Fixed Number.
+        /// </summary>
+        public bool StaggerHooks { get; set; } = false;
         public SubStirrupCollectionDto Copy()
         {
             return (SubStirrupCollectionDto)MemberwiseClone();

@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using LSTool.Compatibility;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Application;
@@ -378,6 +378,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     + $"diameter for the temporary 35D rule: "
                     + exception.Message);
             }
+            var bendBothBars = viewModel.SettingRebarStandardModel
+                ?.BendBothBarsAtStaggeredJoint ?? false;
             var hMinDiameterMultiplier =
                 viewModel.SettingRebarStandardModel?.HMin ?? 0;
             if (hMinDiameterMultiplier <= 0)
@@ -589,7 +591,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         bendClearance.CenterlineBendRadiusFt,
                         minimumStraightLengthFt,
                         toleranceFt,
-                        bentTailPlan.RequiredBentTailLength);
+                        bentTailPlan.RequiredBentTailLength,
+                        bendBothBars);
                 bentTailPlans.Add(bentTailPlan);
                 context.DiagnosticLog?.Record(
                     "main.independent-anchor.input",
@@ -823,6 +826,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     straightLaneEnvelope,
                     bendClearance.CenterlineClearanceFt,
                     toleranceFt,
+                    bendBothBars,
                     context,
                     stageName);
 
@@ -1326,6 +1330,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             BeamLaneEnvelope straightLaneEnvelope,
             double centerlineClearanceFt,
             double toleranceFt,
+            bool bendBothBars,
             RebarExecutionContext context,
             string stageName)
         {
@@ -1411,7 +1416,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             var straightEnd =
                 planned.StraightThroughPoints[
                     planned.StraightThroughPoints.Count - 1];
-            if (!IsInside(
+            // Khi thanh này gập trong nút thì nó không còn cắm sang dầm bên
+            // kia nữa, nên kiểm tra bao dầm không còn ý nghĩa. Kernel đã kiểm
+            // tra đỉnh uốn nằm hẳn trong nút và giữ đủ lớp bảo vệ hai mặt.
+            if (!bendBothBars
+                && !IsInside(
                     straightEnd.Station,
                     bentBeam.MinX,
                     bentBeam.MaxX,
@@ -1429,6 +1438,35 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             var bentEnd =
                 planned.BentVerticalPoints[
                     planned.BentVerticalPoints.Count - 1];
+
+            // Khi cả hai thanh cùng gập, chân đứng của thanh bên không chênh
+            // cũng phải nằm trong bao cột đã trừ lớp bảo vệ. Nó xuất phát từ
+            // cao độ thấp hơn nên chạm biên trước, kiểm tra trước luôn.
+            if (bendBothBars)
+            {
+                IndependentJointColumnVerticalCoverFailure
+                    straightCoverFailure =
+                        IndependentJointColumnVerticalCoverRule.Evaluate(
+                            bentZ,
+                            straightZ,
+                            straightEnd.Elevation,
+                            joint.ColumnBottomZ,
+                            joint.ColumnTopZ,
+                            centerlineClearanceFt,
+                            toleranceFt);
+                if (straightCoverFailure
+                    != IndependentJointColumnVerticalCoverFailure.None)
+                {
+                    throw Unsupported(
+                        context,
+                        stageName,
+                        "IndependentAnchorOutsideColumnVerticalCover",
+                        $"Level-side lane {lane.LaneIndex + 1} cannot bend "
+                        + "into the joint without leaving the cover-reduced "
+                        + $"column height ({straightCoverFailure}).");
+                }
+            }
+
             IndependentJointColumnVerticalCoverFailure verticalCoverFailure =
                 IndependentJointColumnVerticalCoverRule.Evaluate(
                     bentZ,
@@ -2160,9 +2198,19 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         secondArc);
                 }
 
-                // Revit also reports infinitely many solutions for other
-                // singular curve pairs. Without an exact bounded solver for
-                // that pair, preserve the fail-closed behavior.
+                // Revit fails the same way for any singular pair, a straight
+                // bar running parallel to a bend fillet being the common one.
+                // Sample both curves and solve the polyline pair exactly, then
+                // give back the tessellation error so the answer can only ever
+                // understate the real clearance.
+                if (TryGetSampledDistance(first, second, out var sampledDistance))
+                {
+                    return sampledDistance;
+                }
+
+                // No curvature bound for this curve type, so there is no way to
+                // keep the answer conservative. Preserve the fail-closed
+                // behavior.
                 throw;
             }
             if (closestPoints != null && closestPoints.Count > 0)
@@ -2223,107 +2271,79 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             XYZ secondStart,
             XYZ secondEnd)
         {
-            var firstDirection = firstEnd - firstStart;
-            var secondDirection = secondEnd - secondStart;
-            var offset = firstStart - secondStart;
-            var firstLengthSquared =
-                firstDirection.DotProduct(firstDirection);
-            var crossProjection =
-                firstDirection.DotProduct(secondDirection);
-            var secondLengthSquared =
-                secondDirection.DotProduct(secondDirection);
-            var firstOffset =
-                firstDirection.DotProduct(offset);
-            var secondOffset =
-                secondDirection.DotProduct(offset);
-            var denominator =
-                firstLengthSquared * secondLengthSquared
-                - crossProjection * crossProjection;
-            var firstNumerator = denominator;
-            var secondNumerator = denominator;
-            var firstDenominator = denominator;
-            var secondDenominator = denominator;
-            const double epsilon = 1e-12;
+            return CurveClearanceKernel.SegmentDistance(
+                ToClearancePoint(firstStart),
+                ToClearancePoint(firstEnd),
+                ToClearancePoint(secondStart),
+                ToClearancePoint(secondEnd));
+        }
 
-            if (denominator < epsilon)
-            {
-                firstNumerator = 0.0;
-                firstDenominator = 1.0;
-                secondNumerator = secondOffset;
-                secondDenominator = secondLengthSquared;
-            }
-            else
-            {
-                firstNumerator =
-                    crossProjection * secondOffset
-                    - secondLengthSquared * firstOffset;
-                secondNumerator =
-                    firstLengthSquared * secondOffset
-                    - crossProjection * firstOffset;
-                if (firstNumerator < 0.0)
-                {
-                    firstNumerator = 0.0;
-                    secondNumerator = secondOffset;
-                    secondDenominator = secondLengthSquared;
-                }
-                else if (firstNumerator > firstDenominator)
-                {
-                    firstNumerator = firstDenominator;
-                    secondNumerator =
-                        secondOffset + crossProjection;
-                    secondDenominator = secondLengthSquared;
-                }
-            }
+        private static ClearancePoint ToClearancePoint(XYZ point)
+            => new ClearancePoint(point.X, point.Y, point.Z);
 
-            if (secondNumerator < 0.0)
-            {
-                secondNumerator = 0.0;
-                if (-firstOffset < 0.0)
-                {
-                    firstNumerator = 0.0;
-                }
-                else if (-firstOffset > firstLengthSquared)
-                {
-                    firstNumerator = firstDenominator;
-                }
-                else
-                {
-                    firstNumerator = -firstOffset;
-                    firstDenominator = firstLengthSquared;
-                }
-            }
-            else if (secondNumerator > secondDenominator)
-            {
-                secondNumerator = secondDenominator;
-                var adjustedFirstOffset =
-                    -firstOffset + crossProjection;
-                if (adjustedFirstOffset < 0.0)
-                {
-                    firstNumerator = 0.0;
-                }
-                else if (adjustedFirstOffset > firstLengthSquared)
-                {
-                    firstNumerator = firstDenominator;
-                }
-                else
-                {
-                    firstNumerator = adjustedFirstOffset;
-                    firstDenominator = firstLengthSquared;
-                }
-            }
+        /// <summary>
+        /// Số đoạn chia mỗi đường cong. Với bán kính uốn 15mm thì 64 đoạn cho
+        /// sai số chia nhỏ khoảng 0.001mm, tức nhỏ hơn hai bậc so với dung sai
+        /// 0.12mm mà bài kiểm tra khoảng hở đang dùng.
+        /// </summary>
+        private const int SampledFallbackSegmentCount = 64;
 
-            var firstParameter =
-                Math.Abs(firstNumerator) < epsilon
-                    ? 0.0
-                    : firstNumerator / firstDenominator;
-            var secondParameter =
-                Math.Abs(secondNumerator) < epsilon
-                    ? 0.0
-                    : secondNumerator / secondDenominator;
-            var closestOffset = offset
-                + firstDirection * firstParameter
-                - secondDirection * secondParameter;
-            return closestOffset.GetLength();
+        /// <summary>
+        /// Giải khoảng hở bằng cách chia nhỏ hai đường cong rồi tính chính xác
+        /// trên các cặp đoạn thẳng. Chỉ nhận đường thẳng và cung tròn, vì chỉ
+        /// hai loại đó mới chặn được sai số chia nhỏ; loại khác trả về false để
+        /// nơi gọi giữ nguyên hành vi ném lỗi.
+        /// </summary>
+        private static bool TryGetSampledDistance(
+            Curve first,
+            Curve second,
+            out double distance)
+        {
+            distance = 0.0;
+            if (!TryGetCurvatureRadius(first, out var firstRadius)) return false;
+            if (!TryGetCurvatureRadius(second, out var secondRadius)) return false;
+            if (!first.IsBound || !second.IsBound) return false;
+
+            var firstPoints = SampleCurve(first);
+            var secondPoints = SampleCurve(second);
+            distance = CurveClearanceKernel.ConservativeDistance(
+                firstPoints,
+                firstRadius,
+                secondPoints,
+                secondRadius);
+            return true;
+        }
+
+        /// <summary>
+        /// Bán kính dùng để chặn sai số chia nhỏ. Đường thẳng trả về 0 vì chia
+        /// nhỏ một đường thẳng không sinh sai số nào.
+        /// </summary>
+        private static bool TryGetCurvatureRadius(Curve curve, out double radius)
+        {
+            switch (curve)
+            {
+                case Line:
+                    radius = 0.0;
+                    return true;
+                case Arc arc:
+                    radius = arc.Radius;
+                    return radius > 0.0;
+                default:
+                    radius = 0.0;
+                    return false;
+            }
+        }
+
+        private static List<ClearancePoint> SampleCurve(Curve curve)
+        {
+            var points = new List<ClearancePoint>(
+                SampledFallbackSegmentCount + 1);
+            for (var index = 0; index <= SampledFallbackSegmentCount; index++)
+            {
+                var parameter = index / (double)SampledFallbackSegmentCount;
+                points.Add(ToClearancePoint(curve.Evaluate(parameter, true)));
+            }
+            return points;
         }
 
         private static void ValidateMainBarSeparation(

@@ -12,6 +12,12 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
 {
     public partial class SubInstallRebarBeamInModelService
     {
+        /// <summary>
+        /// Dầm phải cao hơn giá trị này mới bố trí thép hông. Dầm thấp hơn
+        /// không cần, và cũng không sinh đai phụ chống phình đi kèm.
+        /// </summary>
+        public const double SideBarMinimumBeamHeightMm = 700;
+
         public List<MainBarBeamReal> GetSideBarBeamReals(
             InstallRebarBeamV2ViewModel installRebarBeamV2ViewModel,
             double extentStirrupFt)
@@ -27,6 +33,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 var subBeams = installRebarBeamV2ViewModel.ElementInstances.Beam.ElementSubs;
                 var qRebarBeams = rebarBeams.Count;
                 var expectedCount = 0;
+                var skippedBeamIds = new HashSet<long>();
                 var diagnosticLog = installRebarBeamV2ViewModel.DiagnosticLog;
                 diagnosticLog?.Record("side.geometry.started", new
                 {
@@ -67,6 +74,24 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         if (qtySide < 0)
                             throw new InvalidOperationException(
                                 $"Side-bar quantity cannot be negative for beam {subBeam.Id}.");
+
+                        // Dầm không đủ cao thì bỏ qua hoàn toàn. Đai phụ chống
+                        // phình cũng lấy đầu vào từ hàm này nên nó tự động
+                        // không được sinh theo.
+                        if (rebarBeam.BeamHeightMm <= SideBarMinimumBeamHeightMm)
+                        {
+                            skippedBeamIds.Add(subBeam.Id);
+                            diagnosticLog?.Record("side.span.skipped", new
+                            {
+                                beamId = subBeam.Id,
+                                beamName = subBeam.Element?.Name,
+                                beamHeightMm = rebarBeam.BeamHeightMm,
+                                minimumBeamHeightMm = SideBarMinimumBeamHeightMm,
+                                requestedQuantitySide = qtySide
+                            });
+                            continue;
+                        }
+
                         expectedCount += qtySide * 2;
                         var csBot = GetPointControls(
                             installRebarBeamV2ViewModel,
@@ -197,6 +222,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                 {
                     expectedBarCount = expectedCount,
                     generatedBarCount = results.Count,
+                    minimumBeamHeightMm = SideBarMinimumBeamHeightMm,
+                    skippedBeamIds = skippedBeamIds.OrderBy(id => id).ToList(),
                     generatedByBeam = results
                         .GroupBy(result => result.SourceBeamId)
                         .Select(group => new
@@ -217,6 +244,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         $"Side-bar geometry count mismatch: expected {expectedCount}, generated {results.Count}.");
                 foreach (var rebarBeam in rebarBeams)
                 {
+                    if (skippedBeamIds.Contains(rebarBeam.BeamId)) continue;
                     var expectedLevels = rebarBeam.RebarBeamSectionStart
                         .RebarBeamSideBar.QuantitySide;
                     var actualLevels = results

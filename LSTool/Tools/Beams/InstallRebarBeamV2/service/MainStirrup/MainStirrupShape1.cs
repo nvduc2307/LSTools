@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB.Structure;
+﻿using Autodesk.Revit.DB.Structure;
 using LSTool.Compatibility;
 using LSTool.Tools.Beams.InstallRebarBeamV2.models.MainStirrups;
 using RIMT.Utils.RevRebars;
@@ -19,7 +19,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.MainStirrup
                 var xVec = point2 - point1;
                 var yVec = point4 - point1;
 
-                if (chanLe % 2 == 1)
+                if (MainStirrupDto.StaggerHooks && chanLe % 2 == 1)
                 {
                     origin = point2;
                     xVec = point1 - point2;
