@@ -57,10 +57,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.SubHorizontalStirrup
                     + "must be positive.");
             }
             var quantity = length / SubStirrupDto.Spacing;
-            var phanDu = quantity - (int)quantity;
-            var remainderLength = phanDu * SubStirrupDto.Spacing;
 
-            
+
             var chanLe = 0;
             for (var i = 0; i < quantity; i++)
             {
@@ -77,21 +75,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service.SubHorizontalStirrup
                 last = new Tuple<LineHorizontalDto, int>(lineDto, chanLe);
             }
 
-            if (remainderLength > SubStirrupDto.Spacing * 0.5)
-            {
-                var transform = Transform.CreateTranslation(
-                    length * SubStirrupDto.Direction);
-                var lineDto = new LineHorizontalDto()
-                {
-                    Left = SubStirrupDto.Left,
-                    Right = SubStirrupDto.Right,
-                    Transform = transform,
-                    DirectionToInside = SubStirrupDto.DirectionInside,
-                };
-                PlaceRebar(lineDto, ++chanLe);
-                last = new Tuple<LineHorizontalDto, int>(lineDto, chanLe);
-            }
-
+            // Bỏ thanh bù ở mép đoạn, cùng lý do như đai chính: thanh này lệch
+            // bước nên không nằm chung được rebar set Fixed Number, và còn bắt
+            // cặp với thanh bù của đoạn kế thành những nhóm hai thanh vô nghĩa.
             return last;
         }
 
