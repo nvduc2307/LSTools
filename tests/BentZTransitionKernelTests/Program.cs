@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry;
@@ -59,6 +59,14 @@ internal static class Program
             ColumnEnvelopeReportsEveryFailedSide,
             ColumnEnvelopeRejectsInvalidOrEmptyInput,
             IndependentAnchorageUsesCallerSuppliedThirtyFiveDiameters,
+            BendBothBarsOffKeepsTheStraightThroughRun,
+            BendBothBarsProducesTwoBentChains,
+            BendBothBarsPutsBothVerticesInsideTheJointAndApart,
+            BendBothBarsSendsBothLegsTheSameWay,
+            BendBothBarsAnchorsBothOverTheRequiredLength,
+            BendBothBarsRoundTripsThroughValidate,
+            BendBothBarsRejectsInsufficientVerticalRoom,
+            BendBothBarsRejectsAJointTooNarrowForTwoBends,
             BentTailRuleKeepsFullAnchorageWhenItFits,
             BentTailRuleFallsBackToHMinWhenFullAnchorageDoesNotFit,
             BentTailRuleRejectsInvalidHMin,
@@ -2098,11 +2106,155 @@ internal static class Program
             0.001);
     }
 
+    // ---- Cả hai thanh cùng gập vào nút -----------------------------------
+
+    private static void BendBothBarsOffKeepsTheStraightThroughRun()
+    {
+        // Mặc định tắt: giữ nguyên thanh chạy thẳng hai điểm như trước.
+        IndependentJointAnchorageResult result =
+            IndependentJointAnchorageGeometry.Plan(IndependentInput());
+
+        Equal(
+            IndependentJointAnchorageStatus.Planned,
+            result.Status,
+            "default status");
+        Equal(2, result.StraightThroughPoints.Count, "default straight count");
+    }
+
+    private static void BendBothBarsProducesTwoBentChains()
+    {
+        IndependentJointAnchorageResult result =
+            IndependentJointAnchorageGeometry.Plan(
+                IndependentInput(bendBothBars: true));
+
+        Equal(
+            IndependentJointAnchorageStatus.Planned,
+            result.Status,
+            "bend-both status");
+        Equal(
+            IndependentJointAnchorageFailure.None,
+            result.Failure,
+            "bend-both failure");
+        Equal(3, result.StraightThroughPoints.Count, "straight count");
+        Equal(3, result.BentVerticalPoints.Count, "bent count");
+    }
+
+    private static void BendBothBarsPutsBothVerticesInsideTheJointAndApart()
+    {
+        IndependentJointAnchorageResult result =
+            IndependentJointAnchorageGeometry.Plan(
+                IndependentInput(bendBothBars: true));
+
+        // Nút chạy từ trạm 6 tới 10, khoảng lùi 1 ở cả hai mặt.
+        double straightVertex = result.StraightThroughPoints[1].Station;
+        double bentVertex = result.BentVerticalPoints[1].Station;
+        Equal(7.0, straightVertex, "straight bend station");
+        Equal(9.0, bentVertex, "bent bend station");
+        True(
+            straightVertex > 6.0 && straightVertex < 10.0,
+            "straight vertex inside joint");
+        True(
+            bentVertex > 6.0 && bentVertex < 10.0,
+            "bent vertex inside joint");
+        True(
+            Math.Abs(bentVertex - straightVertex) > 1e-6,
+            "vertices are apart");
+    }
+
+    private static void BendBothBarsSendsBothLegsTheSameWay()
+    {
+        IndependentJointAnchorageResult result =
+            IndependentJointAnchorageGeometry.Plan(
+                IndependentInput(bendBothBars: true));
+
+        double straightLeg =
+            result.StraightThroughPoints[2].Elevation
+            - result.StraightThroughPoints[1].Elevation;
+        double bentLeg =
+            result.BentVerticalPoints[2].Elevation
+            - result.BentVerticalPoints[1].Elevation;
+        True(straightLeg * bentLeg > 0.0, "both legs point the same way");
+    }
+
+    private static void BendBothBarsAnchorsBothOverTheRequiredLength()
+    {
+        const double required = 5.0;
+        IndependentJointAnchorageResult result =
+            IndependentJointAnchorageGeometry.Plan(
+                IndependentInput(
+                    requiredAnchorageLength: required,
+                    bendBothBars: true));
+
+        True(
+            result.StraightProvidedAnchorageLength >= required - 1e-9,
+            "straight anchorage at least the required length");
+        True(
+            result.BentProvidedAnchorageLength >= required - 1e-9,
+            "bent anchorage at least the required length");
+    }
+
+    private static void BendBothBarsRoundTripsThroughValidate()
+    {
+        IndependentJointAnchorageInput input =
+            IndependentInput(bendBothBars: true);
+        IndependentJointAnchorageResult planned =
+            IndependentJointAnchorageGeometry.Plan(input);
+
+        IndependentJointAnchorageValidationResult validation =
+            IndependentJointAnchorageGeometry.Validate(
+                input,
+                planned.StraightThroughPoints,
+                planned.BentVerticalPoints);
+
+        Equal(true, validation.IsValid, "round trip validity");
+    }
+
+    private static void BendBothBarsRejectsInsufficientVerticalRoom()
+    {
+        // Thanh bên không chênh xuất phát từ cao độ 3, cần 5 nhưng trần chỉ ở
+        // 7 nên chỉ còn 4. Thanh bên chênh xuất phát từ 0 thì vẫn đủ.
+        IndependentJointAnchorageResult result =
+            IndependentJointAnchorageGeometry.Plan(
+                IndependentInput(
+                    bentVerticalLimitElevation: 7.0,
+                    bendBothBars: true));
+
+        Equal(
+            IndependentJointAnchorageStatus.Unsupported,
+            result.Status,
+            "vertical room status");
+        Equal(
+            IndependentJointAnchorageFailure
+                .InsufficientBentAnchorAvailability,
+            result.Failure,
+            "vertical room failure");
+    }
+
+    private static void BendBothBarsRejectsAJointTooNarrowForTwoBends()
+    {
+        // Nút rộng 4, khoảng lùi 2 ở cả hai mặt dồn hai đỉnh uốn về cùng chỗ.
+        IndependentJointAnchorageResult result =
+            IndependentJointAnchorageGeometry.Plan(
+                IndependentInput(
+                    bendInsetFromShallowFace: 2.0,
+                    bendBothBars: true));
+
+        Equal(
+            IndependentJointAnchorageStatus.Unsupported,
+            result.Status,
+            "narrow joint status");
+        Equal(
+            IndependentJointAnchorageFailure.BendOutsideJoint,
+            result.Failure,
+            "narrow joint failure");
+    }
+
     private static IndependentJointAnchorageInput IndependentInput(
         double requiredAnchorageLength = 5.0,
         double bentVerticalLimitElevation = 10.0,
         double bendInsetFromShallowFace = 1.0,
-        double? requiredBentAnchorageLength = null)
+        double? requiredBentAnchorageLength = null,
+        bool bendBothBars = false)
     {
         return new IndependentJointAnchorageInput(
             0.0,
@@ -2118,7 +2270,8 @@ internal static class Program
             0.5,
             0.25,
             0.001,
-            requiredBentAnchorageLength);
+            requiredBentAnchorageLength,
+            bendBothBars);
     }
 
     private static IndependentJointAnchorageInput RuntimeDepthInput(
@@ -2166,6 +2319,12 @@ internal static class Program
             throw new InvalidOperationException(
                 label + ": expected " + expected + ", actual " + actual + ".");
         }
+    }
+
+    private static void True(bool condition, string label)
+    {
+        if (!condition)
+            throw new InvalidOperationException($"{label}: expected true.");
     }
 
     private static void Equal<T>(T expected, T actual, string label)

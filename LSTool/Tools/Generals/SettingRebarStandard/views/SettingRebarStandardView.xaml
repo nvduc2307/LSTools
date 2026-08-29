@@ -234,10 +234,19 @@
                                     </Grid>
                                 </StackPanel>
                             </StackPanel>
-                            <Image 
+                            <Image
                                 Grid.Column="1"
                                 Source="/LSTool;component/Tools/Generals/SettingRebarStandard/imgs/LS_Setting_Beam_Div.png"/>
                         </Grid>
+                    </GroupBox>
+                    <GroupBox Header="Staggered joint" Margin="0,10,0,0">
+                        <CheckBox
+                            DataContext="{Binding SettingRebarStandardModel}"
+                            IsChecked="{Binding BendBothBarsAtStaggeredJoint}"
+                            Margin="5"
+                            VerticalContentAlignment="Center"
+                            Content="Bend both main bars into the joint"
+                            ToolTip="Off: the bar on the level side runs straight through the joint and anchors inside the far beam.&#x0a;On: it bends into the joint the same way and the same direction as the stepped-side bar, both anchored over the same length."/>
                     </GroupBox>
                 </StackPanel>
             </TabItem>

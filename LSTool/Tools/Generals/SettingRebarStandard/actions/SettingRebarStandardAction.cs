@@ -46,6 +46,8 @@ namespace LSTool.Tools.Generals.SettingRebarStandard.actions
             obj.EC = _viewModel.SettingRebarStandardModel.EC;
             obj.EB = _viewModel.SettingRebarStandardModel.EB;
             obj.CoverC = _viewModel.SettingRebarStandardModel.CoverC;
+            obj.BendBothBarsAtStaggeredJoint =
+                _viewModel.SettingRebarStandardModel.BendBothBarsAtStaggeredJoint;
             var content = JsonConvert.SerializeObject(obj);
             using (var ts = new Transaction(_document, "new transaction"))
             {
@@ -98,6 +100,10 @@ namespace LSTool.Tools.Generals.SettingRebarStandard.actions
                 result.EC = obj.EC;
                 result.EB = obj.EB;
                 result.CoverC = obj.CoverC;
+                // Thiếu trường này trong dữ liệu cũ thì JSON trả về false,
+                // tức giữ nguyên hành vi trước đây.
+                result.BendBothBarsAtStaggeredJoint =
+                    obj.BendBothBarsAtStaggeredJoint;
             }
             catch (Exception)
             {

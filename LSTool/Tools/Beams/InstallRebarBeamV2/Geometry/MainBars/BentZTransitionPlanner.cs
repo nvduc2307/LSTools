@@ -378,6 +378,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     + $"diameter for the temporary 35D rule: "
                     + exception.Message);
             }
+            var bendBothBars = viewModel.SettingRebarStandardModel
+                ?.BendBothBarsAtStaggeredJoint ?? false;
             var hMinDiameterMultiplier =
                 viewModel.SettingRebarStandardModel?.HMin ?? 0;
             if (hMinDiameterMultiplier <= 0)
@@ -589,7 +591,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         bendClearance.CenterlineBendRadiusFt,
                         minimumStraightLengthFt,
                         toleranceFt,
-                        bentTailPlan.RequiredBentTailLength);
+                        bentTailPlan.RequiredBentTailLength,
+                        bendBothBars);
                 bentTailPlans.Add(bentTailPlan);
                 context.DiagnosticLog?.Record(
                     "main.independent-anchor.input",
@@ -823,6 +826,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     straightLaneEnvelope,
                     bendClearance.CenterlineClearanceFt,
                     toleranceFt,
+                    bendBothBars,
                     context,
                     stageName);
 
@@ -1326,6 +1330,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             BeamLaneEnvelope straightLaneEnvelope,
             double centerlineClearanceFt,
             double toleranceFt,
+            bool bendBothBars,
             RebarExecutionContext context,
             string stageName)
         {
@@ -1411,7 +1416,11 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             var straightEnd =
                 planned.StraightThroughPoints[
                     planned.StraightThroughPoints.Count - 1];
-            if (!IsInside(
+            // Khi thanh này gập trong nút thì nó không còn cắm sang dầm bên
+            // kia nữa, nên kiểm tra bao dầm không còn ý nghĩa. Kernel đã kiểm
+            // tra đỉnh uốn nằm hẳn trong nút và giữ đủ lớp bảo vệ hai mặt.
+            if (!bendBothBars
+                && !IsInside(
                     straightEnd.Station,
                     bentBeam.MinX,
                     bentBeam.MaxX,
@@ -1429,6 +1438,35 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             var bentEnd =
                 planned.BentVerticalPoints[
                     planned.BentVerticalPoints.Count - 1];
+
+            // Khi cả hai thanh cùng gập, chân đứng của thanh bên không chênh
+            // cũng phải nằm trong bao cột đã trừ lớp bảo vệ. Nó xuất phát từ
+            // cao độ thấp hơn nên chạm biên trước, kiểm tra trước luôn.
+            if (bendBothBars)
+            {
+                IndependentJointColumnVerticalCoverFailure
+                    straightCoverFailure =
+                        IndependentJointColumnVerticalCoverRule.Evaluate(
+                            bentZ,
+                            straightZ,
+                            straightEnd.Elevation,
+                            joint.ColumnBottomZ,
+                            joint.ColumnTopZ,
+                            centerlineClearanceFt,
+                            toleranceFt);
+                if (straightCoverFailure
+                    != IndependentJointColumnVerticalCoverFailure.None)
+                {
+                    throw Unsupported(
+                        context,
+                        stageName,
+                        "IndependentAnchorOutsideColumnVerticalCover",
+                        $"Level-side lane {lane.LaneIndex + 1} cannot bend "
+                        + "into the joint without leaving the cover-reduced "
+                        + $"column height ({straightCoverFailure}).");
+                }
+            }
+
             IndependentJointColumnVerticalCoverFailure verticalCoverFailure =
                 IndependentJointColumnVerticalCoverRule.Evaluate(
                     bentZ,
