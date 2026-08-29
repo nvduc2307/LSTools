@@ -12,6 +12,7 @@ using LSTool.Tools.Beams.InstallRebarBeamV2.views;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Support.Legacy;
 using LSTool.Tools.Beams.InstallRebarBeamV2.UI.Preview;
 using LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics;
+using LSTool.Tools.Beams.InstallRebarBeamV2.Revit.Grouping;
 using LSTool.Tools.Generals.SettingRebarStandard.actions;
 using LSTool.Tools.Generals.SettingRebarStandard.models;
 using RIMT.Utils;
@@ -56,6 +57,14 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.viewModels
         public CanvasPageBase CanvasPageSectionEnd { get; set; }
         public SettingStirrupSectionViewModel SettingStirrupSectionViewModel { get; set; }
         public SettingRebarStandardModelUI SettingRebarStandardModel { get; }
+
+        /// <summary>
+        /// Cách bố trí thanh thép sau khi dựng. Mặc định gom thành rebar set
+        /// theo Fixed Number; đặt Enabled = false để quay lại từng thanh rời.
+        /// </summary>
+        public RebarGroupingOptions RebarGrouping { get; } =
+            RebarGroupingOptions.Default;
+
         internal RebarDiagnosticLog DiagnosticLog { get; set; }
 
         public InstallRebarBeamV2ViewModel(
