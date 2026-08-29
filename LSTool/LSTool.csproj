@@ -128,4 +128,87 @@
     <ItemGroup>
       <Folder Include="Resources\Imgs\" />
     </ItemGroup>
+    
+    <ItemGroup>
+      <Compile Update="Properties\Langs\General.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>General.resx</DependentUpon>
+      </Compile>
+      <Compile Update="Properties\Langs\InstallRebarBeamV2Langs.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>InstallRebarBeamV2Langs.resx</DependentUpon>
+      </Compile>
+      <Compile Update="Properties\Langs\RebarScheduleParameter.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>RebarScheduleParameter.resx</DependentUpon>
+      </Compile>
+      <Compile Update="Properties\Langs\RebarStructureType.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>RebarStructureType.resx</DependentUpon>
+      </Compile>
+      <Compile Update="Properties\Langs\SchemaInfo.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>SchemaInfo.resx</DependentUpon>
+      </Compile>
+      <Compile Update="Properties\Langs\ShareParameterInfo.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>ShareParameterInfo.resx</DependentUpon>
+      </Compile>
+      <Compile Update="Properties\RTParams.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>RTParams.resx</DependentUpon>
+      </Compile>
+    </ItemGroup>
+    
+    <ItemGroup>
+      <EmbeddedResource Update="Properties\Langs\General.ja-JP.resx">
+        <CustomToolNamespace></CustomToolNamespace>
+        <Generator>PublicResXFileCodeGenerator</Generator>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Properties\Langs\General.resx">
+        <CustomToolNamespace></CustomToolNamespace>
+        <Generator>PublicResXFileCodeGenerator</Generator>
+        <LastGenOutput>General.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Properties\Langs\InstallRebarBeamV2Langs.ja-JP.resx">
+        <Generator>PublicResXFileCodeGenerator</Generator>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Properties\Langs\InstallRebarBeamV2Langs.resx">
+        <Generator>PublicResXFileCodeGenerator</Generator>
+        <LastGenOutput>InstallRebarBeamV2Langs.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Properties\Langs\RebarScheduleParameter.resx">
+        <Generator>PublicResXFileCodeGenerator</Generator>
+        <LastGenOutput>RebarScheduleParameter.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Properties\Langs\RebarStructureType.ja-JP.resx">
+        <Generator>PublicResXFileCodeGenerator</Generator>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Properties\Langs\RebarStructureType.resx">
+        <Generator>PublicResXFileCodeGenerator</Generator>
+        <LastGenOutput>RebarStructureType.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Properties\Langs\SchemaInfo.resx">
+        <Generator>PublicResXFileCodeGenerator</Generator>
+        <LastGenOutput>SchemaInfo.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Properties\Langs\ShareParameterInfo.resx">
+        <Generator>PublicResXFileCodeGenerator</Generator>
+        <LastGenOutput>ShareParameterInfo.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Properties\RTParams.ja-JP.resx">
+        <Generator>PublicResXFileCodeGenerator</Generator>
+      </EmbeddedResource>
+      <EmbeddedResource Update="Properties\RTParams.resx">
+        <Generator>PublicResXFileCodeGenerator</Generator>
+        <LastGenOutput>RTParams.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+    </ItemGroup>
 </Project>
