@@ -235,6 +235,24 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.service
                         }
                     }
 
+                    // Dầm không có thép hông thì cũng không có đai phụ chống
+                    // phình cho nó. Đây là trường hợp hợp lệ, ví dụ dầm thấp
+                    // hơn ngưỡng bố trí thép hông, nên bỏ qua chứ không báo
+                    // lỗi. Phải tăng cb trước khi continue vì nó là chỉ số
+                    // cấu hình của dầm, chỉ tăng ở cuối vòng lặp.
+                    if (stirrupStartSegment.Count == 0
+                        && stirrupEndSegment.Count == 0
+                        && stirrupMidSegment.Count == 0)
+                    {
+                        context.DiagnosticLog?.Record("stirrup.side.skipped", new
+                        {
+                            beamId = subBeam.Id,
+                            reason = "beam has no side bars"
+                        });
+                        cb++;
+                        continue;
+                    }
+
                     //rải thép ở segment Start, End trước
                     Tuple<LineHorizontalDto, int> lastPositionStartSegment = null, lastPositionEndSegment = null;
                     foreach (var stirrupStartSegment1 in stirrupStartSegment)
