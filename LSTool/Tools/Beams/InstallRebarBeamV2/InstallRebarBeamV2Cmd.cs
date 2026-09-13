@@ -28,11 +28,16 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2
 
             AC.GetInformation(Application.ActiveUIDocument);
             var document = Application.ActiveUIDocument.Document;
+            var commandTracePath = RebarDiagnosticLog
+                .StartCommandTrace(document);
+            var stage = "transaction-group.start";
+            var selectionCompleted = false;
             using (var tsg = new TransactionGroup(document, "Install Rebar Beam V2"))
             {
                 tsg.Start();
                 try
                 {
+                    stage = "beam-selection";
                     var selectedBeams = Application.ActiveUIDocument.Selection
                         .PickObjects(
                             ObjectType.Element,
@@ -44,14 +49,37 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2
                         .GroupBy(element => element.Id.Value)
                         .Select(group => group.First())
                         .ToList();
+                    selectionCompleted = true;
+                    RebarDiagnosticLog.RecordCommandTrace(
+                        commandTracePath,
+                        "selection.completed",
+                        new
+                        {
+                            selectedBeamIds = selectedBeams
+                                .Select(beam => beam.Id.Value)
+                                .ToList()
+                        });
+                    stage = "bar-types.synchronize";
                     SynchronizeConfiguredRebarBarTypes(
                         Application.ActiveUIDocument);
+                    stage = "beam-groups.resolve";
                     var beamGroups =
                         BeamSelectionRunGrouping.Group(selectedBeams);
+                    RebarDiagnosticLog.RecordCommandTrace(
+                        commandTracePath,
+                        "beam-groups.resolved",
+                        new
+                        {
+                            groupCount = beamGroups.Count,
+                            groups = beamGroups.Select(group => group
+                                .Select(beam => beam.Id.Value)
+                                .ToList()).ToList()
+                        });
 
                     InstallRebarBeamV2ViewModel settingsSource = null;
                     foreach (var beamGroup in beamGroups)
                     {
+                        stage = "view-model.create";
                         ISubInstallRebarBeamInModelService subInstallService =
                             new SubInstallRebarBeamInModelService();
                         IDrawRebarBeamInCanvasSerice drawService =
@@ -67,7 +95,20 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2
 
                         if (settingsSource == null)
                         {
+                            stage = "main-view.show-dialog";
+                            RebarDiagnosticLog.RecordCommandTrace(
+                                commandTracePath,
+                                "main-view.showing",
+                                new
+                                {
+                                    beamIds = beamGroup
+                                        .Select(beam => beam.Id.Value)
+                                        .ToList()
+                                });
                             viewModel.MainView.ShowDialog();
+                            RebarDiagnosticLog.RecordCommandTrace(
+                                commandTracePath,
+                                "main-view.closed");
                             settingsSource = viewModel;
                         }
                         else
@@ -85,14 +126,42 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2
                     }
 
                     tsg.Assimilate();
+                    RebarDiagnosticLog.RecordCommandTrace(
+                        commandTracePath,
+                        "command.completed");
                 }
-                catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+                catch (Autodesk.Revit.Exceptions.OperationCanceledException ex)
                 {
+                    RebarDiagnosticLog.RecordCommandTrace(
+                        commandTracePath,
+                        "command.canceled",
+                        new
+                        {
+                            stage,
+                            selectionCompleted,
+                            exception = ex.ToString()
+                        });
+                    if (selectionCompleted)
+                    {
+                        IO.ShowWarning(
+                            RebarErrorMessageBuilder.Build(
+                                ex,
+                                $"Beam reinforcement startup failed at "
+                                + stage));
+                    }
                     if (tsg.GetStatus() == TransactionStatus.Started)
                         tsg.RollBack();
                 }
                 catch (Exception ex)
                 {
+                    RebarDiagnosticLog.RecordCommandTrace(
+                        commandTracePath,
+                        "command.failed",
+                        new
+                        {
+                            stage,
+                            exception = ex.ToString()
+                        });
                     IO.ShowWarning(
                         RebarErrorMessageBuilder.Build(
                             ex,

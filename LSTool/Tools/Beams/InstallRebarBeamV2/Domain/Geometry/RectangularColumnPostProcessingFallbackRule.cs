@@ -32,9 +32,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
 
     /// <summary>
     /// Allows a joined/cut Revit column to use its original rectangular
-    /// geometry only when the current solid is still the same axis-aligned
-    /// box and merely has split topology edges. Cuts, voids, rotations and
-    /// changed envelopes remain unsupported.
+    /// geometry when the current solid remains a filled axis-aligned box with
+    /// the same cross-section. A planar Z trim/extension from joins is allowed;
+    /// cuts, voids, rotations and changed cross-sections remain unsupported.
     /// </summary>
     public static class RectangularColumnPostProcessingFallbackRule
     {
@@ -113,20 +113,23 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
             if (Math.Abs(currentSizeXmm - originalSizeXmm)
                     > dimensionToleranceMm
                 || Math.Abs(currentSizeYmm - originalSizeYmm)
-                    > dimensionToleranceMm
-                || Math.Abs(currentHeightMm - originalHeightMm)
                     > dimensionToleranceMm)
             {
                 return Failed(
                     RectangularColumnFallbackFailure.EnvelopeMismatch,
-                    "The current and original column envelopes differ.");
+                    "The current and original column cross-sections differ.");
             }
 
             return new RectangularColumnFallbackResult(
                 RectangularColumnFallbackFailure.None,
-                "The current solid is the same rectangular box as the "
-                + "original family geometry; only its topology edges were "
-                + "split by Revit post-processing.");
+                Math.Abs(currentHeightMm - originalHeightMm)
+                    <= dimensionToleranceMm
+                    ? "The current solid is the same rectangular box as the "
+                      + "original family geometry; only its topology edges "
+                      + "were split by Revit post-processing."
+                    : "The current solid remains a filled rectangular prism "
+                      + "with the original cross-section; Revit "
+                      + "post-processing changed only its Z extent.");
         }
 
         private static RectangularColumnFallbackResult Failed(

@@ -17,7 +17,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics
     public sealed class RebarDiagnosticLog : IDisposable
     {
         private const string DifferentSectionGeometryRevision =
-            "20260803.10-layer1-cross-span-synchronization";
+            "20260913.16-command-startup-diagnostics";
         private readonly object _syncRoot = new();
         private readonly StreamWriter _writer;
         private readonly JsonSerializerSettings _serializerSettings = new()
@@ -38,6 +38,64 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Application.Diagnostics
 
         public string FilePath { get; }
         public string RunId { get; }
+
+        public static string StartCommandTrace(Document document)
+        {
+            try
+            {
+                var logDirectory = Path.Combine(
+                    PathUtils.AppDataRimT,
+                    "Logs",
+                    "InstallRebarBeamV2");
+                Directory.CreateDirectory(logDirectory);
+                var documentName = SanitizeFileName(
+                    document?.Title ?? "NoDocument");
+                var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
+                var filePath = Path.Combine(
+                    logDirectory,
+                    $"command_{timestamp}_{documentName}.jsonl");
+                File.WriteAllText(
+                    Path.Combine(logDirectory, "command-latest.txt"),
+                    filePath,
+                    new UTF8Encoding(false));
+                RecordCommandTrace(filePath, "command.started", new
+                {
+                    documentTitle = document?.Title,
+                    differentSectionGeometryRevision =
+                        DifferentSectionGeometryRevision
+                });
+                return filePath;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static void RecordCommandTrace(
+            string filePath,
+            string eventName,
+            object data = null)
+        {
+            if (string.IsNullOrWhiteSpace(filePath)) return;
+            try
+            {
+                var line = JsonConvert.SerializeObject(new
+                {
+                    timestamp = DateTimeOffset.Now,
+                    eventName,
+                    data
+                });
+                File.AppendAllText(
+                    filePath,
+                    line + Environment.NewLine,
+                    new UTF8Encoding(false));
+            }
+            catch
+            {
+                // Startup diagnostics must never change command behavior.
+            }
+        }
 
         public static RebarDiagnosticLog Start(InstallRebarBeamV2ViewModel viewModel)
         {
