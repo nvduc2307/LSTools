@@ -49,10 +49,16 @@ internal static class Program
             CenterlineRadiusFallsBackToNominalDiameter,
             CenterlineRadiusRejectsInvalidDiameters,
             RectangularColumnFallbackAcceptsSplitJoinedEdges,
+            RectangularColumnFallbackAcceptsPlanarZTrim,
             RectangularColumnFallbackRejectsCutVolume,
             RectangularColumnFallbackRejectsEnvelopeChange,
             RectangularColumnFallbackRejectsOtherFailure,
             RectangularColumnFallbackRejectsUnsupportedOriginal,
+            JointColumnSelectionChoosesWorkingRangeOwner,
+            JointColumnSelectionPrefersCommonJoinedColumn,
+            JointColumnSelectionCollapsesEquivalentEnvelopes,
+            JointColumnSelectionRejectsDuplicatedColumns,
+            JointColumnSelectionRejectsPartialVerticalOverlap,
             ColumnEnvelopeAcceptsExactBoundary,
             ColumnEnvelopeAcceptsVerificationBudget,
             ColumnEnvelopeRejectsBeyondVerificationBudget,
@@ -69,6 +75,7 @@ internal static class Program
             BendBothBarsRejectsAJointTooNarrowForTwoBends,
             BentTailRuleKeepsFullAnchorageWhenItFits,
             BentTailRuleFallsBackToHMinWhenFullAnchorageDoesNotFit,
+            BentTailRuleUsesBothBarsGoverningAvailability,
             BentTailRuleRejectsInvalidHMin,
             ColumnVerticalCoverAllowsD13HMinBelowShallowBeamOverlap,
             ColumnVerticalCoverMirrorsD13HMinBelowShallowBeamOverlap,
@@ -392,6 +399,18 @@ internal static class Program
             "split-edge fallback failure");
     }
 
+    private static void RectangularColumnFallbackAcceptsPlanarZTrim()
+    {
+        RectangularColumnFallbackResult result =
+            EvaluateRectangularColumnFallback(currentHeightMm: 3900.0);
+
+        Equal(true, result.IsAllowed, "planar Z trim fallback validity");
+        Equal(
+            RectangularColumnFallbackFailure.None,
+            result.Failure,
+            "planar Z trim fallback failure");
+    }
+
     private static void RectangularColumnFallbackRejectsCutVolume()
     {
         RectangularColumnFallbackResult result =
@@ -442,6 +461,121 @@ internal static class Program
             RectangularColumnFallbackFailure.OriginalGeometryUnsupported,
             result.Failure,
             "unsupported-original failure");
+    }
+
+    private static void JointColumnSelectionChoosesWorkingRangeOwner()
+    {
+        JointColumnCandidateSelectionResult result =
+            JointColumnCandidateSelectionRule.Evaluate(
+                new[]
+                {
+                    new JointColumnCandidateInterval(10, 0.0, 10.0),
+                    new JointColumnCandidateInterval(20, 10.0, 20.0)
+                },
+                8.0,
+                9.5,
+                0.01);
+
+        Equal(true, result.IsSelected, "working-range owner selected");
+        Equal(
+            10L,
+            result.SelectedId.GetValueOrDefault(),
+            "working-range owner id");
+    }
+
+    private static void JointColumnSelectionRejectsDuplicatedColumns()
+    {
+        JointColumnCandidateSelectionResult result =
+            JointColumnCandidateSelectionRule.Evaluate(
+                new[]
+                {
+                    new JointColumnCandidateInterval(10, 0.0, 10.0),
+                    new JointColumnCandidateInterval(20, 0.0, 10.0)
+                },
+                8.0,
+                9.5,
+                0.01);
+
+        Equal(false, result.IsSelected, "duplicated column selection");
+        Equal(
+            JointColumnCandidateSelectionFailure.Ambiguous,
+            result.Failure,
+            "duplicated column failure");
+    }
+
+    private static void JointColumnSelectionPrefersCommonJoinedColumn()
+    {
+        JointColumnCandidateSelectionResult result =
+            JointColumnCandidateSelectionRule.Evaluate(
+                new[]
+                {
+                    new JointColumnCandidateInterval(10, 0.0, 10.0),
+                    new JointColumnCandidateInterval(
+                        20,
+                        0.0,
+                        10.0,
+                        isJoinedToEveryBeam: true)
+                },
+                8.0,
+                9.5,
+                0.01);
+
+        Equal(true, result.IsSelected, "common joined column selected");
+        Equal(
+            20L,
+            result.SelectedId.GetValueOrDefault(),
+            "common joined column id");
+        Equal(
+            true,
+            result.UsedCommonJoinPriority,
+            "common join priority used");
+    }
+
+    private static void JointColumnSelectionCollapsesEquivalentEnvelopes()
+    {
+        JointColumnCandidateSelectionResult result =
+            JointColumnCandidateSelectionRule.Evaluate(
+                new[]
+                {
+                    new JointColumnCandidateInterval(
+                        10, 1.0, 2.0, 3.0, 4.0, 0.0, 10.0, true),
+                    new JointColumnCandidateInterval(
+                        20, 1.0, 2.0, 3.0, 4.0, 0.0, 10.0, true)
+                },
+                8.0,
+                9.5,
+                0.01);
+
+        Equal(true, result.IsSelected, "equivalent envelope selected");
+        Equal(
+            10L,
+            result.SelectedId.GetValueOrDefault(),
+            "equivalent envelope representative id");
+        Equal(
+            true,
+            result.UsedEquivalentEnvelopeCollapse,
+            "equivalent envelope collapse used");
+    }
+
+    private static void JointColumnSelectionRejectsPartialVerticalOverlap()
+    {
+        JointColumnCandidateSelectionResult result =
+            JointColumnCandidateSelectionRule.Evaluate(
+                new[]
+                {
+                    new JointColumnCandidateInterval(10, 0.0, 8.5),
+                    new JointColumnCandidateInterval(20, 9.0, 20.0)
+                },
+                8.0,
+                9.5,
+                0.01);
+
+        Equal(false, result.IsSelected, "partial-overlap selection");
+        Equal(
+            JointColumnCandidateSelectionFailure
+                .NoCandidateContainsWorkingRange,
+            result.Failure,
+            "partial-overlap failure");
     }
 
     private static RectangularColumnFallbackResult
@@ -1238,6 +1372,29 @@ internal static class Program
             result.Policy,
             "hMin fallback tail policy");
         Near(250.0, result.RequiredBentTailLength, "hMin tail length");
+    }
+
+    private static void BentTailRuleUsesBothBarsGoverningAvailability()
+    {
+        double result = IndependentJointBentTailRule
+            .ResolveGoverningVerticalAvailability(
+                531.99,
+                131.99,
+                bendBothBars: true);
+
+        Near(131.99, result, "both-bars governing availability");
+        IndependentJointBentTailPlan plan =
+            IndependentJointBentTailRule.Resolve(
+                210.0,
+                6.0,
+                10.0,
+                result,
+                1.0);
+        Equal(
+            IndependentJointBentTailPolicy.LongestStraightThenHMin,
+            plan.Policy,
+            "both-bars hMin fallback policy");
+        Near(60.0, plan.RequiredBentTailLength, "both-bars hMin length");
     }
 
     private static void BentTailRuleRejectsInvalidHMin()

@@ -35,6 +35,24 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Domain.Geometry
 
     public static class IndependentJointBentTailRule
     {
+        public static double ResolveGoverningVerticalAvailability(
+            double deepSideAvailableLength,
+            double levelSideAvailableLength,
+            bool bendBothBars)
+        {
+            EnsureFinite(
+                deepSideAvailableLength,
+                nameof(deepSideAvailableLength));
+            EnsureFinite(
+                levelSideAvailableLength,
+                nameof(levelSideAvailableLength));
+            return bendBothBars
+                ? Math.Min(
+                    deepSideAvailableLength,
+                    levelSideAvailableLength)
+                : deepSideAvailableLength;
+        }
+
         public static IndependentJointBentTailPlan Resolve(
             double fullAnchorageLength,
             double nominalBarDiameter,

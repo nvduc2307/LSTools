@@ -178,10 +178,20 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 return legacyRuns;
             }
 
+            var workingMinimumZ = terminalRuns.Min(item =>
+                Math.Min(
+                    item.TerminalPath.CoreStart.Z,
+                    item.TerminalPath.CoreEnd.Z));
+            var workingMaximumZ = terminalRuns.Max(item =>
+                Math.Max(
+                    item.TerminalPath.CoreStart.Z,
+                    item.TerminalPath.CoreEnd.Z));
             var joint = ResolveJointGeometry(
                 viewModel,
                 context,
-                geometryToleranceFt);
+                geometryToleranceFt,
+                workingMinimumZ,
+                workingMaximumZ);
             if (policyClassification.Policy
                 == MainBarTransitionPolicy.IndependentAnchorage35D)
             {
@@ -553,9 +563,18 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 var verticalDirection = Math.Sign(
                     lane.StraightSide.CorePoint.Z
                     - lane.BentSide.CorePoint.Z);
-                var verticalAvailableFt =
+                var deepSideVerticalAvailableFt =
                     (verticalLimitZ - lane.BentSide.CorePoint.Z)
                     * verticalDirection;
+                var levelSideVerticalAvailableFt =
+                    (verticalLimitZ - lane.StraightSide.CorePoint.Z)
+                    * verticalDirection;
+                var governingVerticalAvailableFt =
+                    IndependentJointBentTailRule
+                        .ResolveGoverningVerticalAvailability(
+                            deepSideVerticalAvailableFt,
+                            levelSideVerticalAvailableFt,
+                            bendBothBars);
                 IndependentJointBentTailPlan bentTailPlan;
                 try
                 {
@@ -563,7 +582,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         requiredAnchorageFt,
                         nominalBarDiameterFt,
                         hMinDiameterMultiplier,
-                        verticalAvailableFt,
+                        governingVerticalAvailableFt,
                         toleranceFt);
                 }
                 catch (Exception exception)
@@ -628,9 +647,16 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                             (Math.Abs(jointEnd - jointStart)
                                 + requiredAnchorageFt).FootToMm(),
                             3),
-                        verticalAvailableMm = Math.Round(
-                            verticalAvailableFt.FootToMm(),
+                        deepSideVerticalAvailableMm = Math.Round(
+                            deepSideVerticalAvailableFt.FootToMm(),
                             3),
+                        levelSideVerticalAvailableMm = Math.Round(
+                            levelSideVerticalAvailableFt.FootToMm(),
+                            3),
+                        governingVerticalAvailableMm = Math.Round(
+                            governingVerticalAvailableFt.FootToMm(),
+                            3),
+                        bendBothBars,
                         bentSideStationMm = Math.Round(
                             lane.BentSide.Station.FootToMm(),
                             3),
@@ -686,7 +712,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                                     .FootToMm(),
                                 3),
                             availableVerticalMm = Math.Round(
-                                Math.Max(0.0, verticalAvailableFt)
+                                Math.Max(
+                                    0.0,
+                                    governingVerticalAvailableFt)
                                     .FootToMm(),
                                 3),
                             horizontalPolicy =
@@ -701,7 +729,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     var requiredBentTailMm =
                         bentTailPlan.RequiredBentTailLength.FootToMm();
                     var availableVerticalMm =
-                        Math.Max(0.0, verticalAvailableFt).FootToMm();
+                        Math.Max(
+                            0.0,
+                            governingVerticalAvailableFt).FootToMm();
                     var measurement = planned.Failure
                         == IndependentJointAnchorageFailure
                             .InsufficientBentAnchorAvailability
@@ -2772,7 +2802,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
         private BeamJointGeometry ResolveJointGeometry(
             InstallRebarBeamV2ViewModel viewModel,
             RebarExecutionContext context,
-            double toleranceFt)
+            double toleranceFt,
+            double workingMinimumZ,
+            double workingMaximumZ)
         {
             var members = viewModel.ElementInstances.Beam.ElementSubs;
             if (members.Count != 2)
@@ -2854,6 +2886,24 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     item.Line.Evaluate(0.5, true).DotProduct(axisX))
                 .ThenBy(item => item.Member.Id)
                 .ToList();
+            var commonJoinedColumnIds = new HashSet<long>(
+                JoinGeometryUtils
+                    .GetJoinedElements(
+                        context.Document,
+                        ordered[0].Member.Element)
+                    .Where(id =>
+                        context.Document.GetElement(id)?.Category?.Id.Value
+                        == (long)BuiltInCategory.OST_StructuralColumns)
+                    .Select(id => id.Value));
+            commonJoinedColumnIds.IntersectWith(
+                JoinGeometryUtils
+                    .GetJoinedElements(
+                        context.Document,
+                        ordered[1].Member.Element)
+                    .Where(id =>
+                        context.Document.GetElement(id)?.Category?.Id.Value
+                        == (long)BuiltInCategory.OST_StructuralColumns)
+                    .Select(id => id.Value));
             var left = CreateBeamEnvelope(ordered[0].Member, axisX, axisY);
             var right = CreateBeamEnvelope(ordered[1].Member, axisX, axisY);
             var leftCenterY = (left.MinY + left.MaxY) / 2.0;
@@ -2882,12 +2932,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             var seamStation =
                 (leftFacingStation + rightFacingStation) / 2.0;
             var seamY = (leftCenterY + rightCenterY) / 2.0;
-            var seamZ = (
-                Math.Max(left.BottomZ, right.BottomZ)
-                + Math.Min(left.TopZ, right.TopZ)) / 2.0;
-
             var candidates = new List<ColumnEnvelope>();
-            var unsupportedCandidateIds = new List<long>();
+            var unsupportedCandidates = new List<ColumnEnvelope>();
             var columns = new FilteredElementCollector(context.Document)
                 .OfCategory(BuiltInCategory.OST_StructuralColumns)
                 .WhereElementIsNotElementType()
@@ -2905,8 +2951,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     || seamStation > envelope.MaxX + toleranceFt
                     || seamY < envelope.MinY - toleranceFt
                     || seamY > envelope.MaxY + toleranceFt
-                    || seamZ < envelope.BottomZ - toleranceFt
-                    || seamZ > envelope.TopZ + toleranceFt)
+                    || workingMaximumZ < envelope.BottomZ - toleranceFt
+                    || workingMinimumZ > envelope.TopZ + toleranceFt)
                 {
                     continue;
                 }
@@ -2942,8 +2988,35 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                                 3),
                             heightMm = Math.Round(
                                 (envelope.TopZ - envelope.BottomZ).FootToMm(),
+                                3),
+                            bottomZmm = Math.Round(
+                                envelope.BottomZ.FootToMm(),
+                                3),
+                            topZmm = Math.Round(
+                                envelope.TopZ.FootToMm(),
                                 3)
                         },
+                        workingRange = new
+                        {
+                            minimumZmm = Math.Round(
+                                workingMinimumZ.FootToMm(),
+                                3),
+                            maximumZmm = Math.Round(
+                                workingMaximumZ.FootToMm(),
+                                3),
+                            overlapMm = Math.Round(
+                                Math.Max(
+                                    0.0,
+                                    Math.Min(
+                                        envelope.TopZ,
+                                        workingMaximumZ)
+                                    - Math.Max(
+                                        envelope.BottomZ,
+                                        workingMinimumZ)).FootToMm(),
+                                3)
+                        },
+                        isJoinedToEveryBeam = commonJoinedColumnIds.Contains(
+                            column.Id.Value),
                         isSupported = geometryAssessment.IsSupported,
                         acceptanceMode = geometryAssessment.AcceptanceMode,
                         fallback = geometryAssessment.Fallback,
@@ -2968,37 +3041,106 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 }
                 if (!geometryAssessment.IsSupported)
                 {
-                    unsupportedCandidateIds.Add(column.Id.Value);
+                    unsupportedCandidates.Add(envelope);
                     continue;
                 }
                 candidates.Add(envelope);
             }
 
-            if (candidates.Count != 1)
+            var selection = JointColumnCandidateSelectionRule.Evaluate(
+                candidates
+                    .Select(candidate => new JointColumnCandidateInterval(
+                        candidate.Id,
+                        candidate.MinX,
+                        candidate.MaxX,
+                        candidate.MinY,
+                        candidate.MaxY,
+                        candidate.BottomZ,
+                        candidate.TopZ,
+                        commonJoinedColumnIds.Contains(candidate.Id)))
+                    .ToList(),
+                workingMinimumZ,
+                workingMaximumZ,
+                toleranceFt);
+            context.DiagnosticLog?.Record(
+                "main.joint-column.candidates-resolved",
+                new
+                {
+                    workingMinimumZmm = Math.Round(
+                        workingMinimumZ.FootToMm(),
+                        3),
+                    workingMaximumZmm = Math.Round(
+                        workingMaximumZ.FootToMm(),
+                        3),
+                    selectionFailure = selection.Failure.ToString(),
+                    selectionMode = selection
+                        .UsedEquivalentEnvelopeCollapse
+                            ? "EquivalentEnvelopeRepresentative"
+                            : selection.UsedCommonJoinPriority
+                                ? "CommonJoinedColumn"
+                                : "GeometricWorkingRange",
+                    equivalentEnvelopeCandidateIds = selection
+                        .UsedEquivalentEnvelopeCollapse
+                            ? selection.ContainingCandidateIds
+                            : Array.Empty<long>(),
+                    selectedColumnId = selection.SelectedId,
+                    containingCandidateIds =
+                        selection.ContainingCandidateIds,
+                    supportedCandidates = candidates.Select(candidate => new
+                    {
+                        columnId = candidate.Id,
+                        isJoinedToEveryBeam = commonJoinedColumnIds.Contains(
+                            candidate.Id),
+                        bottomZmm = Math.Round(
+                            candidate.BottomZ.FootToMm(),
+                            3),
+                        topZmm = Math.Round(
+                            candidate.TopZ.FootToMm(),
+                            3)
+                    }).ToList(),
+                    unsupportedCandidateIds = unsupportedCandidates
+                        .Select(candidate => candidate.Id)
+                        .ToList()
+                });
+            if (!selection.IsSelected)
             {
-                var unsupportedGeometry =
-                    candidates.Count == 0 && unsupportedCandidateIds.Count > 0;
+                var unsupportedGeometry = unsupportedCandidates.Any(candidate =>
+                    candidate.BottomZ <= workingMinimumZ + toleranceFt
+                    && candidate.TopZ >= workingMaximumZ - toleranceFt);
+                var ambiguous = selection.Failure
+                    == JointColumnCandidateSelectionFailure.Ambiguous;
                 throw Unsupported(
                     context,
                     "main geometry",
-                    unsupportedGeometry
+                    ambiguous
+                        ? "JointColumnAmbiguous"
+                        : unsupportedGeometry
                         ? "JointColumnGeometryUnsupported"
-                        : candidates.Count == 0
-                        ? "JointColumnNotFound"
-                        : "JointColumnAmbiguous",
-                    unsupportedGeometry
+                        : "JointColumnNotFound",
+                    ambiguous
+                        ? $"The beam transition working range is contained by "
+                          + $"{selection.ContainingCandidateIds.Count} "
+                          + "structural columns; a unique transition window "
+                          + "is required. Candidate ids: "
+                          + string.Join(
+                              ", ",
+                              selection.ContainingCandidateIds)
+                        : unsupportedGeometry
                         ? "The structural column at the joint is rotated or "
                           + "non-rectangular. Different-section phase one "
                           + "requires an "
                           + "axis-aligned rectangular column. Candidate ids: "
-                          + string.Join(", ", unsupportedCandidateIds)
-                        : candidates.Count == 0
-                        ? "No structural column encloses the beam joint."
-                        : $"The beam joint intersects {candidates.Count} structural columns; "
-                          + "a unique transition window is required.");
+                          + string.Join(
+                              ", ",
+                              unsupportedCandidates.Select(candidate =>
+                                  candidate.Id))
+                        : "No supported structural column contains the full "
+                          + "vertical working range of the beam transition.");
             }
 
-            var selected = candidates[0];
+            var selectedColumnId = selection.SelectedId.GetValueOrDefault();
+            var selected = candidates.Single(candidate =>
+                candidate.Id == selectedColumnId);
             if (left.MaxX < selected.MinX - toleranceFt
                 || left.MaxX > selected.MaxX + toleranceFt
                 || right.MinX < selected.MinX - toleranceFt
@@ -3017,6 +3159,9 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 left,
                 right,
                 selected.Id,
+                selection.UsedEquivalentEnvelopeCollapse
+                    ? selection.ContainingCandidateIds
+                    : new[] { selected.Id },
                 selected.MinX,
                 selected.MaxX,
                 selected.MinY,
@@ -3176,7 +3321,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 modeledColumnReinforcement =
                     ResolveModeledJointReinforcement(
                         context.Document,
-                        joint.ColumnId,
+                        joint.ColumnIds,
                         joint.LeftBeam.Id,
                         joint.RightBeam.Id);
             }
@@ -3219,7 +3364,8 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                     context,
                     stageName,
                     "JointColumnStirrupDataMissing",
-                    $"Column {joint.ColumnId} has no modeled stirrup/tie "
+                    $"Column set {string.Join(", ", joint.ColumnIds)} has no "
+                    + "modeled stirrup/tie "
                     + "geometry with a resolvable bar diameter"
                     + (allowConfiguredBeamStirrupFallback
                         ? " and no valid configured beam-stirrup fallback"
@@ -3237,14 +3383,15 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 stirrupSelection.Value;
             var coverFt = ResolveColumnCover(
                 context.Document,
-                joint.ColumnId);
+                joint.ColumnIds);
             if (coverFt <= 0.0)
             {
                 throw Unsupported(
                     context,
                     stageName,
                     "JointColumnCoverMissing",
-                    $"Column {joint.ColumnId} has no resolvable positive "
+                    $"Column set {string.Join(", ", joint.ColumnIds)} has no "
+                    + "resolvable positive "
                     + "RebarCoverType. The temporary stirrup fallback does "
                     + "not substitute column cover.");
             }
@@ -3367,28 +3514,20 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
         private static ColumnReinforcementClearance
             ResolveModeledJointReinforcement(
             Document document,
-            long columnId,
+            IReadOnlyList<long> columnIds,
             long leftBeamId,
             long rightBeamId)
         {
-            var column = document.GetElement(new ElementId(columnId));
-            var hostData = column == null
-                ? null
-                : RebarHostData.GetRebarHostData(column);
-            if (hostData == null)
-                return ColumnReinforcementClearance.Empty;
-
+            var columnIdSet = new HashSet<long>(
+                columnIds ?? Array.Empty<long>());
             var maximumBarDiameterFt = 0.0;
             var maximumStirrupDiameterFt = 0.0;
             var stirrupCount = 0;
             var rebars = new List<ModeledColumnRebar>();
             var seenRebarIds = new HashSet<long>();
-            foreach (var hostId in new[]
-                     {
-                         columnId,
-                         leftBeamId,
-                         rightBeamId
-                     }.Distinct())
+            foreach (var hostId in columnIdSet
+                         .Concat(new[] { leftBeamId, rightBeamId })
+                         .Distinct())
             {
                 var host = document.GetElement(new ElementId(hostId));
                 var currentHostData = host == null
@@ -3433,7 +3572,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                             + "has no positive model or nominal diameter.");
                     }
 
-                    if (hostId == columnId)
+                    if (columnIdSet.Contains(hostId))
                     {
                         maximumBarDiameterFt = Math.Max(
                             maximumBarDiameterFt,
@@ -3447,7 +3586,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                         rebar,
                         diameter,
                         isStirrup));
-                    if (hostId == columnId && isStirrup)
+                    if (columnIdSet.Contains(hostId) && isStirrup)
                     {
                         stirrupCount++;
                         maximumStirrupDiameterFt = Math.Max(
@@ -3465,6 +3604,23 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
         }
 
         private static double ResolveColumnCover(
+            Document document,
+            IReadOnlyList<long> columnIds)
+        {
+            if (columnIds == null || columnIds.Count == 0) return 0.0;
+
+            var resolved = columnIds
+                .Distinct()
+                .Select(columnId => ResolveSingleColumnCover(
+                    document,
+                    columnId))
+                .ToList();
+            return resolved.Any(cover => cover <= 0.0)
+                ? 0.0
+                : resolved.Max();
+        }
+
+        private static double ResolveSingleColumnCover(
             Document document,
             long columnId)
         {
@@ -4086,6 +4242,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
             public BeamEnvelope LeftBeam { get; }
             public BeamEnvelope RightBeam { get; }
             public long ColumnId { get; }
+            public IReadOnlyList<long> ColumnIds { get; }
             public double ColumnStart { get; }
             public double ColumnEnd { get; }
             public double ColumnMinY { get; }
@@ -4099,6 +4256,7 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 BeamEnvelope leftBeam,
                 BeamEnvelope rightBeam,
                 long columnId,
+                IReadOnlyList<long> columnIds,
                 double columnStart,
                 double columnEnd,
                 double columnMinY,
@@ -4111,6 +4269,14 @@ namespace LSTool.Tools.Beams.InstallRebarBeamV2.Geometry.MainBars
                 LeftBeam = leftBeam;
                 RightBeam = rightBeam;
                 ColumnId = columnId;
+                ColumnIds = (columnIds ?? Array.Empty<long>())
+                    .Distinct()
+                    .OrderBy(id => id)
+                    .ToList();
+                if (ColumnIds.Count == 0)
+                    throw new ArgumentException(
+                        "At least one joint column id is required.",
+                        nameof(columnIds));
                 ColumnStart = columnStart;
                 ColumnEnd = columnEnd;
                 ColumnMinY = columnMinY;
