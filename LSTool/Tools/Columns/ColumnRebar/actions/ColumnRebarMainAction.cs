@@ -1,6 +1,5 @@
 ﻿using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
-using LSTool.Compatibility;
 using LSTool.Tools.Columns.ColumnRebar.models;
 using LSTool.Tools.Generals.SettingRebarStandard.models;
 using LSTool.Utils;
@@ -86,12 +85,19 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             var faceTops = cCols.Select(x => x.FaceTop).ToList();
             var faceRights = cCols.Select(x => x.FaceRight).ToList();
             var faceBots = cCols.Select(x => x.FaceBottom).ToList();
+            var facess = new List<List<ColumnFaceModel>>()
+            {
+                faceLefts,
+                faceTops,
+                faceRights,
+                faceBots
+            };
             var rebarPositions = new List<List<ColumnRebarPositionModel>>();
 
-            rebarPositions.AddRange(InstallRebarFace(faceLefts, true));
-            rebarPositions.AddRange(InstallRebarFace(faceBots));
-            rebarPositions.AddRange(InstallRebarFace(faceRights, true));
-            rebarPositions.AddRange(InstallRebarFace(faceTops));
+            rebarPositions.AddRange(InstallRebarFace(faceLefts, facess, true));
+            rebarPositions.AddRange(InstallRebarFace(faceBots, facess));
+            rebarPositions.AddRange(InstallRebarFace(faceRights, facess, true));
+            rebarPositions.AddRange(InstallRebarFace(faceTops, facess));
 
             foreach (var col in cCols)
             {
@@ -102,7 +108,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 col.RebarMainPositionss = positions;
             }
         }
-        private List<List<ColumnRebarPositionModel>> InstallRebarFace(List<ColumnFaceModel> faces, bool ignoreFirstEnd = false)
+        private List<List<ColumnRebarPositionModel>> InstallRebarFace(List<ColumnFaceModel> faces, List<List<ColumnFaceModel>> facess, bool ignoreFirstEnd = false)
         {
             var result = new List<List<ColumnRebarPositionModel>>();
             var fCount = faces.Count;
@@ -114,8 +120,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
             else
             {
                 //Truong hop co nhieu cot
-                CreateRebarColumn_Multi(faces, ignoreFirstEnd, out List<List<ColumnRebarPositionModel>> rebarPositions1);
-                CreateRebarColumn_Multi_Last(faces, ignoreFirstEnd, out List<List<ColumnRebarPositionModel>> rebarPositions2);
+                CreateRebarColumn_Multi(faces, ignoreFirstEnd, facess, out List<List<ColumnRebarPositionModel>> rebarPositions1);
+                CreateRebarColumn_Multi_Last(faces, ignoreFirstEnd, facess, out List<List<ColumnRebarPositionModel>> rebarPositions2);
                 result.AddRange(rebarPositions1);
                 result.AddRange(rebarPositions2);
             }
@@ -173,6 +179,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private void CreateRebarColumn_Multi(
             List<ColumnFaceModel> faces,
             bool ignoreFirstEnd,
+            List<List<ColumnFaceModel>> facess,
             out List<List<ColumnRebarPositionModel>> rebarPoss)
         {
             rebarPoss = new List<List<ColumnRebarPositionModel>>();
@@ -216,10 +223,10 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 var rebarPosition = rebarPositions[index];
                 var rebarPositionNext = rebarPositions[index + 1];
                 var rebarPositionPrev = index == 0 ? null : rebarPositions[index - 1];
-                var isLapDiffTop = IsDifferentFace(face, faces[index + 1], out double distanceTop);
+                var isLapDiffTop = IsDifferentFace(facess, index, true, out double distanceTop);
                 var isLapDiffBot = index == 0
                     ? false
-                    : IsDifferentFace(faces[index - 1], face, out double distanceBot);
+                    : IsDifferentFace(facess, index, false, out double distanceBot);
                 var rbCount = rebarPosition.Count;
                 foreach (var item in rebarPosition)
                 {
@@ -280,9 +287,6 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     }
                     void _install_Case_NotLapDiffTop_rebarPositionPrevTarget_Null_rebarPositionNextTarget_Null(bool isLapDiffBotImportant = false)
                     {
-                        //var p1 = index == 0
-                        //        ? item.Position - vtZ * anchor
-                        //        : item.Position - vtZ * (isLapDiffBot ? anchor : 0);
                         var p1 = item.Position - vtZ * anchor;
                         var p2 = item.Position + vtZ * (length + lapLengthGap);
                         var ps = index == 0 ?
@@ -298,20 +302,12 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                     }
                     void _install_Case_NotLapDiffTop_rebarPositionPrevTarget_Null_rebarPositionNextTarget_Valid(bool isLapDiffBotImportant = false)
                     {
-                        //var p1 = index == 0
-                        //        ? item.Position - vtZ * anchor
-                        //        : item.Position - vtZ * (isLapDiffBot ? anchor : 0);
                         var p1 = item.Position - vtZ * anchor;
                         var p2 = item.Position + vtZ * (length - face.HeightBeamZone.FromMillimeters());
                         var p3 = rebarPositionNextTarget.Position;
                         var p4 = rebarPositionNextTarget.Position + vtZ * lapLengthGap;
 
-                        var fNor = Plane.CreateByNormalAndOrigin(face.Plane.Normal.CrossProduct(vtZ), item.Position);
-                        var distanceCheck = rebarPositionNextTarget.Position
-                            .RayIntersectPlane(fNor.Normal, fNor)
-                            .DistanceTo(rebarPositionNextTarget.Position)
-                            .FootToMm();
-                        if(distanceCheck > _distanceCheckLimit)
+                        if (IsDifferentFace(facess, index, true, out double dis))
                         {
                             _install_Case_LapDiffTop();
                             return;
@@ -334,12 +330,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                                 : item.Position - vtZ * (isLapDiffBot ? anchor : 0);
                         var p2 = item.Position + vtZ * (length + lapLengthGap);
 
-                        var fNor1 = Plane.CreateByNormalAndOrigin(face.Plane.Normal.CrossProduct(vtZ), item.Position);
-                        var distanceCheck1 = rebarPositionPrevTarget.Position
-                            .RayIntersectPlane(fNor1.Normal, fNor1)
-                            .DistanceTo(rebarPositionPrevTarget.Position)
-                            .FootToMm();
-                        if (distanceCheck1 > _distanceCheckLimit)
+                        if (IsDifferentFace(facess, index, false, out double dis))
                         {
                             _install_Case_NotLapDiffTop_rebarPositionPrevTarget_Null_rebarPositionNextTarget_Null(true);
                             return;
@@ -364,23 +355,13 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                         var p3 = rebarPositionNextTarget.Position;
                         var p4 = rebarPositionNextTarget.Position + vtZ * lapLengthGap;
 
-                        var fNor = Plane.CreateByNormalAndOrigin(face.Plane.Normal.CrossProduct(vtZ), item.Position);
-                        var distanceCheck = rebarPositionNextTarget.Position
-                            .RayIntersectPlane(fNor.Normal, fNor)
-                            .DistanceTo(rebarPositionNextTarget.Position)
-                            .FootToMm();
-                        if (distanceCheck > _distanceCheckLimit)
+                        if (IsDifferentFace(facess, index, true, out double dis))
                         {
                             _install_Case_LapDiffTop();
                             return;
                         }
 
-                        var fNor1 = Plane.CreateByNormalAndOrigin(face.Plane.Normal.CrossProduct(vtZ), item.Position);
-                        var distanceCheck1 = rebarPositionPrevTarget.Position
-                            .RayIntersectPlane(fNor1.Normal, fNor1)
-                            .DistanceTo(rebarPositionPrevTarget.Position)
-                            .FootToMm();
-                        if (distanceCheck1 > _distanceCheckLimit)
+                        if (IsDifferentFace(facess, index, false, out double dis1))
                         {
                             _install_Case_NotLapDiffTop_rebarPositionPrevTarget_Null_rebarPositionNextTarget_Valid(true);
                             return;
@@ -403,6 +384,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private void CreateRebarColumn_Multi_Last(
             List<ColumnFaceModel> faces,
             bool ignoreFirstEnd,
+            List<List<ColumnFaceModel>> facess,
             out List<List<ColumnRebarPositionModel>> rebarPoss)
         {
             rebarPoss = new List<List<ColumnRebarPositionModel>>();
@@ -439,7 +421,8 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 int.Parse(Math.Round(maxQty, 0).ToString()), facePrev);
             rebarPoss.Add(rebarPositions);
             var rbCount = rebarPositions.Count;
-            var isLapDiff = IsDifferentFace(face, facePrev, out double distanceTop);
+            var isLapDiff = IsDifferentFace(facess, faceCount - 1, false, out double distanceBot);
+
             foreach (var rebarPosition in rebarPositions)
             {
                 var index = rebarPositions.IndexOf(rebarPosition);
@@ -454,13 +437,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 var isSolePrev = rebarPositionPrevTarget != null
                     && (!condit1Prev && !isOddPrev ? true : condit1Prev && isOddPrev ? true : false);
 
-
-                var fNor1 = Plane.CreateByNormalAndOrigin(face.Plane.Normal.CrossProduct(vtZ), rebarPosition.Position);
-                var distanceCheck1 = rebarPositionPrevTarget.Position
-                    .RayIntersectPlane(fNor1.Normal, fNor1)
-                    .DistanceTo(rebarPositionPrevTarget.Position)
-                    .FootToMm();
-                if (distanceCheck1 > _distanceCheckLimit) isLapDiff = true;
+                if (IsDifferentFace(facess, index, false, out double dis)) isLapDiff = true;
 
                 var rbStart = isLapDiff
                     ? rebarPosition.Position - vtZ * anchor
@@ -482,6 +459,45 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 else
                     RebarHelper.CreateRebar(_document, cv, $"D{Math.Round(face.Diameter, 0)}", normal, _rebarBarTypes, _host);
             }
+        }
+        private bool IsDifferentFace(List<List<ColumnFaceModel>> facess, int indexTarget, bool isNextFace, out double distance)
+        {
+            //isNextFace == true => check face next
+            //isNextFace == false => check face prev
+            distance = 0;
+            var result = false;
+            foreach (var faces in facess)
+            {
+                var qty = faces.Count;
+                foreach (var face in faces)
+                {
+                    var index = faces.IndexOf(face);
+                    if (index != indexTarget) continue;
+                    if (isNextFace)
+                    {
+                        if (index == qty - 1) continue;
+                        var fNext = faces[index + 1];
+                        var isDif = IsDifferentFace(face, fNext, out double dis);
+                        if (isDif)
+                        {
+                            distance = dis;
+                            return isDif;
+                        }
+                    }
+                    else
+                    {
+                        if (index == 0) continue;
+                        var fPrev = faces[index - 1];
+                        var isDif = IsDifferentFace(fPrev, face, out double dis);
+                        if (isDif)
+                        {
+                            distance = dis;
+                            return isDif;
+                        }
+                    }
+                }
+            }
+            return result;
         }
         private bool IsDifferentFace(ColumnFaceModel fs, ColumnFaceModel fe, out double distance)
         {
