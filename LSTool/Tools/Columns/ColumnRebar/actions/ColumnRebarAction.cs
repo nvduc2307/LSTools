@@ -1,4 +1,4 @@
-﻿using Autodesk.Revit.UI;
+using Autodesk.Revit.UI;
 using LSTool.Tools.Columns.ColumnRebar.models;
 using LSTool.Tools.Columns.ColumnRebar.viewModels;
 using LSTool.Tools.Columns.ColumnRebar.views;
@@ -56,7 +56,12 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
                 ColumnConcreteModelAction = _ColumnConcreteModelAction,
                 OkCommand = new RelayCommand(_OkCommand),
                 CreateTeiCommand = new RelayCommand(_CreateTeiCommand),
-                CancelCommand = new RelayCommand(_CancelCommand)
+                CancelCommand = new RelayCommand(_CancelCommand),
+                // Preset commands
+                LoadCommand = new RelayCommand(_LoadCommand),
+                SaveCommand = new RelayCommand(_SaveCommand),
+                SaveAsCommand = new RelayCommand(_SaveAsCommand),
+                RemoveCommand = new RelayCommand(_RemoveCommand),
             };
             _columnRebarStirrupAction = new ColumnRebarStirrupAction(_uidocument, _host);
             _columnRebarMainAction = new ColumnRebarMainAction(
@@ -73,6 +78,7 @@ namespace LSTool.Tools.Columns.ColumnRebar.actions
         private void _view_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
             _canvasSectionPreViewAction = new CanvasSectionPreViewAction(_view.CanvasSectionPreView);
+            _InitPresets();
         }
 
         public void Execute()

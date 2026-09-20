@@ -1,0 +1,12 @@
+[
+  {
+    "Name": "Default",
+    "DiameterDX": "D16",
+    "SpacingDX": 4,
+    "DiameterDY": "D16",
+    "SpacingDY": 4,
+    "DiameterST": "D8",
+    "SpacingST": 150,
+    "SpacingSTE": 100
+  }
+]
