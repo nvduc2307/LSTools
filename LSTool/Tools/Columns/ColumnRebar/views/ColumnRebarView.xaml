@@ -1,4 +1,4 @@
-﻿<Window x:Class="LSTool.Tools.Columns.ColumnRebar.views.ColumnRebarView"
+<Window x:Class="LSTool.Tools.Columns.ColumnRebar.views.ColumnRebarView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -22,10 +22,65 @@
     </Window.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
+            <RowDefinition Height="35"/>
             <RowDefinition/>
             <RowDefinition Height="35"/>
         </Grid.RowDefinitions>
-        <TabControl>
+
+        <!-- ── Preset Toolbar ──────────────────────────────────────────── -->
+        <Grid Grid.Row="0" Margin="0,0,0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left group: ComboBox + Load + Save + Remove -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <ComboBox
+                    Width="150"
+                    Height="25"
+                    ItemsSource="{Binding Presets}"
+                    SelectedItem="{Binding SelectedPreset, UpdateSourceTrigger=PropertyChanged}"
+                    DisplayMemberPath="Name"
+                    VerticalContentAlignment="Center"/>
+                <Button
+                    Command="{Binding LoadCommand}"
+                    Content="Load"
+                    Width="50"
+                    Height="25"
+                    Margin="5,0,0,0"/>
+                <Button
+                    Command="{Binding SaveCommand}"
+                    Content="Save"
+                    Width="50"
+                    Height="25"
+                    Margin="5,0,0,0"/>
+                <Button
+                    Command="{Binding RemoveCommand}"
+                    Content="Remove"
+                    Width="60"
+                    Height="25"
+                    Margin="5,0,0,0"/>
+            </StackPanel>
+
+            <!-- Right group: TextBox (name) + SaveAs -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBox
+                    Width="150"
+                    Height="25"
+                    Text="{Binding NewPresetName, UpdateSourceTrigger=PropertyChanged}"
+                    VerticalContentAlignment="Center"/>
+                <Button
+                    Command="{Binding SaveAsCommand}"
+                    Content="Save As"
+                    Width="60"
+                    Height="25"
+                    Margin="5,0,0,0"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- ── Main content (TabControl) ───────────────────────────────── -->
+        <TabControl Grid.Row="1">
             <TabItem Header="Rebar Info">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -187,11 +242,27 @@
                 </Grid>
             </TabItem>
         </TabControl>
-        <StackPanel 
-            VerticalAlignment="Bottom"
-            HorizontalAlignment="Right"
-            Grid.Row="1">
-            <StackPanel Orientation="Horizontal">
+        <!-- ── Bottom row: Status + Buttons ────────────────────────────── -->
+        <Grid Grid.Row="2" VerticalAlignment="Center">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Status text (inline, auto-clears) -->
+            <TextBlock
+                Grid.Column="0"
+                Text="{Binding StatusText}"
+                VerticalAlignment="Center"
+                Foreground="#2E7D32"
+                FontStyle="Italic"
+                Margin="4,0,0,0"/>
+
+            <!-- Action buttons -->
+            <StackPanel
+                Grid.Column="1"
+                Orientation="Horizontal"
+                VerticalAlignment="Center">
                 <Button
                     Command="{Binding CreateTeiCommand}"
                     Margin="0,0,10,0"
@@ -210,6 +281,7 @@
                     Height="25"
                     Content="Cancel"/>
             </StackPanel>
-        </StackPanel>
+        </Grid>
     </Grid>
 </Window>
+
