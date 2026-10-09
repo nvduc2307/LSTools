@@ -1,4 +1,4 @@
-﻿using System.Windows.Media;
+using System.Windows.Media;
 
 namespace LSTool.Cores.canvas
 {
@@ -14,10 +14,10 @@ namespace LSTool.Cores.canvas
         public static SolidColorBrush Color_Red = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(255, 0, 0) };
         public static SolidColorBrush Color_BackGround = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(238, 238, 238) };
 
-        public static SolidColorBrush Color_Concrete = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(197, 197, 197) };
-        public static SolidColorBrush Color_Concrete_OutLine = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(0, 0, 0) };
+        public static SolidColorBrush Color_Concrete = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(241, 245, 249) };
+        public static SolidColorBrush Color_Concrete_OutLine = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(23, 32, 51) };
         public static SolidColorBrush Color_Selected = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(160, 178, 218) };
-        public static SolidColorBrush Color_Selected1 = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(0, 4, 255) };
+        public static SolidColorBrush Color_Selected1 = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(245, 158, 11) };
         public static SolidColorBrush Color_Selected_OutLine = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(0, 59, 189) };
 
         public static SolidColorBrush Color_Enable = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(132, 132, 132) };
@@ -25,7 +25,7 @@ namespace LSTool.Cores.canvas
         public static SolidColorBrush Color_Weld = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(0, 0, 255) };
         public static SolidColorBrush Color_Coupler = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(0, 255, 0) };
 
-        public static SolidColorBrush Color_Rebar = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(255, 0, 0) };
+        public static SolidColorBrush Color_Rebar = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(37, 99, 235) };
         public static SolidColorBrush Color_Rebar_Top = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(255, 0, 0) };
         public static SolidColorBrush Color_Rebar_Side = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(51, 102, 255) };
         public static SolidColorBrush Color_Rebar_Bottom = new SolidColorBrush() { Color = System.Windows.Media.Color.FromRgb(102, 0, 0) };

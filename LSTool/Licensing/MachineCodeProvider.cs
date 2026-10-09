@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Win32;
@@ -7,7 +7,8 @@ namespace LSTool.Licensing
 {
     public static class MachineCodeProvider
     {
-        private const string ProductSalt = "LSTools.DeviceHash.v1";
+        // Keep the existing salt so installed machines retain their device ID.
+        private const string ProductSalt = "SDRTools.DeviceHash.v1";
 
         public static string GetMachineCode()
         {

@@ -1,0 +1,13 @@
+[
+  {
+    "Id": 1,
+    "Name": "Default",
+    "DiameterDX": "D10",
+    "DiameterDY": "D10",
+    "DiameterST": "D10",
+    "SpacingDX": 5,
+    "SpacingDY": 5,
+    "SpacingST": 100,
+    "SpacingSTE": 100
+  }
+]

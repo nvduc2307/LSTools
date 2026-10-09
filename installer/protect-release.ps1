@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [Parameter(Mandatory)]
     [string]$PackagePath,
@@ -29,7 +29,7 @@ $confuserArchiveSha256 = (
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $templatePath = Join-Path `
     $PSScriptRoot `
-    'confuser\LSTools.safe.crproj.template'
+    'confuser\LSTool.safe.crproj.template'
 $toolDirectory = Join-Path `
     $repositoryRoot `
     ('.tools\confuserex2\' + $confuserVersion)
@@ -325,13 +325,13 @@ $configuration = $template.
         ($probePathElements -join [Environment]::NewLine))
 $configurationPath = Join-Path `
     $resolvedProtectionPath `
-    "LSTools-R$RevitVersion.crproj"
+    "LSTool-R$RevitVersion.crproj"
 [IO.File]::WriteAllText(
     $configurationPath,
     $configuration,
     [Text.UTF8Encoding]::new($false))
 
-Write-Host "Protecting LSTools for Revit $RevitVersion..."
+Write-Host "Protecting LSTool for Revit $RevitVersion..."
 & $confuserCli -n $configurationPath
 if ($LASTEXITCODE -ne 0) {
     throw "ConfuserEx2 failed for Revit $RevitVersion."

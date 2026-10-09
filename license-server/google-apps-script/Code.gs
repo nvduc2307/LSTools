@@ -1,6 +1,7 @@
-const LICENSE_SHEET_NAME = 'Licenses';
+﻿const LICENSE_SHEET_NAME = 'Licenses';
 const ACTIVATION_SHEET_NAME = 'Activations';
-const LICENSE_PRODUCT = 'LSTools';
+const LICENSE_PRODUCT = 'LSTool';
+const LEGACY_LICENSE_PRODUCT = 'SDRTools';
 const LEASE_HOURS = 72;
 const DEFAULT_MAX_DEVICES = 1;
 const MAX_DEVICE_LIMIT = 100;
@@ -44,7 +45,7 @@ function doGet() {
     return jsonResponse_(
       true,
       'READY',
-      'LSTools license server is ready.'
+      'LSTool license server is ready.'
     );
   } catch (error) {
     console.error(error && error.stack ? error.stack : error);
@@ -86,14 +87,15 @@ function doPost(e) {
       return jsonResponse_(false, 'BAD_DEVICE', 'Mã thiết bị không hợp lệ.');
     }
 
-    if (product !== LICENSE_PRODUCT) {
+    if (product !== LICENSE_PRODUCT &&
+        product !== LEGACY_LICENSE_PRODUCT) {
       return jsonResponse_(false, 'BAD_PRODUCT', 'License không dành cho sản phẩm này.');
     }
 
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
     try {
-      return processLicenseRequest_(action, credential, deviceHash);
+      return processLicenseRequest_(action, credential, deviceHash, product);
     } finally {
       lock.releaseLock();
     }
@@ -107,7 +109,7 @@ function doPost(e) {
   }
 }
 
-function processLicenseRequest_(action, credential, deviceHash) {
+function processLicenseRequest_(action, credential, deviceHash, product) {
   ensureLicenseStorageReady_();
   const sheet = getLicenseSheet_();
   const headers = getHeaderMap_(sheet, LICENSE_HEADERS);
@@ -147,8 +149,9 @@ function processLicenseRequest_(action, credential, deviceHash) {
   const record = readLicenseRecord_(sheet, headers, row);
   const now = new Date();
 
-  if (record.product !== LICENSE_PRODUCT) {
-    return jsonResponse_(false, 'BAD_PRODUCT', 'License không dành cho LSTools.');
+  if (record.product !== LICENSE_PRODUCT &&
+      record.product !== LEGACY_LICENSE_PRODUCT) {
+    return jsonResponse_(false, 'BAD_PRODUCT', 'License không dành cho LSTool.');
   }
 
   if (record.status !== 'ACTIVE') {
@@ -220,7 +223,7 @@ function processLicenseRequest_(action, credential, deviceHash) {
   sheet.getRange(row, headers.LastCheckUtc).setValue(now);
   SpreadsheetApp.flush();
 
-  const lease = createSignedLease_(record, deviceHash, now);
+  const lease = createSignedLease_(record, deviceHash, now, product);
   const clientCredential = action === 'activate'
     ? createClientCredential_(record.licenseId, deviceHash)
     : '';
@@ -366,7 +369,7 @@ function constantTimeEquals_(left, right) {
   return difference === 0;
 }
 
-function createSignedLease_(record, deviceHash, issuedUtc) {
+function createSignedLease_(record, deviceHash, issuedUtc, product) {
   const privateKey = normalizePrivateKey_(
     PropertiesService.getScriptProperties()
       .getProperty('LSTOOLS_PRIVATE_KEY')
@@ -387,7 +390,7 @@ function createSignedLease_(record, deviceHash, issuedUtc) {
     schemaVersion: 1,
     licenseId: record.licenseId,
     customer: record.customer,
-    product: LICENSE_PRODUCT,
+    product: product,
     deviceHash: deviceHash,
     issuedUtc: issuedUtc.toISOString(),
     expiresUtc: record.expiresUtc.toISOString(),
@@ -990,7 +993,7 @@ function reactivateSelectedLicense() {
 
 function onOpen() {
   SpreadsheetApp.getUi()
-    .createMenu('LSTools License')
+    .createMenu('LSTool License')
     .addItem('Chuẩn bị sheet', 'setupLicenseSheet')
     .addSeparator()
     .addItem('Tạo mã đóng gói mới', 'createTrialLicense')

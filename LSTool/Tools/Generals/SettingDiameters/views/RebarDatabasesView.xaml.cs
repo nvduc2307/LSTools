@@ -10,6 +10,7 @@ namespace LSTool.Tools.Generals.SettingDiameters.views
     {
         public RebarDatabasesView()
         {
+            LSTool.Utils.UI.UiAssemblyLoader.Initialize();
             InitializeComponent();
         }
     }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,7 +8,8 @@ namespace LSTool.Licensing
 {
     public static class LeaseVerifier
     {
-        public const string ProductName = "LSTools";
+        public const string ProductName = "LSTool";
+        private const string LegacyProductName = "SDRTools";
         public const int CurrentSchemaVersion = 1;
 
         public static LicenseValidationResult Verify(
@@ -107,11 +108,15 @@ namespace LSTool.Licensing
             if (!string.Equals(
                     payload.Product,
                     ProductName,
+                    StringComparison.Ordinal) &&
+                !string.Equals(
+                    payload.Product,
+                    LegacyProductName,
                     StringComparison.Ordinal))
             {
                 return LicenseValidationResult.Failure(
                     LicenseValidationCode.InvalidProduct,
-                    "Token này không dành cho LSTools.",
+                    "Token này không dành cho LSTool.",
                     payload);
             }
 

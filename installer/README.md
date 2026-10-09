@@ -1,8 +1,8 @@
-# Tạo bộ cài LSTools theo khách hàng
+﻿# Tạo bộ cài LSTool theo khách hàng
 
 ## Quy trình
 
-1. Trong Google Sheet, dùng **LSTools License > Tạo mã đóng gói mới**.
+1. Trong Google Sheet, dùng **LSTool License > Tạo mã đóng gói mới**.
 2. Ghi chuỗi Base64 nhận được vào:
 
    ```text
@@ -65,9 +65,11 @@ chỉ bật sau khi có bộ kiểm thử runtime riêng.
 - Tự phát hiện Revit 2024, 2025 và 2026.
 - Chỉ cài phiên bản add-in tương ứng với Revit có trên máy.
 - Cài theo tài khoản Windows hiện tại, không yêu cầu quyền Administrator.
-- Gỡ cài đặt từ **Installed apps > LSTools**.
+- Gỡ cài đặt từ **Installed apps > LSTool**.
 - Dữ liệu phiên sử dụng được mã hóa tại
-  `%LocalAppData%\LSTools\runtime-state.dat` và không bị xóa khi gỡ add-in.
+  `%LocalAppData%\LSTool\runtime-state.dat` và không bị xóa khi gỡ add-in.
+- Khi nâng cấp từ SDRTools, bộ cài xóa manifest và thư mục add-in cũ; LSTool đọc
+  dữ liệu phiên cũ và chuyển sang thư mục mới.
 
 ## Yêu cầu máy build
 
@@ -83,11 +85,11 @@ chỉ bật sau khi có bộ kiểm thử runtime riêng.
 ## Kiểm tra trước khi gửi khách
 
 - Xác nhận log có `Renamed symbols` cho đủ R24, R25 và R26.
-- Xác nhận kiểm tra metadata báo đủ 7 entry point Revit.
+- Xác nhận kiểm tra metadata báo đủ 6 entry point Revit hiện được đăng ký.
 - Chạy bộ cài trên máy thử, mở đúng phiên bản Revit và mở từng cửa sổ WPF quan
   trọng.
-- Chạy ít nhất các lệnh Beam Rebar, Install Rebar Beam V2 và Column Rebar trên
-  model thử.
+- Chạy ít nhất các nút **Beam > Create**, **Column > Create** và
+  **General > Concrete Cover** trên model thử.
 - Không gửi `symbols.map`, DLL build gốc hoặc thư mục `protection-maps`.
 
 ## Chữ ký số

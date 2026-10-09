@@ -1,7 +1,7 @@
-@echo off
+﻿@echo off
 setlocal
 
-title LSTools Installer Builder
+title LSTool Installer Builder
 
 set "CUSTOMER_NAME=%~1"
 set "APP_VERSION=%~2"
@@ -17,7 +17,7 @@ if not defined APP_VERSION (
 if not defined APP_VERSION set "APP_VERSION=1.0.0"
 
 echo.
-echo Dang build va bao ve bo cai LSTools bang ConfuserEx2...
+echo Dang build va bao ve bo cai LSTool bang ConfuserEx2...
 echo Khach hang: %CUSTOMER_NAME%
 echo Phien ban:  %APP_VERSION%
 echo.

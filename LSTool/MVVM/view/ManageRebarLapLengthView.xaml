@@ -1,0 +1,65 @@
+<?xml version="1.0" ?>
+<Window xmlns:fluent="http://schemas.lepo.co/wpfui/2022/xaml" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="LSTool.MVVM.view.ManageRebarLapLengthView" Title="LSTool · Lap Length" Width="600" Height="380" MinWidth="520" MinHeight="300" Style="{DynamicResource ToolWindow}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/LSTool;component/Resources/UI/CompactTheme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0"/>
+        <Grid Grid.Row="1">
+            <fluent:DataGrid ItemsSource="{Binding RebarLapLengths}" SelectionUnit="FullRow" ClipboardCopyMode="ExcludeHeader">
+                <fluent:DataGrid.Columns>
+                    <DataGridTemplateColumn Header="ID" Width="42" MinWidth="42">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Id}" Margin="6,0" TextAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Concrete grade" Width="*" MinWidth="65">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding ConcreteStrengthRatingName}" Margin="6,0" TextAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Rebar type" Width="*" MinWidth="65">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding StructureRebarTypeName}" Margin="6,0" TextAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Lst" Width="*" MinWidth="65">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <fluent:TextBox Text="{Binding Lst, UpdateSourceTrigger=PropertyChanged, Delay=100}" Style="{StaticResource CellInput}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </fluent:DataGrid.Columns>
+            </fluent:DataGrid>
+        </Grid>
+        <Border Grid.Row="2" Padding="0,8,0,0" Margin="0,8,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <fluent:Button Content="Cancel" Command="{Binding CancelCommand}" Style="{StaticResource CancelButton}" Margin="0,0,8,0"/>
+                    <fluent:Button Content="OK" Command="{Binding OkCommand}" Style="{StaticResource PrimaryButton}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

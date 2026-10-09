@@ -17,9 +17,17 @@ namespace LSTool.Utils
         {
             get => $"{AssemblyDirectory}\\Resources\\Templates";
         }
-        public static string Datas
+        public static string FolderDatas
         {
             get => $"{AssemblyDirectory}\\Resources\\Datas";
+        }
+        public static string Appdatas
+        {
+            get
+            {
+                var folder = $"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\\LSTool";
+                return folder;
+            }
         }
 
         public static string AssemblyDirectory

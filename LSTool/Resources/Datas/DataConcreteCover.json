@@ -1,0 +1,32 @@
+[
+  {
+    "Id": 1,
+    "StructureConcreteType": 0,
+    "CoverValue": 30
+  },
+  {
+    "Id": 2,
+    "StructureConcreteType": 1,
+    "CoverValue": 30
+  },
+  {
+    "Id": 3,
+    "StructureConcreteType": 2,
+    "CoverValue": 50
+  },
+  {
+    "Id": 4,
+    "StructureConcreteType": 3,
+    "CoverValue": 55
+  },
+  {
+    "Id": 5,
+    "StructureConcreteType": 4,
+    "CoverValue": 25
+  },
+  {
+    "Id": 6,
+    "StructureConcreteType": 5,
+    "CoverValue": 40
+  }
+]

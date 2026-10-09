@@ -19,7 +19,7 @@ namespace LSTool.Properties.Langs {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class RebarStructureType {
@@ -66,6 +66,15 @@ namespace LSTool.Properties.Langs {
         public static string BEAM_ABDOMINAL_REBAR {
             get {
                 return ResourceManager.GetString("BEAM_ABDOMINAL_REBAR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 梁_段取り筋.
+        /// </summary>
+        public static string BEAM_DANTORI_REBAR {
+            get {
+                return ResourceManager.GetString("BEAM_DANTORI_REBAR", resourceCulture);
             }
         }
         
@@ -322,6 +331,15 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 基礎_段取り筋.
+        /// </summary>
+        public static string FOUNDATION_DANTORI_REBAR {
+            get {
+                return ResourceManager.GetString("FOUNDATION_DANTORI_REBAR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 基礎_横筋.
         /// </summary>
         public static string FOUNDATION_HORIZONTAL_REBAR {
@@ -466,3 +484,5 @@ namespace LSTool.Properties.Langs {
         }
     }
 }
+
+

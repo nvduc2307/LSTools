@@ -1,0 +1,78 @@
+<?xml version="1.0" ?>
+<Window xmlns:fluent="http://schemas.lepo.co/wpfui/2022/xaml" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="LSTool.MVVM.view.ManageConcreteCoverView" Title="LSTool · Concrete Cover" Width="580" Height="340" MinWidth="500" MinHeight="320" Style="{DynamicResource ToolWindow}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/LSTool;component/Resources/UI/CompactTheme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0"/>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Border Style="{StaticResource Panel}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="130"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="40"/>
+                        <RowDefinition Height="40"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.ColumnSpan="2" Style="{StaticResource PanelHeader}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="130"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Element / Condition"/>
+                            <TextBlock Grid.Column="1" Text="Cover (mm)" TextAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="1" Grid.ColumnSpan="2" BorderBrush="#E5EAF0" BorderThickness="0,0,0,1"/>
+                    <TextBlock Grid.Row="1" Text="RC Column" Margin="8,2" TextWrapping="Wrap"/>
+                    <fluent:TextBox Grid.Row="1" Grid.Column="1" x:Name="ColumnCoverTextBox" DataContext="{Binding ColumnCover}" Text="{Binding CoverValue}" Style="{StaticResource CellInput}" VerticalAlignment="Center"/>
+                    <Border Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="#E5EAF0" BorderThickness="0,0,0,1"/>
+                    <TextBlock Grid.Row="2" Text="RC Shear Wall" Margin="8,2" TextWrapping="Wrap"/>
+                    <fluent:TextBox Grid.Row="2" Grid.Column="1" x:Name="ShearWallCoverTextBox" DataContext="{Binding WallCover}" Text="{Binding CoverValue}" Style="{StaticResource CellInput}" VerticalAlignment="Center"/>
+                    <Border Grid.Row="3" Grid.ColumnSpan="2" BorderBrush="#E5EAF0" BorderThickness="0,0,0,1"/>
+                    <TextBlock Grid.Row="3" Text="RC Beam" Margin="8,2" TextWrapping="Wrap"/>
+                    <fluent:TextBox Grid.Row="3" Grid.Column="1" x:Name="BeamCoverTextBox" DataContext="{Binding BeamCover}" Text="{Binding CoverValue}" Style="{StaticResource CellInput}" VerticalAlignment="Center"/>
+                    <Border Grid.Row="4" Grid.ColumnSpan="2" BorderBrush="#E5EAF0" BorderThickness="0,0,0,1"/>
+                    <TextBlock Grid.Row="4" Text="RC Slab" Margin="8,2" TextWrapping="Wrap"/>
+                    <fluent:TextBox Grid.Row="4" Grid.Column="1" x:Name="SlabCoverTextBox" DataContext="{Binding SlabCover}" Text="{Binding CoverValue}" Style="{StaticResource CellInput}" VerticalAlignment="Center"/>
+                    <Border Grid.Row="5" Grid.ColumnSpan="2" BorderBrush="#E5EAF0" BorderThickness="0,0,0,1"/>
+                    <TextBlock Grid.Row="5" Text="Earth-contact — cast against compacted ground" Margin="8,2" TextWrapping="Wrap"/>
+                    <fluent:TextBox Grid.Row="5" Grid.Column="1" x:Name="CompactedGroundCoverTextBox" Text="70" Style="{StaticResource CellInput}" VerticalAlignment="Center"/>
+                    <Border Grid.Row="6" Grid.ColumnSpan="2" BorderBrush="#E5EAF0" BorderThickness="0,0,0,1"/>
+                    <TextBlock Grid.Row="6" Text="Earth-contact — cast against form / lean concrete" Margin="8,2" TextWrapping="Wrap"/>
+                    <fluent:TextBox Grid.Row="6" Grid.Column="1" x:Name="LeanConcreteCoverTextBox" Text="50" Style="{StaticResource CellInput}" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+        </ScrollViewer>
+        <Border Grid.Row="2" Padding="0,8,0,0" Margin="0,8,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <fluent:Button Content="Cancel" Command="{Binding CancelCommand}" Style="{StaticResource CancelButton}" Margin="0,0,8,0"/>
+                    <fluent:Button Content="OK" Command="{Binding OkCommand}" Style="{StaticResource PrimaryButton}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

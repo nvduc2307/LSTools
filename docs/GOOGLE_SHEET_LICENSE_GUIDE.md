@@ -1,15 +1,15 @@
-# Quản lý thời hạn LSTools bằng Google Sheet
+﻿# Quản lý thời hạn LSTool bằng Google Sheet
 
 ## Mô hình đang dùng
 
 - Khách hàng không thấy nút License, hộp nhập key, mã thiết bị hay thông tin Google Sheet.
 - Mỗi khách nhận một bộ cài riêng. Bộ cài chứa một mã kích hoạt đóng gói nội bộ.
 - Mỗi license có cột `MaxDevices`; cùng một bộ cài có thể kích hoạt trên số máy tối đa đã đặt.
-- Lần chạy đầu tiên trên mỗi máy, LSTools tự kích hoạt ngầm và ghi máy vào sheet `Activations`.
+- Lần chạy đầu tiên trên mỗi máy, LSTool tự kích hoạt ngầm và ghi máy vào sheet `Activations`.
 - Server trả về một credential riêng cho máy; credential được Windows DPAPI mã hóa tại
-  `%LocalAppData%\LSTools\runtime-state.dat`.
+  `%LocalAppData%\LSTool\runtime-state.dat`.
 - Gỡ rồi cài lại trên cùng máy không làm thời hạn bắt đầu lại. Nếu file cục bộ bị xóa,
-  LSTools chỉ xin cấp lại credential cho activation của đúng máy và ngày hết hạn vẫn giữ nguyên.
+  LSTool chỉ xin cấp lại credential cho activation của đúng máy và ngày hết hạn vẫn giữ nguyên.
 - Máy mới được chấp nhận khi số activation trạng thái `Active` còn nhỏ hơn `MaxDevices`.
 - Mỗi lần xác nhận online, Apps Script cấp lease ký RSA có hiệu lực tối đa 72 giờ. Trong khoảng
   này phần mềm có thể tiếp tục dùng khi mất mạng.
@@ -17,10 +17,14 @@
 Google Apps Script là endpoint serverless; không cần VPS hoặc máy cá nhân chạy 24/24. Google
 Sheet chỉ là bảng quản trị riêng của nhà cung cấp và không chia sẻ cho khách.
 
+Khi nâng cấp từ SDRTools, bản LSTool đọc dữ liệu phiên cũ và lưu lại tại đường dẫn mới.
+Mã thiết bị không đổi. Apps Script mới chấp nhận cả license và client cũ trong giai
+đoạn chuyển đổi; cần triển khai lại Apps Script trước khi phát bộ cài LSTool.
+
 ## Tạo mã đóng gói cho một khách hàng
 
 1. Mở Google Sheet quản trị.
-2. Chọn menu **LSTools License > Tạo mã đóng gói mới**.
+2. Chọn menu **LSTool License > Tạo mã đóng gói mới**.
 3. Nhập tên khách hàng, số ngày sử dụng, số máy tối đa, danh sách tính năng và ghi chú.
 4. Hộp thoại trả về một chuỗi Base64. Đây là mã dùng để build bộ cài, không gửi chuỗi này cho
    khách hàng.
@@ -69,13 +73,13 @@ Trước khi giao, kiểm tra:
 - Không còn `Resources\Settings\LicenseServer.json`.
 - Log ConfuserEx2 có số lượng `Renamed symbols` cho cả R24, R25 và R26.
 - Kiểm tra metadata xác nhận đủ các entry point Revit và embedded release profile.
-- Mở Revit với kết nối Internet, chạy một lệnh LSTools và xác nhận lệnh hoạt động.
+- Mở Revit với kết nối Internet, chạy một lệnh LSTool và xác nhận lệnh hoạt động.
 - Mở các cửa sổ WPF chính để kiểm tra binding/BAML sau obfuscation.
 
 ## Quản lý khách hàng
 
 - **Đặt số máy:** chọn dòng trong `Licenses`, rồi dùng
-  **LSTools License > Đặt số máy tối đa**. Có thể sửa trực tiếp cột `MaxDevices`, giá trị hợp lệ
+  **LSTool License > Đặt số máy tối đa**. Có thể sửa trực tiếp cột `MaxDevices`, giá trị hợp lệ
   từ 1 đến 100.
 - **Xem máy:** chọn dòng trong `Licenses`, rồi dùng
   **Xem máy của license đang chọn** để chuyển tới sheet `Activations`.

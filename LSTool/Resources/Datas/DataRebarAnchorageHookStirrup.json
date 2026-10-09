@@ -1,0 +1,98 @@
+[
+  {
+    "Id": 1,
+    "Diameter": 6,
+    "R": 9,
+    "LengthHook90": 10,
+    "LengthHook135": 10,
+    "LengthHook180": 7
+  },
+  {
+    "Id": 1,
+    "Diameter": 8,
+    "R": 12,
+    "LengthHook90": 10,
+    "LengthHook135": 10,
+    "LengthHook180": 7
+  },
+  {
+    "Id": 1,
+    "Diameter": 10,
+    "R": 25,
+    "LengthHook90": 10,
+    "LengthHook135": 10,
+    "LengthHook180": 7
+  },
+  {
+    "Id": 1,
+    "Diameter": 12,
+    "R": 30,
+    "LengthHook90": 10,
+    "LengthHook135": 10,
+    "LengthHook180": 7
+  },
+  {
+    "Id": 1,
+    "Diameter": 14,
+    "R": 35,
+    "LengthHook90": 10,
+    "LengthHook135": 10,
+    "LengthHook180": 7
+  },
+  {
+    "Id": 1,
+    "Diameter": 16,
+    "R": 40,
+    "LengthHook90": 10,
+    "LengthHook135": 10,
+    "LengthHook180": 7
+  },
+  {
+    "Id": 1,
+    "Diameter": 18,
+    "R": 45,
+    "LengthHook90": 10,
+    "LengthHook135": 10,
+    "LengthHook180": 7
+  },
+  {
+    "Id": 1,
+    "Diameter": 20,
+    "R": 80,
+    "LengthHook90": 10,
+    "LengthHook135": 10,
+    "LengthHook180": 7
+  },
+  {
+    "Id": 1,
+    "Diameter": 22,
+    "R": 88,
+    "LengthHook90": 10,
+    "LengthHook135": 10,
+    "LengthHook180": 7
+  },
+  {
+    "Id": 1,
+    "Diameter": 25,
+    "R": 100,
+    "LengthHook90": 10,
+    "LengthHook135": 10,
+    "LengthHook180": 7
+  },
+  {
+    "Id": 1,
+    "Diameter": 32,
+    "R": 128,
+    "LengthHook90": 10,
+    "LengthHook135": 10,
+    "LengthHook180": 7
+  },
+  {
+    "Id": 1,
+    "Diameter": 40,
+    "R": 160,
+    "LengthHook90": 10,
+    "LengthHook135": 10,
+    "LengthHook180": 7
+  }
+]

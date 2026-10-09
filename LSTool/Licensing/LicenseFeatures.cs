@@ -1,4 +1,4 @@
-namespace LSTool.Licensing
+﻿namespace LSTool.Licensing
 {
     public static class LicenseFeatures
     {

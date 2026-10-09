@@ -41,7 +41,7 @@ namespace LSTool.Tools.Generals.SettingDiameters.action
 
         private void _ResetCommand()
         {
-            var pathData = $"{PathHelper.Datas}\\RebarbarTypeData.json";
+            var pathData = $"{PathHelper.FolderDatas}\\RebarbarTypeData.json";
             var data = JsonConvert.DeserializeObject<List<RebarBarTypeModel>>(File.ReadAllText(pathData));
             if (data == null) return;
             _viewModel.RebarBarTypes = new ObservableCollection<RebarBarTypeModel>(data);
@@ -63,147 +63,43 @@ namespace LSTool.Tools.Generals.SettingDiameters.action
         }
         public void CreateRebarBarType(List<RebarBarTypeModel> rebarBarTypeModels)
         {
-            SynchronizeRebarBarTypes(_document, rebarBarTypeModels);
-        }
-
-        public static void SynchronizeRebarBarTypes(
-            Document document,
-            IEnumerable<RebarBarTypeModel> rebarBarTypeModels)
-        {
-            if (document == null)
-                throw new ArgumentNullException(nameof(document));
-            if (!document.IsModifiable)
-                throw new InvalidOperationException(
-                    "A transaction is required to synchronize Rebar Bar Types.");
-
-            var configuredTypes = rebarBarTypeModels?
-                .Where(type => type != null)
-                .ToList() ?? new List<RebarBarTypeModel>();
-            if (configuredTypes.Count == 0) return;
-
-            var rebarBarTypes = new FilteredElementCollector(document)
+            if (!rebarBarTypeModels.Any()) return;
+            var rebarBarTypes = new FilteredElementCollector(_document)
                 .WhereElementIsElementType()
                 .OfClass(typeof(RebarBarType))
                 .Cast<RebarBarType>()
                 .ToList();
-            var failures = new List<Exception>();
-            foreach (var type in configuredTypes)
+            foreach (var type in rebarBarTypeModels)
             {
                 try
                 {
-                    if (string.IsNullOrWhiteSpace(type.NameStyle))
-                        throw new InvalidOperationException(
-                            "A configured Rebar Bar Type has no name.");
-                    if (type.BarDiameterReal <= 0.0
-                        || double.IsNaN(type.BarDiameterReal)
-                        || double.IsInfinity(type.BarDiameterReal))
-                    {
-                        throw new InvalidOperationException(
-                            $"Rebar Bar Type '{type.NameStyle}' has an invalid "
-                            + $"configured diameter {type.BarDiameterReal} mm.");
-                    }
-
-                    var typeTarget = rebarBarTypes.FirstOrDefault(x =>
-                        string.Equals(
-                            x.Name,
-                            type.NameStyle,
-                            StringComparison.OrdinalIgnoreCase));
-                    var configuredDiameterFt =
-                        type.BarDiameterReal.FromMillimeters();
-                    var configuredBendDiameterFt =
-                        type.StandardBendDiameter.FromMillimeters();
-                    if (typeTarget == null)
-                    {
-                        typeTarget = RebarBarTypeHelper.CreateNewType(
-                            document,
-                            type.NameStyle,
-                            configuredDiameterFt,
-                            configuredBendDiameterFt);
-                        rebarBarTypes.Add(typeTarget);
-                    }
-                    else
-                    {
-                        RebarBarTypeHelper.SetRebarDiameter(
-                            typeTarget,
-                            configuredDiameterFt);
-                        RebarBarTypeHelper.SetRebarBendDiameter(
-                            typeTarget,
-                            configuredBendDiameterFt);
-                    }
-
-                    VerifySynchronizedDiameter(
-                        typeTarget,
-                        configuredDiameterFt);
+                    var typeTarget = rebarBarTypes.FirstOrDefault(x => x.Name == type.NameStyle);
+                    if (typeTarget != null) continue;
+                    RebarBarTypeHelper.CreateNewType(
+                                _document,
+                                type.NameStyle,
+                                type.BarDiameterReal.FromMillimeters(),
+                                type.StandardBendDiameter.FromMillimeters());
                 }
-                catch (Exception exception)
+                catch (Exception)
                 {
-                    failures.Add(new InvalidOperationException(
-                        $"Failed to synchronize Rebar Bar Type "
-                        + $"'{type.NameStyle ?? "<unnamed>"}'.",
-                        exception));
-                }
-            }
 
-            if (failures.Count > 0)
-            {
-                throw new AggregateException(
-                    "One or more configured Rebar Bar Types could not be "
-                    + "synchronized.",
-                    failures);
+                }
             }
         }
 
         public List<RebarBarTypeModel> GetRebarBarTypes()
         {
-            return ReadConfiguredRebarBarTypes(_document);
-        }
-
-        public static List<RebarBarTypeModel> ReadConfiguredRebarBarTypes(
-            Document document)
-        {
-            if (document == null)
-                throw new ArgumentNullException(nameof(document));
-            var pathData = $"{PathHelper.Datas}\\RebarbarTypeData.json";
-            if (!File.Exists(pathData))
-                return new List<RebarBarTypeModel>();
-            var schema = new RebarBarTypeSchema(
-                RebarBarTypeSchema.GUID,
-                RebarBarTypeSchema.NAME);
-            var dataInModel = schema.Read(document.ProjectInformation);
+            var result = new List<RebarBarTypeModel>();
+            var pathData = $"{PathHelper.FolderDatas}\\RebarbarTypeData.json";
+            if(!File.Exists(pathData)) return result;
+            var dataInModel = _rebarBarTypeSchema.Read(_document.ProjectInformation);
             var data = string.IsNullOrEmpty(dataInModel)
                 ? JsonConvert.DeserializeObject<List<RebarBarTypeModel>>(File.ReadAllText(pathData))
                 : JsonConvert.DeserializeObject<List<RebarBarTypeModel>>(dataInModel);
-            return data ?? new List<RebarBarTypeModel>();
-        }
-
-        private static void VerifySynchronizedDiameter(
-            RebarBarType rebarBarType,
-            double expectedDiameterFt)
-        {
-            var nominalParameter = rebarBarType.get_Parameter(
-                BuiltInParameter.REBAR_BAR_DIAMETER);
-            var modelParameter = rebarBarType.get_Parameter(
-                BuiltInParameter.REBAR_MODEL_BAR_DIAMETER);
-            if (nominalParameter == null || modelParameter == null)
-            {
-                throw new InvalidOperationException(
-                    $"Rebar Bar Type '{rebarBarType.Name}' does not expose "
-                    + "both nominal and modeled diameter parameters.");
-            }
-
-            var expectedMm = expectedDiameterFt.ToMillimeters();
-            var nominalMm = nominalParameter.AsDouble().ToMillimeters();
-            var modelMm = modelParameter.AsDouble().ToMillimeters();
-            if (Math.Abs(nominalMm - expectedMm) > 1.0
-                || Math.Abs(modelMm - expectedMm) > 1.0)
-            {
-                throw new InvalidOperationException(
-                    $"Rebar Bar Type '{rebarBarType.Name}' remains "
-                    + "inconsistent after synchronization: configured "
-                    + $"{expectedMm:0.###} mm, nominal "
-                    + $"{nominalMm:0.###} mm, modeled "
-                    + $"{modelMm:0.###} mm.");
-            }
+            if (data == null) return result;
+            result = data;
+            return result;
         }
         public void Execute()
         {

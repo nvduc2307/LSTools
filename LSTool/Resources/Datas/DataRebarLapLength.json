@@ -1,0 +1,86 @@
+[
+  {
+    "Id": 1,
+    "ConcreteStrengthRatingId": 0,
+    "StructureRebarType": 0,
+    "Lst": 56
+  },
+  {
+    "Id": 1,
+    "ConcreteStrengthRatingId": 1,
+    "StructureRebarType": 0,
+    "Lst": 56
+  },
+  {
+    "Id": 2,
+    "ConcreteStrengthRatingId": 2,
+    "StructureRebarType": 0,
+    "Lst": 48
+  },
+  {
+    "Id": 3,
+    "ConcreteStrengthRatingId": 3,
+    "StructureRebarType": 0,
+    "Lst": 42
+  },
+  {
+    "Id": 4,
+    "ConcreteStrengthRatingId": 4,
+    "StructureRebarType": 0,
+    "Lst": 38
+  },
+  {
+    "Id": 5,
+    "ConcreteStrengthRatingId": 5,
+    "StructureRebarType": 0,
+    "Lst": 36
+  },
+  {
+    "Id": 6,
+    "ConcreteStrengthRatingId": 6,
+    "StructureRebarType": 0,
+    "Lst": 36
+  },
+  {
+    "Id": 7,
+    "ConcreteStrengthRatingId": 0,
+    "StructureRebarType": 1,
+    "Lst": 67
+  },
+  {
+    "Id": 8,
+    "ConcreteStrengthRatingId": 1,
+    "StructureRebarType": 1,
+    "Lst": 67
+  },
+  {
+    "Id": 9,
+    "ConcreteStrengthRatingId": 2,
+    "StructureRebarType": 1,
+    "Lst": 57
+  },
+  {
+    "Id": 10,
+    "ConcreteStrengthRatingId": 3,
+    "StructureRebarType": 1,
+    "Lst": 50
+  },
+  {
+    "Id": 11,
+    "ConcreteStrengthRatingId": 4,
+    "StructureRebarType": 1,
+    "Lst": 46
+  },
+  {
+    "Id": 12,
+    "ConcreteStrengthRatingId": 5,
+    "StructureRebarType": 1,
+    "Lst": 43
+  },
+  {
+    "Id": 13,
+    "ConcreteStrengthRatingId": 6,
+    "StructureRebarType": 1,
+    "Lst": 43
+  }
+]

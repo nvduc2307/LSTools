@@ -1,16 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using LSTool.Utils;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace LSTool.Tools.Beams.BeamRebar.view
 {
@@ -19,9 +9,15 @@ namespace LSTool.Tools.Beams.BeamRebar.view
     /// </summary>
     public partial class BeamRebarView : Window
     {
+        public Canvas CanvasStart => canvas_start;
+        public Canvas CanvasMid => canvas_mid;
+        public Canvas CanvasEnd => canvas_end;
+
         public BeamRebarView()
         {
+            LSTool.Utils.UI.UiAssemblyLoader.Initialize();
             InitializeComponent();
+            this.Escape();
         }
     }
 }

@@ -12,6 +12,12 @@
         <Configurations>$(Configurations);Release R24;Release R25;Release R26</Configurations>
     </PropertyGroup>
 
+    <ItemGroup>
+        <Content Include="Resources\Licenses\WpfUi-*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
     <!-- Revit configuration -->
     <PropertyGroup Condition="$(Configuration.Contains('R24'))">
         <RevitVersion>2024</RevitVersion>
@@ -44,21 +50,48 @@
     </PropertyGroup>
     <ItemGroup>
       <None Remove="Resources\Datas\RebarbarTypeData.json" />
-      <None Remove="Resources\Datas\ColumnRebarPresets.json" />
+      <None Remove="Resources\Datas\RebarBeamSetting.json" />
+      <None Remove="Resources\Datas\RebarColumnSetting.json" />
+      <None Remove="Resources\Datas\SettingBeam.json" />
+      <None Remove="Resources\Datas\SettingColumn.json" />
       <None Remove="Resources\Templates\ShareParameterConcreteBeam.txt" />
       <None Remove="Resources\Templates\ShareParameterConcreteColumn.txt" />
-      <None Remove="Tools\Beams\BeamRebar\imgs\Setting_Develop.png" />
-      <None Remove="Tools\Columns\ColumnRebar\imgs\Foundation_Anchol.png" />
-      <None Remove="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Anchol.png" />
-      <None Remove="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Beam_Div.png" />
-      <None Remove="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Col_Div.png" />
-      <None Remove="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Lap.png" />
     </ItemGroup>
     <ItemGroup>
       <Content Include="Resources\Datas\RebarbarTypeData.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
-      <Content Include="Resources\Datas\ColumnRebarPresets.json">
+      <Content Include="Resources\Datas\DataConcreteCover.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Resources\Datas\DataConcreteStrengthRating.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Resources\Datas\DataRebarAnchorageHookMainBar.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Resources\Datas\DataRebarAnchorageHookStirrup.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Resources\Datas\DataRebarAnchorageLength.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Resources\Datas\DataRebarLapLength.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Resources\Datas\DataRebarLenght.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Resources\Datas\RebarBeamSetting.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Resources\Datas\RebarColumnSetting.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Resources\Datas\SettingBeam.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Resources\Datas\SettingColumn.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
       <Content Include="Resources\Settings\ReleaseChannel.json">
@@ -85,8 +118,10 @@
         <PackageReference Include="Nice3point.Revit.Extensions" Version="$(RevitVersion).*" />
         <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="$(RevitVersion).*" />
         <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="$(RevitVersion).*" />
+        <!-- Shared Fluent controls for both net48 and net8.0-windows. -->
+        <PackageReference Include="WPF-UI" Version="4.3.0" />
         <!-- MVVM -->
-        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
       <Reference Include="System.Net.Http" />
@@ -102,15 +137,11 @@
     </ItemGroup>
     
     <ItemGroup>
+        <Resource Include="MVVM\imgs\RebarBeamSetting.png" />
+        <Resource Include="MVVM\imgs\RebarColumnSetting.png" />
         <Resource Include="Resources\Icons\RibbonIcon16.png" />
         <Resource Include="Resources\Icons\RibbonIcon32.png" />
-        <Resource Include="Tools\Beams\BeamRebar\imgs\Setting_Develop.png" />
         <Resource Include="Tools\Beams\InstallRebarBeamV2\imgs\*.png" />
-        <Resource Include="Tools\Columns\ColumnRebar\imgs\Foundation_Anchol.png" />
-        <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Anchol.png" />
-        <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Beam_Div.png" />
-        <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Col_Div.png" />
-        <Resource Include="Tools\Generals\SettingRebarStandard\imgs\LS_Setting_Lap.png" />
     </ItemGroup>
 
     <ItemGroup>
@@ -124,95 +155,32 @@
       <None Update="Resources\ShareParameters\RTOOL_SHARE_PARAMETER_REBAR_SCHEDULE.txt">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="Resources\Data\DataRebarLenght.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
     </ItemGroup>
     
     <ItemGroup>
+      <Folder Include="MVVM\imgs\" />
       <Folder Include="Resources\Imgs\" />
-    </ItemGroup>
-    
-    <ItemGroup>
-      <Compile Update="Properties\Langs\General.Designer.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>General.resx</DependentUpon>
-      </Compile>
-      <Compile Update="Properties\Langs\InstallRebarBeamV2Langs.Designer.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>InstallRebarBeamV2Langs.resx</DependentUpon>
-      </Compile>
-      <Compile Update="Properties\Langs\RebarScheduleParameter.Designer.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>RebarScheduleParameter.resx</DependentUpon>
-      </Compile>
-      <Compile Update="Properties\Langs\RebarStructureType.Designer.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>RebarStructureType.resx</DependentUpon>
-      </Compile>
-      <Compile Update="Properties\Langs\SchemaInfo.Designer.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>SchemaInfo.resx</DependentUpon>
-      </Compile>
-      <Compile Update="Properties\Langs\ShareParameterInfo.Designer.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>ShareParameterInfo.resx</DependentUpon>
-      </Compile>
-      <Compile Update="Properties\RTParams.Designer.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>RTParams.resx</DependentUpon>
-      </Compile>
-    </ItemGroup>
-    
-    <ItemGroup>
-      <EmbeddedResource Update="Properties\Langs\General.ja-JP.resx">
-        <CustomToolNamespace></CustomToolNamespace>
-        <Generator>PublicResXFileCodeGenerator</Generator>
-      </EmbeddedResource>
-      <EmbeddedResource Update="Properties\Langs\General.resx">
-        <CustomToolNamespace></CustomToolNamespace>
-        <Generator>PublicResXFileCodeGenerator</Generator>
-        <LastGenOutput>General.Designer.cs</LastGenOutput>
-      </EmbeddedResource>
-      <EmbeddedResource Update="Properties\Langs\InstallRebarBeamV2Langs.ja-JP.resx">
-        <Generator>PublicResXFileCodeGenerator</Generator>
-      </EmbeddedResource>
-      <EmbeddedResource Update="Properties\Langs\InstallRebarBeamV2Langs.resx">
-        <Generator>PublicResXFileCodeGenerator</Generator>
-        <LastGenOutput>InstallRebarBeamV2Langs.Designer.cs</LastGenOutput>
-      </EmbeddedResource>
-      <EmbeddedResource Update="Properties\Langs\RebarScheduleParameter.resx">
-        <Generator>PublicResXFileCodeGenerator</Generator>
-        <LastGenOutput>RebarScheduleParameter.Designer.cs</LastGenOutput>
-      </EmbeddedResource>
-      <EmbeddedResource Update="Properties\Langs\RebarStructureType.ja-JP.resx">
-        <Generator>PublicResXFileCodeGenerator</Generator>
-      </EmbeddedResource>
-      <EmbeddedResource Update="Properties\Langs\RebarStructureType.resx">
-        <Generator>PublicResXFileCodeGenerator</Generator>
-        <LastGenOutput>RebarStructureType.Designer.cs</LastGenOutput>
-      </EmbeddedResource>
-      <EmbeddedResource Update="Properties\Langs\SchemaInfo.resx">
-        <Generator>PublicResXFileCodeGenerator</Generator>
-        <LastGenOutput>SchemaInfo.Designer.cs</LastGenOutput>
-      </EmbeddedResource>
-      <EmbeddedResource Update="Properties\Langs\ShareParameterInfo.resx">
-        <Generator>PublicResXFileCodeGenerator</Generator>
-        <LastGenOutput>ShareParameterInfo.Designer.cs</LastGenOutput>
-      </EmbeddedResource>
-      <EmbeddedResource Update="Properties\RTParams.ja-JP.resx">
-        <Generator>PublicResXFileCodeGenerator</Generator>
-      </EmbeddedResource>
-      <EmbeddedResource Update="Properties\RTParams.resx">
-        <Generator>PublicResXFileCodeGenerator</Generator>
-        <LastGenOutput>RTParams.Designer.cs</LastGenOutput>
-      </EmbeddedResource>
+      <Folder Include="Tools\Generals\ManageConcreteCover\viewModel\" />
+      <Folder Include="Tools\Generals\ManageConcreteCover\model\" />
+      <Folder Include="Tools\Generals\ManageConcreteCover\view\" />
+      <Folder Include="Tools\Generals\ManageRebarAnchorageHookMainBar\model\" />
+      <Folder Include="Tools\Generals\ManageRebarAnchorageHookMainBar\viewModel\" />
+      <Folder Include="Tools\Generals\ManageRebarAnchorageHookMainBar\view\" />
+      <Folder Include="Tools\Generals\ManageRebarAnchorageHookStirrup\model\" />
+      <Folder Include="Tools\Generals\ManageRebarAnchorageHookStirrup\viewModel\" />
+      <Folder Include="Tools\Generals\ManageRebarAnchorageHookStirrup\view\" />
+      <Folder Include="Tools\Generals\ManageRebarAnchorageLength\model\" />
+      <Folder Include="Tools\Generals\ManageRebarAnchorageLength\viewModel\" />
+      <Folder Include="Tools\Generals\ManageRebarAnchorageLength\view\" />
+      <Folder Include="Tools\Generals\ManageRebarLapLength\model\" />
+      <Folder Include="Tools\Generals\ManageRebarLapLength\viewModel\" />
+      <Folder Include="Tools\Generals\ManageRebarLapLength\view\" />
+      <Folder Include="Tools\Generals\RebarInfomationParameter\action\" />
+      <Folder Include="Tools\Generals\RebarInfomationParameter\model\" />
+      <Folder Include="Tools\Generals\RebarInfomationParameter\viewModel\" />
+      <Folder Include="Tools\Generals\RebarInfomationParameter\view\" />
+      <Folder Include="Tools\Generals\SettingRebarColumn\model\" />
+      <Folder Include="Tools\Generals\SettingRebarColumn\viewModel\" />
+      <Folder Include="Tools\Generals\SettingRebarColumn\view\" />
     </ItemGroup>
 </Project>

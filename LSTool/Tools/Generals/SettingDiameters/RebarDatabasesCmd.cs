@@ -11,11 +11,6 @@ namespace LSTool.Tools.Generals.SettingDiameters
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
-            if (!LicenseGate.EnsureFeature(LicenseFeatures.Settings))
-            {
-                return Result.Cancelled;
-            }
-
             var result = Result.Succeeded;
             var uiDocument = commandData.Application.ActiveUIDocument;
             var document = uiDocument.Document;

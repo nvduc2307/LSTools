@@ -1,0 +1,88 @@
+<?xml version="1.0" ?>
+<Window xmlns:fluent="http://schemas.lepo.co/wpfui/2022/xaml" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="LSTool.MVVM.view.ManageRebarAnchorageHookMainBarView" Title="LSTool · Main Bar Hooks" Width="720" Height="380" MinWidth="640" MinHeight="340" Style="{DynamicResource ToolWindow}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/LSTool;component/Resources/UI/CompactTheme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0"/>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="170"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Border Style="{StaticResource Panel}" Padding="8" Margin="0,0,8,0">
+                <Image Source="{StaticResource MainBarHookDiagram}" Stretch="Uniform"/>
+            </Border>
+            <Grid Grid.Column="1">
+                <fluent:DataGrid ItemsSource="{Binding RebarAnchorageHookMainBars}" SelectionUnit="FullRow" ClipboardCopyMode="ExcludeHeader">
+                    <fluent:DataGrid.Columns>
+                        <DataGridTemplateColumn Header="ID" Width="42" MinWidth="42">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Id}" Margin="6,0" TextAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Diameter" Width="*" MinWidth="65">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Diameter, StringFormat='Ø{0}'}" Margin="6,0" TextAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="A" Width="*" MinWidth="65">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <fluent:TextBox Text="{Binding A, UpdateSourceTrigger=PropertyChanged, Delay=100}" Style="{StaticResource CellInput}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="R" Width="*" MinWidth="65">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <fluent:TextBox Text="{Binding R, UpdateSourceTrigger=PropertyChanged, Delay=100}" Style="{StaticResource CellInput}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="B" Width="*" MinWidth="65">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <fluent:TextBox Text="{Binding B, UpdateSourceTrigger=PropertyChanged, Delay=100}" Style="{StaticResource CellInput}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="C" Width="*" MinWidth="65">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <fluent:TextBox Text="{Binding C, UpdateSourceTrigger=PropertyChanged, Delay=100}" Style="{StaticResource CellInput}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </fluent:DataGrid.Columns>
+                </fluent:DataGrid>
+            </Grid>
+        </Grid>
+        <Border Grid.Row="2" Padding="0,8,0,0" Margin="0,8,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <fluent:Button Content="Cancel" Command="{Binding CancelCommand}" Style="{StaticResource CancelButton}" Margin="0,0,8,0"/>
+                    <fluent:Button Content="OK" Command="{Binding OkCommand}" Style="{StaticResource PrimaryButton}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using LSTool.Utils;
 
 namespace LSTool.Licensing
@@ -24,7 +24,7 @@ namespace LSTool.Licensing
                 return true;
             }
 
-            IO.ShowWarning(GetCustomerMessage(result.Code), "LSTools");
+            IO.ShowWarning(GetCustomerMessage(result.Code), "LSTool");
             return false;
         }
 
@@ -51,7 +51,7 @@ namespace LSTool.Licensing
 
                 default:
                     return
-                        "Phiên bản LSTools này hiện không khả dụng.\n\n" +
+                        "Phiên bản LSTool này hiện không khả dụng.\n\n" +
                         "Vui lòng liên hệ nhà cung cấp.";
             }
         }

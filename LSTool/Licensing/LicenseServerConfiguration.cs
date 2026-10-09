@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using Newtonsoft.Json;
 
@@ -78,7 +78,7 @@ namespace LSTool.Licensing
             }
             catch
             {
-                // Cleanup is best-effort and must never block LSTools startup.
+                // Cleanup is best-effort and must never block LSTool startup.
             }
         }
     }

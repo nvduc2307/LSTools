@@ -1,0 +1,558 @@
+using Autodesk.Revit.DB.Structure;
+using Autodesk.Revit.UI;
+using LSTool.MVVM.model.Structures;
+using LSTool.Tools.Columns.CreateColumn.model;
+using LSTool.Tools.Columns.CreateColumn.stringDefines;
+using LSTool.Tools.Columns.CreateColumn.types;
+using LSTool.Tools.Generals.ManageConcreteCover.action;
+using LSTool.Utils;
+using System.IO;
+
+namespace LSTool.Tools.Columns.CreateColumn.action
+{
+    public class ColumnConcreteAction
+    {
+        private UIDocument _uidocument;
+        private Document _document;
+        private ConcreteCoverModel _cover;
+        public Action QtyActionChange { get; set; }
+        public ColumnConcreteAction(UIDocument uidocument)
+        {
+            _uidocument = uidocument;
+            _document = _uidocument.Document;
+            QtyActionChange = _QtyActionChange;
+            _cover = GetSettingCover();
+        }
+
+        private void _QtyActionChange()
+        {
+        }
+
+        public List<FamilyInstance> SelectColumns()
+        {
+            //selete cols
+            var elements = _uidocument.Selection.PickElements(_document, null, _columnSelectedFilter);
+            //valid cols
+            var columns = ValidateColumns(elements);
+            if (!columns.Any()) return columns;
+            return columns;
+        }
+        public List<ColumnConcreteModel> GetColumnConcreteModels(
+            List<FamilyInstance> columns)
+        {
+            var results = new List<ColumnConcreteModel>();
+            if (!columns.Any()) return results;
+            var diameters = new FilteredElementCollector(_document)
+                .WhereElementIsElementType()
+                .OfClass(typeof(RebarBarType))
+                .Cast<RebarBarType>()
+                .Where(x => x.Name.Contains("D"))
+                .OrderBy(x => x.Name)
+                .Select(x => x.Name)
+                .ToList();
+            foreach (var cl in columns)
+            {
+                try
+                {
+                    var transform = cl.GetTransform();
+                    var vtx = transform.BasisX;
+                    var vtz = transform.BasisZ;
+                    var vty = vtx.CrossProduct(vtz);
+                    var heightBeamZone = GetHeightBeamZone(cl);
+                    var ccM = new ColumnConcreteModel
+                    {
+                        Id = cl.UniqueId,
+                        HeightBeamZone = heightBeamZone == 0 ? 400 : heightBeamZone,
+                        Cover = _cover.CoverValue,
+                        VTX = vtx,
+                        VTY = vty,
+                        VTZ = vtz,
+                        Ties = new List<List<ColumnStirrupPositionModel>>()
+                    };
+                    GetDistanceColumn(
+                        cl,
+                        vtx,
+                        vty,
+                        vtz,
+                        out XYZ center,
+                        out double width,
+                        out double height,
+                        out double length);
+                    if (center == null) throw new Exception("center is null");
+                    if (width == 0) throw new Exception("width is 0");
+                    if (height == 0) throw new Exception("height is 0");
+                    if (length == 0) throw new Exception("length is 0");
+
+                    GetFaceColumn(
+                        cl,
+                        vtx,
+                        vty,
+                        vtz,
+                        center,
+                        width,
+                        height,
+                        length,
+                        out ColumnFaceModel fLeft,
+                        out ColumnFaceModel fTop,
+                        out ColumnFaceModel fRight,
+                        out ColumnFaceModel fBottom);
+                    if (fLeft == null) throw new Exception("fLeft is null");
+                    if (fTop == null) throw new Exception("fTop is null");
+                    if (fRight == null) throw new Exception("fRight is null");
+                    if (fBottom == null) throw new Exception("fBottom is null");
+                    ccM.Center = center;
+                    ccM.Width = width;
+                    ccM.Height = height;
+                    ccM.Length = length;
+                    ccM.FaceLeft = fLeft;
+                    ccM.FaceTop = fTop;
+                    ccM.FaceRight = fRight;
+                    ccM.FaceBottom = fBottom;
+
+                    GetRebarSetting(
+                        cl,
+                        out string dx_diameter,
+                        out double dx_spacing,
+                        out string dy_diameter,
+                        out double dy_spacing,
+                        out string ts_diameter,
+                        out double ts_spacing,
+                        out double ts_spacing_end);
+                    ccM.DiameterDXs = [.. diameters];
+                    ccM.DiameterDX =
+                        ccM.DiameterDXs.FirstOrDefault(x => x == dx_diameter)
+                        ?? ccM.DiameterDXs.FirstOrDefault();
+                    ccM.SpacingDX = dx_spacing;
+
+                    ccM.DiameterDYs = [.. diameters];
+                    ccM.DiameterDY =
+                        ccM.DiameterDYs.FirstOrDefault(x => x == dy_diameter)
+                        ?? ccM.DiameterDYs.FirstOrDefault();
+                    ccM.SpacingDY = dy_spacing;
+
+                    ccM.DiameterSTs = [.. diameters];
+                    ccM.DiameterST =
+                        ccM.DiameterSTs.FirstOrDefault(x => x == ts_diameter)
+                        ?? ccM.DiameterSTs.FirstOrDefault();
+                    ccM.SpacingST = ts_spacing;
+                    ccM.SpacingSTE = ts_spacing_end;
+                    ccM.SpacingDXAction = QtyActionChange;
+                    ccM.SpacingDYAction = QtyActionChange;
+                    results.Add(ccM);
+                }
+                catch (Exception ex)
+                {
+                    IO.ShowWarning(ex.Message);
+                }
+            }
+
+            // Sắp xếp các cột theo cao độ Z tăng dần (cột dưới ở trên đầu danh sách)
+            results = results
+                .Where(x => x.Center != null)
+                .OrderBy(x => x.Center.DotProduct(XYZ.BasisZ))
+                .ToList();
+
+            for (int i = 0; i < results.Count; i++)
+            {
+                results[i].Name = $"Item{i + 1}";
+            }
+
+            return results;
+        }
+        public void SetRebarSetting(
+            Document document,
+            List<ColumnConcreteModel> cls)
+        {
+            using (var ts = new SubTransaction(document))
+            {
+                ts.Start();
+                foreach (var item in cls)
+                {
+                    try
+                    {
+                        var cl = document.GetElement(item.Id);
+                        var par_dx_diameter = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DX_Diameter);
+                        var par_dx_spacing = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DX_Spacing);
+
+                        var par_dy_diameter = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DY_Diameter);
+                        var par_dy_spacing = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DY_Spacing);
+
+                        var par_ts_diameter = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Diameter);
+                        var par_ts_spacing = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Spacing);
+                        var par_ts_spacing_end = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Spacing_End);
+
+                        if (par_dx_diameter == null) throw new Exception();
+                        if (par_dx_spacing == null) throw new Exception();
+                        if (par_dy_diameter == null) throw new Exception();
+                        if (par_dy_spacing == null) throw new Exception();
+                        if (par_ts_diameter == null) throw new Exception();
+                        if (par_ts_spacing == null) throw new Exception();
+                        if (par_ts_spacing_end == null) throw new Exception();
+                        par_dx_diameter.Set(item.DiameterDX);
+                        par_dx_spacing.Set(item.SpacingDX.FromMillimeters());
+
+                        par_dy_diameter.Set(item.DiameterDY);
+                        par_dy_spacing.Set(item.SpacingDY.FromMillimeters());
+
+                        par_ts_diameter.Set(item.DiameterST);
+                        par_ts_spacing.Set(item.SpacingST.FromMillimeters());
+                        par_ts_spacing_end.Set(item.SpacingSTE.FromMillimeters());
+                    }
+                    catch (Exception ex)
+                    {
+                        IO.ShowWarning(ex.Message);
+                    }
+                }
+                ts.Commit();
+            }
+        }
+        public void ValidateShareParameter()
+        {
+            var pathShareParameter = $"{PathHelper.Templates}\\ShareParameterConcreteColumn.txt";
+            if (!File.Exists(pathShareParameter)) return;
+            using (var ts = new Transaction(_document, "AddParameter"))
+            {
+                ts.SkipAllWarnings();
+                ts.Start();
+                ParameterHelper
+                    .CreateSharedParameters(
+                        _document,
+                        pathShareParameter,
+                        BuiltInCategory.OST_StructuralColumns);
+                _document.Regenerate();
+                ts.Commit();
+            }
+        }
+        private ConcreteCoverModel GetSettingCover()
+        {
+            var action = new ManageConcreteCoverAction(_document);
+            return action.GetColumnCover();
+        }
+
+        private double GetHeightBeamZone(FamilyInstance col)
+        {
+            var tolerance = 100.0.FromMillimeters();
+            double result = 0;
+            var bb = col.get_BoundingBox(_document.ActiveView) ?? col.get_BoundingBox(null);
+            if (bb == null) return result;
+            var outLine = new Outline(bb.Min, bb.Max);
+            var bbFilter = new BoundingBoxIntersectsFilter(outLine, tolerance);
+            var beams = (_document.ActiveView != null
+                ? new FilteredElementCollector(_document, _document.ActiveView.Id)
+                : new FilteredElementCollector(_document))
+                .WhereElementIsNotElementType()
+                .WherePasses(bbFilter)
+                .OfClass(typeof(FamilyInstance))
+                .OfCategory(BuiltInCategory.OST_StructuralFraming)
+                .Cast<FamilyInstance>()
+                .ToList();
+
+            if (!beams.Any())
+            {
+                beams = new FilteredElementCollector(_document)
+                    .WhereElementIsNotElementType()
+                    .WherePasses(bbFilter)
+                    .OfClass(typeof(FamilyInstance))
+                    .OfCategory(BuiltInCategory.OST_StructuralFraming)
+                    .Cast<FamilyInstance>()
+                    .ToList();
+            }
+            if (!beams.Any()) return result;
+
+            var colSolids = col.GetSolid();
+            if (colSolids == null || !colSolids.Any()) return result;
+            var colPs = colSolids.Select(x => x.GetPoints())
+                .Aggregate((a, b) => a.Concat(b).ToList())
+                .Distinct(new ComparePoint())
+                .ToList();
+            if (!colPs.Any()) return result;
+            colPs = colPs
+                .OrderBy(x => x.DotProduct(XYZ.BasisZ))
+                .ToList();
+            var colCenter = colPs.GetCenter();
+            var planMin = Plane.CreateByNormalAndOrigin(XYZ.BasisZ, bb.Min);
+            var planMax = Plane.CreateByNormalAndOrigin(XYZ.BasisZ, bb.Max);
+            var min = colCenter.RayIntersectPlane(planMin.Normal, planMin);
+            var max = colCenter.RayIntersectPlane(planMax.Normal, planMax);
+            var beamValids = beams.Where(x =>
+            {
+                var trans = x.GetTransform();
+                var dTop = trans.Origin.RayIntersectPlane(planMax.Normal, planMax).DistanceTo(trans.Origin).ToMillimeters();
+                var dBot = trans.Origin.RayIntersectPlane(planMin.Normal, planMin).DistanceTo(trans.Origin).ToMillimeters();
+                return dTop < dBot;
+            })
+            .ToList();
+            if (!beamValids.Any()) return result;
+            var beamHeights = beamValids
+                .Select(x =>
+                {
+                    var beamTrans = x.GetTransform();
+                    var beamBB = x.get_BoundingBox(_document.ActiveView) ?? x.get_BoundingBox(null);
+                    if (beamBB == null) return 0.0;
+                    var planBeamMin = Plane.CreateByNormalAndOrigin(beamTrans.BasisZ, beamBB.Min);
+                    var planBeamMax = Plane.CreateByNormalAndOrigin(beamTrans.BasisZ, beamBB.Max);
+                    var beamPBot = beamTrans.Origin.RayIntersectPlane(planBeamMin.Normal, planBeamMin);
+                    var beamPTop = beamTrans.Origin.RayIntersectPlane(planBeamMax.Normal, planBeamMax);
+                    return Math.Round(beamPBot.DistanceTo(beamPTop).ToMillimeters(), 0);
+                })
+                .OrderBy(x => x)
+                .ToList();
+            result = beamHeights.LastOrDefault();
+            return result;
+        }
+        private void GetRebarSetting(
+            FamilyInstance cl,
+            out string dx_diameter,
+            out double dx_spacing,
+            out string dy_diameter,
+            out double dy_spacing,
+            out string ts_diameter,
+            out double ts_spacing,
+            out double ts_spacing_end)
+        {
+            dx_diameter = "D10";
+            dx_spacing = 5;
+            dy_diameter = "D10";
+            dy_spacing = 5;
+            ts_diameter = "D10";
+            ts_spacing = 100;
+            ts_spacing_end = 100;
+            try
+            {
+                var par_dx_diameter = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DX_Diameter);
+                var par_dx_spacing = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DX_Spacing);
+
+                var par_dy_diameter = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DY_Diameter);
+                var par_dy_spacing = cl.LookupParameter(ColumnConcreteModelParameterName.LS_DY_Spacing);
+
+                var par_ts_diameter = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Diameter);
+                var par_ts_spacing = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Spacing);
+                var par_ts_spacing_end = cl.LookupParameter(ColumnConcreteModelParameterName.LS_ST_Spacing_End);
+
+                if (par_dx_diameter == null) throw new Exception();
+                if (par_dx_spacing == null) throw new Exception();
+                if (par_dy_diameter == null) throw new Exception();
+                if (par_dy_spacing == null) throw new Exception();
+                if (par_ts_diameter == null) throw new Exception();
+                if (par_ts_spacing == null) throw new Exception();
+                if (par_ts_spacing_end == null) throw new Exception();
+
+                dx_diameter = par_dx_diameter.AsString();
+                dx_spacing = Math.Round(par_dx_spacing.AsDouble().ToMillimeters(), 0);
+
+                dy_diameter = par_dy_diameter.AsString();
+                dy_spacing = Math.Round(par_dy_spacing.AsDouble().ToMillimeters(), 0);
+
+                ts_diameter = par_ts_diameter.AsString();
+                ts_spacing = Math.Round(par_ts_spacing.AsDouble().ToMillimeters(), 0);
+                ts_spacing_end = Math.Round(par_ts_spacing_end.AsDouble().ToMillimeters(), 0);
+
+                if (string.IsNullOrEmpty(dx_diameter)) throw new Exception();
+                if (dx_spacing < 10) throw new Exception();
+
+                if (string.IsNullOrEmpty(dy_diameter)) throw new Exception();
+                if (dy_spacing < 10) throw new Exception();
+
+                if (string.IsNullOrEmpty(ts_diameter)) throw new Exception();
+                if (ts_spacing < 10) throw new Exception();
+                if (ts_spacing_end < 10) throw new Exception();
+            }
+            catch (Exception)
+            {
+                dx_diameter = "D10";
+                dx_spacing = 5;
+                dy_diameter = "D10";
+                dy_spacing = 5;
+                ts_diameter = "D10";
+                ts_spacing = 100;
+                ts_spacing_end = 100;
+            }
+        }
+        private void GetFaceColumn(
+            FamilyInstance cl,
+            XYZ vtx,
+            XYZ vty,
+            XYZ vtz,
+            XYZ center,
+            double width,
+            double height,
+            double length,
+            out ColumnFaceModel fLeft,
+            out ColumnFaceModel fTop,
+            out ColumnFaceModel fRight,
+            out ColumnFaceModel fBottom)
+        {
+            fLeft = null;
+            fTop = null;
+            fRight = null;
+            fBottom = null;
+            try
+            {
+                var p1b = center
+                    - vtx * width.FromMillimeters() / 2
+                    - vty * height.FromMillimeters() / 2
+                    - vtz * length.FromMillimeters() / 2;
+                var p2b = center
+                    + vtx * width.FromMillimeters() / 2
+                    - vty * height.FromMillimeters() / 2
+                    - vtz * length.FromMillimeters() / 2;
+                var p3b = center
+                    + vtx * width.FromMillimeters() / 2
+                    + vty * height.FromMillimeters() / 2
+                    - vtz * length.FromMillimeters() / 2;
+                var p4b = center
+                    - vtx * width.FromMillimeters() / 2
+                    + vty * height.FromMillimeters() / 2
+                    - vtz * length.FromMillimeters() / 2;
+
+                var p1t = center
+                    - vtx * width.FromMillimeters() / 2
+                    - vty * height.FromMillimeters() / 2
+                    + vtz * length.FromMillimeters() / 2;
+                var p2t = center
+                    + vtx * width.FromMillimeters() / 2
+                    - vty * height.FromMillimeters() / 2
+                    + vtz * length.FromMillimeters() / 2;
+                var p3t = center
+                    + vtx * width.FromMillimeters() / 2
+                    + vty * height.FromMillimeters() / 2
+                    + vtz * length.FromMillimeters() / 2;
+                var p4t = center
+                    - vtx * width.FromMillimeters() / 2
+                    + vty * height.FromMillimeters() / 2
+                    + vtz * length.FromMillimeters() / 2;
+
+                fLeft = new ColumnFaceModel()
+                {
+                    HostId = cl.UniqueId,
+                    FaceType = (int)ColumnFaceType.Left,
+                    Pb1 = p4b,
+                    Pb2 = p1b,
+                    Pt1 = p4t,
+                    Pt2 = p1t,
+                    Plane = Plane.CreateByNormalAndOrigin(-vtx, p4b)
+                };
+                fTop = new ColumnFaceModel()
+                {
+                    HostId = cl.UniqueId,
+                    FaceType = (int)ColumnFaceType.Top,
+                    Pb1 = p3b,
+                    Pb2 = p4b,
+                    Pt1 = p3t,
+                    Pt2 = p4t,
+                    Plane = Plane.CreateByNormalAndOrigin(vty, p3b)
+                };
+                fRight = new ColumnFaceModel()
+                {
+                    HostId = cl.UniqueId,
+                    FaceType = (int)ColumnFaceType.Right,
+                    Pb1 = p2b,
+                    Pb2 = p3b,
+                    Pt1 = p2t,
+                    Pt2 = p3t,
+                    Plane = Plane.CreateByNormalAndOrigin(vtx, p2b)
+                };
+                fBottom = new ColumnFaceModel()
+                {
+                    HostId = cl.UniqueId,
+                    FaceType = (int)ColumnFaceType.Bottom,
+                    Pb1 = p1b,
+                    Pb2 = p2b,
+                    Pt1 = p1t,
+                    Pt2 = p2t,
+                    Plane = Plane.CreateByNormalAndOrigin(-vty, p1b)
+                };
+            }
+            catch (Exception)
+            {
+                fLeft = null;
+                fTop = null;
+                fRight = null;
+                fBottom = null;
+            }
+        }
+        private void GetDistanceColumn(
+            FamilyInstance cl,
+            XYZ vtx,
+            XYZ vty,
+            XYZ vtz,
+            out XYZ center,
+            out double width,
+            out double height,
+            out double length)
+        {
+            center = null;
+            width = 0;
+            height = 0;
+            length = 0;
+            try
+            {
+                var ps = cl.GetSolid()
+                        .Select(x => x.GetPoints())
+                        .Aggregate((a, b) => a.Concat(b).ToList())
+                        .ToList();
+                center = ps.GetCenter();
+                var fx = Plane.CreateByNormalAndOrigin(vty, center);
+                var fy = Plane.CreateByNormalAndOrigin(vtx, center);
+                var fS = Plane.CreateByNormalAndOrigin(vtz, center);
+
+                var minz = ps.Min(x => x.Z);
+                var maxz = ps.Max(x => x.Z);
+                length = Math.Round(Math.Abs(maxz - minz).ToMillimeters(), 0);
+
+                var psSections = ps
+                    .Select(p => p.RayIntersectPlane(fS.Normal, fS))
+                    .ToList();
+                var psX = psSections
+                    .Select(p => p.RayIntersectPlane(fx.Normal, fx))
+                    .Distinct(new ComparePoint())
+                    .OrderBy(p => p.DotProduct(vtx))
+                    .ToList();
+                var psY = psSections
+                    .Select(p => p.RayIntersectPlane(fy.Normal, fy))
+                    .Distinct(new ComparePoint())
+                    .OrderBy(p => p.DotProduct(vty))
+                    .ToList();
+                if (!psX.Any()) throw new Exception();
+                if (!psY.Any()) throw new Exception();
+
+                width = Math.Round(psX.FirstOrDefault().DistanceTo(psX.LastOrDefault()).ToMillimeters(), 0);
+                height = Math.Round(psY.FirstOrDefault().DistanceTo(psY.LastOrDefault()).ToMillimeters(), 0);
+
+                if (width < 50) throw new Exception("ccM.Width < 50");
+                if (height < 50) throw new Exception("ccM.Height < 50");
+            }
+            catch (Exception)
+            {
+                center = null;
+                width = 0;
+                height = 0;
+                length = 0;
+            }
+        }
+        private List<FamilyInstance> ValidateColumns(List<Element> elements)
+        {
+            if (elements == null)
+                throw new Exception("Element is not found");
+            if (!elements.Any())
+                throw new Exception("Element is not found");
+            if (elements.Any(x => x is not FamilyInstance))
+                throw new Exception("Element is not found");
+            var columns = elements
+                .Cast<FamilyInstance>()
+                .ToList();
+            foreach (var column in columns)
+            {
+                if (!column.GetTransform().BasisZ.IsParallel(XYZ.BasisZ))
+                    throw new Exception("Tool chỉ hỗ trợ cột đứng");
+            }
+            return columns;
+        }
+        private bool _columnSelectedFilter(Element element)
+        {
+            if (element is not FamilyInstance fa) return false;
+            if (fa.Category.BuiltInCategory != BuiltInCategory.OST_StructuralColumns) return false;
+            return true;
+        }
+    }
+}

@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [ValidatePattern('^\d+\.\d+\.\d+(?:\.\d+)?$')]
     [string]$AppVersion = '1.0.0',
@@ -20,7 +20,7 @@ $projectPath = Join-Path $repositoryRoot 'LSTool\LSTool.csproj'
 $profilePath = Join-Path `
     $repositoryRoot `
     'LSTool\Resources\Settings\ReleaseProfile.dat'
-$installerScript = Join-Path $PSScriptRoot 'LSTools.iss'
+$installerScript = Join-Path $PSScriptRoot 'LSTool.iss'
 $outputDirectory = Join-Path $PSScriptRoot 'dist'
 $stagingDirectory = Join-Path $PSScriptRoot 'staging'
 $protectionDirectory = Join-Path $PSScriptRoot 'protection-maps'
@@ -84,7 +84,7 @@ function Assert-ReleaseProfile {
     }
 
     if ($credential -notmatch '^LST-(?:[A-F0-9]{4}-){5}[A-F0-9]{4}$') {
-        throw 'ReleaseProfile.dat does not contain a valid LSTools profile.'
+        throw 'ReleaseProfile.dat does not contain a valid LSTool profile.'
     }
 }
 
@@ -179,7 +179,7 @@ $releasePackages = @(
 if (-not $SkipBuild) {
     foreach ($releasePackage in $releasePackages) {
         Write-Host (
-            'Building LSTools ' +
+            'Building LSTool ' +
             $releasePackage.Configuration +
             '...'
         )
@@ -210,7 +210,7 @@ if ([string]::IsNullOrWhiteSpace($safeCustomerName)) {
 }
 
 $outputBaseFilename = (
-    "LSTools-$safeCustomerName-$AppVersion-Setup"
+    "LSTool-$safeCustomerName-$AppVersion-Setup"
 )
 
 $verifierArguments = @()

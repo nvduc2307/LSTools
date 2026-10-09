@@ -19,7 +19,7 @@ namespace LSTool.Properties.Langs {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class InstallRebarBeamV2Langs {
@@ -61,7 +61,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Install Beam Reinforcement.
+        ///   Looks up a localized string similar to InstallRebarBeamView.
         /// </summary>
         public static string IRBV2_COMMAND_NAME {
             get {
@@ -124,7 +124,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Anchor Settings.
+        ///   Looks up a localized string similar to Setting Anchor.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_ANCHOR {
             get {
@@ -133,7 +133,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Beam Settings.
+        ///   Looks up a localized string similar to Setting Beam.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_BEAM {
             get {
@@ -142,7 +142,16 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Bottom Reinforcement.
+        ///   Looks up a localized string similar to Setting Dantory.
+        /// </summary>
+        public static string IRBV2_GROUP_SETTING_DANTORY {
+            get {
+                return ResourceManager.GetString("IRBV2_GROUP_SETTING_DANTORY", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Setting Rebar Bot.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_REBAR_BOT {
             get {
@@ -151,7 +160,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Side Bars.
+        ///   Looks up a localized string similar to SideBar.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_REBAR_SIDE {
             get {
@@ -169,7 +178,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Top Reinforcement.
+        ///   Looks up a localized string similar to Setting Rebar Top.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_REBAR_TOP {
             get {
@@ -178,7 +187,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to End Section.
+        ///   Looks up a localized string similar to Section End.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_SECTION_END {
             get {
@@ -187,7 +196,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Middle Section.
+        ///   Looks up a localized string similar to Section Mid.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_SECTION_MID {
             get {
@@ -196,7 +205,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Start Section.
+        ///   Looks up a localized string similar to Section Start.
         /// </summary>
         public static string IRBV2_GROUP_SETTING_SECTION_START {
             get {
@@ -205,7 +214,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Concrete Cover.
+        ///   Looks up a localized string similar to Setting Cover.
         /// </summary>
         public static string IRBV2_SETTING_COVER {
             get {
@@ -214,7 +223,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Rebar Spacing.
+        ///   Looks up a localized string similar to DISTANCE_R_TO_R.
         /// </summary>
         public static string IRBV2_SETTING_DISTANCE_R_TO_R {
             get {
@@ -250,7 +259,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Span.
+        ///   Looks up a localized string similar to Setting Span.
         /// </summary>
         public static string IRBV2_SETTING_SPAN {
             get {
@@ -259,7 +268,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Beam Settings.
+        ///   Looks up a localized string similar to Setting Beam.
         /// </summary>
         public static string IRBV2_TAB_SETTING_BEAM {
             get {
@@ -268,7 +277,7 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Rebar Settings.
+        ///   Looks up a localized string similar to Setting Section.
         /// </summary>
         public static string IRBV2_TAB_SETTING_SECTION {
             get {
@@ -277,12 +286,23 @@ namespace LSTool.Properties.Langs {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Stirrup Settings.
+        ///   Looks up a localized string similar to Stirrup Type.
         /// </summary>
         public static string IRBV2_TAB_SETTING_STIRRUP_TYPE {
             get {
                 return ResourceManager.GetString("IRBV2_TAB_SETTING_STIRRUP_TYPE", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sub Setting.
+        /// </summary>
+        public static string IRBV2_TAB_SETTING_SUB_SETTING {
+            get {
+                return ResourceManager.GetString("IRBV2_TAB_SETTING_SUB_SETTING", resourceCulture);
+            }
+        }
     }
 }
+
+

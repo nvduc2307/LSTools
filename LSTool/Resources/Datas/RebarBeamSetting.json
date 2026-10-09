@@ -1,0 +1,108 @@
+[
+  {
+    "Id": 1,
+    "Name": "Default",
+    "SectionStart": {
+      "RebarTop1": {
+        "Name": "D16",
+        "Spacing": 3
+      },
+      "RebarTop2": {
+        "Name": "D16",
+        "Spacing": 0
+      },
+      "RebarTop3": {
+        "Name": "D16",
+        "Spacing": 0
+      },
+      "RebarBot1": {
+        "Name": "D16",
+        "Spacing": 3
+      },
+      "RebarBot2": {
+        "Name": "D16",
+        "Spacing": 0
+      },
+      "RebarBot3": {
+        "Name": "D16",
+        "Spacing": 0
+      },
+      "SideBar": {
+        "Name": "D12",
+        "Spacing": 0
+      },
+      "Stirrup": {
+        "Name": "D10",
+        "Spacing": 150
+      }
+    },
+    "SectionMid": {
+      "RebarTop1": {
+        "Name": "D16",
+        "Spacing": 3
+      },
+      "RebarTop2": {
+        "Name": "D16",
+        "Spacing": 0
+      },
+      "RebarTop3": {
+        "Name": "D16",
+        "Spacing": 0
+      },
+      "RebarBot1": {
+        "Name": "D16",
+        "Spacing": 3
+      },
+      "RebarBot2": {
+        "Name": "D16",
+        "Spacing": 0
+      },
+      "RebarBot3": {
+        "Name": "D16",
+        "Spacing": 0
+      },
+      "SideBar": {
+        "Name": "D12",
+        "Spacing": 0
+      },
+      "Stirrup": {
+        "Name": "D10",
+        "Spacing": 200
+      }
+    },
+    "SectionEnd": {
+      "RebarTop1": {
+        "Name": "D16",
+        "Spacing": 3
+      },
+      "RebarTop2": {
+        "Name": "D16",
+        "Spacing": 0
+      },
+      "RebarTop3": {
+        "Name": "D16",
+        "Spacing": 0
+      },
+      "RebarBot1": {
+        "Name": "D16",
+        "Spacing": 3
+      },
+      "RebarBot2": {
+        "Name": "D16",
+        "Spacing": 0
+      },
+      "RebarBot3": {
+        "Name": "D16",
+        "Spacing": 0
+      },
+      "SideBar": {
+        "Name": "D12",
+        "Spacing": 0
+      },
+      "Stirrup": {
+        "Name": "D10",
+        "Spacing": 150
+      }
+    }
+  }
+]

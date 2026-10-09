@@ -1,0 +1,44 @@
+<?xml version="1.0" ?>
+<Window xmlns:fluent="http://schemas.lepo.co/wpfui/2022/xaml" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="LSTool.Tools.Generals.SettingRebarBeam.view.SettingRebarBeamView" Title="LSTool · Beam Settings" Width="560" Height="300" MinWidth="480" MinHeight="280" Style="{DynamicResource ToolWindow}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/LSTool;component/Resources/UI/CompactTheme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0"/>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="140"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Margin="0,12,12,0">
+                <TextBlock Text="E0"/>
+                <fluent:TextBox DataContext="{Binding SettingBeamModel}" Text="{Binding E0, UpdateSourceTrigger=LostFocus}" Margin="0,4,0,12"/>
+                <TextBlock Text="LC"/>
+                <fluent:TextBox DataContext="{Binding SettingBeamModel}" Text="{Binding StressZone, UpdateSourceTrigger=LostFocus}" Margin="0,4,0,0"/>
+            </StackPanel>
+            <Image Grid.Column="1" Source="/LSTool;component/MVVM/imgs/RebarBeamSetting.png" Stretch="Uniform" Margin="6"/>
+        </Grid>
+        <Border Grid.Row="2" Padding="0,8,0,0" Margin="0,8,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <fluent:Button Content="Cancel" Command="{Binding CancelCommand}" Style="{StaticResource CancelButton}" Margin="0,0,8,0"/>
+                    <fluent:Button Content="OK" Command="{Binding OkCommand}" Style="{StaticResource PrimaryButton}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
