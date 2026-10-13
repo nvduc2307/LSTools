@@ -6,7 +6,6 @@ using System.IO;
 
 namespace LSTool.Tools.Beams.BeamRebar.action
 {
-    /// <summary>Đọc / ghi danh sách setting thép dầm (RebarBeamSetting.json) và áp dụng vào model dầm.</summary>
     public class BeamRebarSettingAction
     {
         private static string FilePath => $"{PathHelper.Appdatas}\\RebarBeamSetting.json";
@@ -40,7 +39,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             File.WriteAllText(FilePath, JsonConvert.SerializeObject(settings, Formatting.Indented));
         }
 
-        /// <summary>Chụp cấu hình thép hiện tại của dầm.</summary>
         public static void Capture(BeamRebarModel beam, BeamRebarSettingModel setting)
         {
             setting.SectionStart = CaptureSection(beam?.SectionStart);
@@ -48,7 +46,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             setting.SectionEnd = CaptureSection(beam?.SectionEnd);
         }
 
-        /// <summary>Áp dụng setting đã lưu lên dầm (đường kính không có trong danh sách của dầm thì bỏ qua).</summary>
         public static void Apply(BeamRebarSettingModel setting, BeamRebarModel beam)
         {
             if (setting == null || beam == null) return;

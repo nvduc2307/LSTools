@@ -55,7 +55,6 @@ namespace LSTool.Licensing
             }
             catch
             {
-                // The caller reports a clear configuration error.
             }
 
             return new LicenseServerConfiguration();
@@ -78,7 +77,6 @@ namespace LSTool.Licensing
             }
             catch
             {
-                // Cleanup is best-effort and must never block LSTool startup.
             }
         }
     }

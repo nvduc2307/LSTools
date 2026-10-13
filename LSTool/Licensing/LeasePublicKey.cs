@@ -5,9 +5,6 @@ namespace LSTool.Licensing
 {
     internal static class LeasePublicKey
     {
-        // Public half of the key used by Google Apps Script to sign short-lived
-        // lease tokens. The private key belongs only in Apps Script Properties
-        // and the developer's secure backup.
         private const string ModulusBase64 =
             "0uek5oS+NRxsg/NU1reBTdKLYpi4R0ICyi9FYl3c+U3a74zO6kFael0HqN1uQ1vx" +
             "ET0Yv2ezfy6+MNzaqOTZ7nNgO44vXiAJniam8PgB+mB6gNTqJJjJS4an/M6aY813" +

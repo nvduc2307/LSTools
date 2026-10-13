@@ -151,6 +151,7 @@ namespace LSTool.Tools.Columns.CreateColumn.action
                     .WhereElementIsElementType()
                     .OfClass(typeof(RebarHookType))
                     .Cast<RebarHookType>()
+                    .Where(x=>x.Style == RebarStyle.StirrupTie)
                     .ToList();
 
                 var hook135 = rebarHookTypes.FirstOrDefault(x => Math.Abs(x.HookAngle.ToDegrees() - 135) <= 1)
@@ -255,7 +256,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
                         int n = pts.Count;
                         var cMid = new XYZ(pts.Average(p => p.X), pts.Average(p => p.Y), pts.Average(p => p.Z));
 
-                        // Sắp xếp các điểm theo thứ tự chiều kim đồng hồ quanh trọng tâm
                         var vtx = ccRInfo.VTX;
                         var vty = ccRInfo.VTZ.CrossProduct(ccRInfo.VTX).Normalize();
                         var sortedPts = pts
@@ -266,7 +266,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
                             })
                             .ToList();
 
-                        // Tính vector cạnh và vector pháp tuyến ngoài cho từng cạnh
                         var edgeVecs = new XYZ[n];
                         var edgeNormals = new XYZ[n];
                         for (int i = 0; i < n; i++)
@@ -285,7 +284,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
                             edgeNormals[i] = normal;
                         }
 
-                        // Tính các đỉnh giao nhau của các cạnh đai đa giác
                         for (int i = 0; i < n; i++)
                         {
                             int prevIdx = (i - 1 + n) % n;
@@ -363,7 +361,7 @@ namespace LSTool.Tools.Columns.CreateColumn.action
                         var vInEnd = (ps[1] - p2).Normalize();
                         hookOrientEnd = rightStart.DotProduct(vInEnd) > 0 ? RebarHookOrientation.Left : RebarHookOrientation.Right;
                     }
-                    else // qty > 2 (đai đa giác kín 3, 4, 5, 6... đỉnh)
+                    else
                     {
                         var pStart = ps[0];
                         var pNext = ps[1];
@@ -511,7 +509,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             var dMainY = col.DiameterDY.FindInterger();
             var dSt = col.DiameterST.FindInterger();
 
-            // FaceLeft (Left = 0): Bottom-Left (Pb2) -> Top-Left (Pb1), qtyY
             if (col.FaceLeft != null)
             {
                 var cover = (col.Cover + dSt + dMainY / 2.0).FromMillimeters();
@@ -524,7 +521,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
                 results.AddRange(SolvePositionInstallRebar(sp, ep, qtyY, qtyY, col.FaceLeft));
             }
 
-            // FaceTop (Top = 1): Top-Left (Pb2) -> Top-Right (Pb1), qtyX
             if (col.FaceTop != null)
             {
                 var cover = (col.Cover + dSt + dMainX / 2.0).FromMillimeters();
@@ -537,7 +533,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
                 results.AddRange(SolvePositionInstallRebar(sp, ep, qtyX, qtyX, col.FaceTop));
             }
 
-            // FaceRight (Right = 2): Top-Right (Pb2) -> Bottom-Right (Pb1), qtyY
             if (col.FaceRight != null)
             {
                 var cover = (col.Cover + dSt + dMainY / 2.0).FromMillimeters();
@@ -550,7 +545,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
                 results.AddRange(SolvePositionInstallRebar(sp, ep, qtyY, qtyY, col.FaceRight));
             }
 
-            // FaceBottom (Bottom = 3): Bottom-Right (Pb2) -> Bottom-Left (Pb1), qtyX
             if (col.FaceBottom != null)
             {
                 var cover = (col.Cover + dSt + dMainX / 2.0).FromMillimeters();

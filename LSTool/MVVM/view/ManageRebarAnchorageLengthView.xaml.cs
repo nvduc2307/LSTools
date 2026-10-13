@@ -14,9 +14,6 @@ using System.Windows.Shapes;
 
 namespace LSTool.MVVM.view
 {
-    /// <summary>
-    /// Interaction logic for ManageRebarAnchorageLengthView.xaml
-    /// </summary>
     public partial class ManageRebarAnchorageLengthView : Window
     {
         public ManageRebarAnchorageLengthView()

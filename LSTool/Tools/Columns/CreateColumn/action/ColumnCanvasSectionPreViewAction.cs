@@ -11,11 +11,6 @@ using ws = System.Windows.Shapes;
 
 namespace LSTool.Tools.Columns.CreateColumn.action
 {
-    /// <summary>
-    /// Vẽ trực quan mặt cắt ngang cột lên Canvas trong công cụ CreateColumn.
-    /// Hiển thị tiết diện bê tông cột, thép đai bao ngoài, thép dọc phương X, Y và đai phụ (ties/C-tie).
-    /// Hỗ trợ chọn thanh thép để tạo đai phụ (_CreateTeiCommand) và xóa đai phụ bằng chuột phải.
-    /// </summary>
     public class ColumnCanvasSectionPreViewAction
     {
         private readonly Canvas _canvas;
@@ -32,6 +27,16 @@ namespace LSTool.Tools.Columns.CreateColumn.action
         private const double PadSide = 65.0;
         private const double PadTop = 26.0;
         private const double PadBottom = 44.0;
+        private const double ColumnDotMinDiameter = 12.0;
+        private const double ColumnDotMaxDiameter = 20.0;
+        private static readonly OptionStyleInstanceInCanvas ColumnRebarDot = new OptionStyleInstanceInCanvas(
+            StyleThicknessInCanvas.Thickness_1, StyleDashInCanvas.Style_Solid,
+            StyleColorInCanvas.Color_Red, StyleColorInCanvas.Color_Red);
+        private static readonly OptionStyleInstanceInCanvas ColumnRebarLine = new OptionStyleInstanceInCanvas(
+            StyleThicknessInCanvas.Thickness_2, StyleDashInCanvas.Style_Solid,
+            StyleColorInCanvas.Color_Red, null);
+        private static double ColumnDiameterLimit(double span, int gridQty) =>
+            Math.Min(ColumnDotMaxDiameter, RebarSectionPreviewStyle.GetDiameterLimit(span, gridQty));
 
         public List<InstanceInCanvasCircel> RebarSelected { get; set; }
 
@@ -53,9 +58,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             DrawSection(columnConcreteModel);
         }
 
-        /// <summary>
-        /// Hiển thị mặt cắt cột từ model. Tự động subscribe PropertyChanged để cập nhật khi setting đổi.
-        /// </summary>
         public void DrawSection(ColumnConcreteModel model)
         {
             if (_columnConcreteModel != null)
@@ -89,9 +91,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             }
         }
 
-        /// <summary>
-        /// Vẽ lại toàn bộ mặt cắt cột trên canvas bao gồm tiết diện bê tông, đai chính, thép chủ và đai phụ.
-        /// </summary>
         public void Redraw()
         {
             if (_canvas == null) return;
@@ -127,16 +126,12 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             qtyMaxX = Math.Max(2, Math.Max(dx, qtyMaxX));
             qtyMaxY = Math.Max(2, Math.Max(dy, qtyMaxY));
 
-            // 1. Tiết diện bê tông
             DrawSectionConcrete(height, width);
 
-            // 2. Thép đai chính bao ngoài
             DrawSectionStirrupMain(height, width, cover);
 
-            // 3. Bố trí thép chủ & gắn tương tác chuột chọn tạo đai
             var rbs = DrawRebarMain(height, width, cover, dx, dy, qtyMaxX, qtyMaxY);
 
-            // Resize replaces the visual instances; keep selection on the same bars.
             RebarSelected = rbs.Where(x => selected.Contains((x.Id, x.HostId))).ToList();
             foreach (var bar in RebarSelected)
             {
@@ -144,10 +139,8 @@ namespace LSTool.Tools.Columns.CreateColumn.action
                 bar.UpdateStatus();
             }
 
-            // 4. Vẽ các đai phụ (ties) đã lưu
             UpdateTies(_columnConcreteModel, rbs);
 
-            // 5. Kích thước & thông tin cốt thép
             DrawDimensionsAndInfo(_canvas, _canvasCenter, width, height, _columnConcreteModel);
         }
 
@@ -160,9 +153,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             return faceId;
         }
 
-        /// <summary>
-        /// Tạo đai phụ từ các thanh thép đang được chọn trên Canvas.
-        /// </summary>
         public void CreateTies(ColumnConcreteModel columnConcreteModel, bool isAddData = true)
         {
             if (columnConcreteModel == null) return;
@@ -185,7 +175,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
                         .ToList());
                 }
 
-                // Reset trạng thái chọn
                 foreach (var item in RebarSelected)
                 {
                     item.IsSelected = false;
@@ -207,9 +196,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             }
         }
 
-        /// <summary>
-        /// Vẽ toàn bộ đai phụ đã cấu hình trong Ties của cột lên Canvas.
-        /// </summary>
         public void UpdateTies(ColumnConcreteModel columnConcreteModel, List<InstanceInCanvasCircel> rbs)
         {
             if (columnConcreteModel?.Ties == null || !columnConcreteModel.Ties.Any()) return;
@@ -243,9 +229,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             }
         }
 
-        /// <summary>
-        /// Vẽ đai 2 điểm (đai móc / C-tie) có 2 đầu móc ôm lấy thép chủ.
-        /// </summary>
         private void DrawTwoPointTieInCanvas(List<InstanceInCanvasCircel> rebars)
         {
             var firstCenter = rebars[0].Point;
@@ -278,7 +261,7 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             if (normal * outsideDirection < 0)
                 normal = -normal;
 
-            var options = OptionStyleInstanceInCanvas.OPTION_REBAR_LINE;
+            var options = ColumnRebarLine;
             var diameter = rebars.Max(rb => rb.Diameter);
             var hookRadius = (diameter + options.Thickness) / 2 + options.Thickness;
             var hookLength = diameter;
@@ -327,23 +310,16 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             _canvas.Children.Add(tie);
         }
 
-        /// <summary>
-        /// Vẽ đai phụ khép kín ôm quanh nhiều thanh thép chủ (>= 3 thanh).
-        /// Các góc cong được vẽ chính xác theo bán kính của thanh thép chủ, tiếp xúc mượt mà với các đoạn thẳng nối.
-        /// </summary>
         private void DrawPolygonTieInCanvas(List<InstanceInCanvasCircel> rebars)
         {
             if (rebars == null || rebars.Count < 3) return;
 
-            // 1. Lấy tọa độ tâm các thanh thép
             var pts = rebars.Select(r => r.Point).ToList();
 
-            // 2. Tính trọng tâm tập điểm
             var cx = pts.Average(p => p.X);
             var cy = pts.Average(p => p.Y);
             var center = new wd.Point(cx, cy);
 
-            // 3. Sắp xếp các điểm theo thứ tự chiều kim đồng hồ quanh trọng tâm
             var sortedPoints = pts
                 .OrderBy(p => Math.Atan2(p.Y - cy, p.X - cx))
                 .ToList();
@@ -351,13 +327,11 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             int n = sortedPoints.Count;
             if (n < 3) return;
 
-            var options = OptionStyleInstanceInCanvas.OPTION_REBAR_LINE;
+            var options = ColumnRebarLine;
             var t = options.Thickness;
             var rebarRadius = rebars.Max(rb => rb.Diameter) / 2.0;
-            // Bán kính cung cong bo ngoài thanh thép (tính tới tim nét vẽ của đai)
             var arcRadius = rebarRadius + t / 2.0 + 0.5;
 
-            // 4. Tính vector pháp tuyến hướng ra ngoài (outward normal) cho từng cạnh (i -> i+1)
             var edgeNormals = new wd.Vector[n];
             for (int i = 0; i < n; i++)
             {
@@ -371,10 +345,8 @@ namespace LSTool.Tools.Columns.CreateColumn.action
                 }
                 edgeVec.Normalize();
 
-                // Vector vuông góc (u_y, -u_x)
                 var normal = new wd.Vector(edgeVec.Y, -edgeVec.X);
 
-                // Đảm bảo normal hướng ra ngoài polygon so với vector từ trọng tâm tới trung điểm cạnh
                 var mid = new wd.Point(0.5 * (pCurr.X + pNext.X), 0.5 * (pCurr.Y + pNext.Y));
                 var outVec = mid - center;
                 if (normal * outVec < 0)
@@ -384,11 +356,8 @@ namespace LSTool.Tools.Columns.CreateColumn.action
                 edgeNormals[i] = normal;
             }
 
-            // 5. Tính các điểm tiếp xúc tangent A_i và B_i tại mỗi đỉnh i:
-            // A_i là điểm kết thúc đoạn thẳng cạnh (i-1 -> i)
-            // B_i là điểm bắt đầu đoạn thẳng cạnh (i -> i+1)
-            var startTangentPoints = new wd.Point[n]; // B_i
-            var endTangentPoints = new wd.Point[n];   // A_i
+            var startTangentPoints = new wd.Point[n];
+            var endTangentPoints = new wd.Point[n];
             for (int i = 0; i < n; i++)
             {
                 var pCurr = sortedPoints[i];
@@ -404,8 +373,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
                     pCurr.Y + currNormal.Y * arcRadius);
             }
 
-            // 6. Xây dựng PathFigure khép kín:
-            // B_0 -> Line tới A_1 -> Arc quanh đỉnh 1 tới B_1 -> Line tới A_2 -> Arc tới B_2 -> ... -> Line tới A_0 -> Arc tới B_0
             var figure = new wm.PathFigure
             {
                 StartPoint = startTangentPoints[0],
@@ -416,15 +383,13 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             {
                 int nextIdx = (i + 1) % n;
 
-                // Đoạn thẳng từ B_i đến A_{nextIdx}
                 figure.Segments.Add(new wm.LineSegment(endTangentPoints[nextIdx], true));
 
-                // Cung tròn bo quanh thanh thép tại đỉnh nextIdx từ A_{nextIdx} đến B_{nextIdx}
                 figure.Segments.Add(new wm.ArcSegment(
                     startTangentPoints[nextIdx],
                     new wd.Size(arcRadius, arcRadius),
                     0,
-                    false, // isLargeArc: luôn < 180 độ
+                    false,
                     wm.SweepDirection.Clockwise,
                     true));
             }
@@ -508,9 +473,9 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             var heightInCanvas = MMToPixel(Math.Max(0, height - 2 * cover)) * _scale;
             var widthInCanvas = MMToPixel(Math.Max(0, width - 2 * cover)) * _scale;
             var cornerRadius = Math.Min(
-                RebarSectionPreviewStyle.MaximumDiameter,
+                ColumnDotMaxDiameter / 2,
                 Math.Min(heightInCanvas, widthInCanvas) / 2);
-            var options = OptionStyleInstanceInCanvas.OPTION_REBAR_LINE;
+            var options = ColumnRebarLine;
             var stirrup = new ws.Rectangle
             {
                 Width = widthInCanvas,
@@ -535,24 +500,23 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             var stirrupH = MMToPixel(Math.Max(0, height - 2 * cover)) * _scale;
             var stirrupW = MMToPixel(Math.Max(0, width - 2 * cover)) * _scale;
 
-            var opts = OptionStyleInstanceInCanvas.OPTION_REBAR_LINE;
+            var opts = ColumnRebarLine;
             var edgeGap = opts.Thickness / 2.0 + 1.0;
             _maxRebarDiameterInCanvas = Math.Min(
-                RebarSectionPreviewStyle.GetDiameterLimit(stirrupW - 2 * edgeGap, qtyMaxX),
-                RebarSectionPreviewStyle.GetDiameterLimit(stirrupH - 2 * edgeGap, qtyMaxY));
+                ColumnDiameterLimit(stirrupW - 2 * edgeGap, qtyMaxX),
+                ColumnDiameterLimit(stirrupH - 2 * edgeGap, qtyMaxY));
             if (_maxRebarDiameterInCanvas <= 0) return result;
             var diameterX = GetPreviewDiameter(_columnConcreteModel.DiameterDX);
             var diameterY = GetPreviewDiameter(_columnConcreteModel.DiameterDY);
-            // Khoảng cách từ tim đai tới tim thép chủ để thép chủ ôm sát mép trong đai đai (khoảng hở nhẹ ~1px)
             var offset = edgeGap + Math.Max(diameterX, diameterY) / 2.0;
 
             var rebarHalfW = Math.Max(0, stirrupW / 2.0 - offset);
             var rebarHalfH = Math.Max(0, stirrupH / 2.0 - offset);
 
-            var p1 = new wd.Point(_canvasCenter.X - rebarHalfW, _canvasCenter.Y - rebarHalfH); // Top-Left
-            var p2 = new wd.Point(_canvasCenter.X + rebarHalfW, _canvasCenter.Y - rebarHalfH); // Top-Right
-            var p3 = new wd.Point(_canvasCenter.X + rebarHalfW, _canvasCenter.Y + rebarHalfH); // Bottom-Right
-            var p4 = new wd.Point(_canvasCenter.X - rebarHalfW, _canvasCenter.Y + rebarHalfH); // Bottom-Left
+            var p1 = new wd.Point(_canvasCenter.X - rebarHalfW, _canvasCenter.Y - rebarHalfH);
+            var p2 = new wd.Point(_canvasCenter.X + rebarHalfW, _canvasCenter.Y - rebarHalfH);
+            var p3 = new wd.Point(_canvasCenter.X + rebarHalfW, _canvasCenter.Y + rebarHalfH);
+            var p4 = new wd.Point(_canvasCenter.X - rebarHalfW, _canvasCenter.Y + rebarHalfH);
 
             var qtyL = _DrawRebarMain(dy, qtyMaxY, p4, p1, (int)ColumnFaceType.Left, true);
             var qtyT = _DrawRebarMain(dx, qtyMaxX, p1, p2, (int)ColumnFaceType.Top);
@@ -582,20 +546,18 @@ namespace LSTool.Tools.Columns.CreateColumn.action
 
                     var diameter = faceId == (int)ColumnFaceType.Top || faceId == (int)ColumnFaceType.Bottom
                         ? diameterX : diameterY;
-                    var c = new InstanceInCanvasCircel(_canvas, OptionStyleInstanceInCanvas.OPTION_REBAR, rebarPos.Position, diameter)
+                    var c = new InstanceInCanvasCircel(_canvas, ColumnRebarDot, rebarPos.Position, diameter)
                     {
                         Id = rebarPos.Index,
                         HostId = faceId
                     };
 
-                    // Kiểm tra xem rebar này có đang trong danh sách chọn không
                     if (RebarSelected.Any(x => x.Id == c.Id && x.HostId == c.HostId))
                     {
                         c.IsSelected = true;
                         c.UpdateStatus();
                     }
 
-                    // Chỉ các thanh ở giữa (không phải góc) mới được chọn tạo đai phụ
                     if (index != 0 && index != qty - 1)
                     {
                         c.LClickAction = _RebarClickAction;
@@ -613,8 +575,8 @@ namespace LSTool.Tools.Columns.CreateColumn.action
         {
             double.TryParse(name?.TrimStart('D', 'd'), NumberStyles.Float,
                 CultureInfo.InvariantCulture, out var diameterMm);
-            return RebarSectionPreviewStyle.GetDiameter(diameterMm, MMToPixel(1) * _scale,
-                _maxRebarDiameterInCanvas);
+            var d = Math.Max(ColumnDotMinDiameter, Math.Min(ColumnDotMaxDiameter, diameterMm * MMToPixel(1) * _scale));
+            return Math.Max(0, Math.Min(_maxRebarDiameterInCanvas, d));
         }
 
         private List<ColumnRebarPositionInCanvasModel> SolvePositionInstallRebar(
@@ -669,9 +631,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
 
         private static double MMToPixel(double distance) => distance * 4.0;
 
-        /// <summary>
-        /// Vẽ kích thước mặt cắt b x h và thông tin cốt thép.
-        /// </summary>
         private void DrawDimensionsAndInfo(
             Canvas canvas, wd.Point center,
             double width, double height,
@@ -681,7 +640,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             var widthInCanvas = MMToPixel(width) * _scale;
             var textBrush = new wm.SolidColorBrush(wm.Color.FromRgb(60, 60, 60));
 
-            // Kích thước chiều rộng b (trên đỉnh cột)
             var textWidth = new TextBlock
             {
                 Text = $"b = {width:0}",
@@ -694,7 +652,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             Canvas.SetTop(textWidth, center.Y - heightInCanvas / 2 - 20);
             canvas.Children.Add(textWidth);
 
-            // Kích thước chiều cao h (bên trái cột)
             var textHeight = new TextBlock
             {
                 Text = $"h = {height:0}",
@@ -707,7 +664,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
             Canvas.SetTop(textHeight, center.Y - textHeight.DesiredSize.Height / 2);
             canvas.Children.Add(textHeight);
 
-            // Dòng thông tin cốt thép bên dưới
             var qtyX = (int)model.SpacingDX;
             var qtyY = (int)model.SpacingDY;
             var tieCount = model.Ties?.Count ?? 0;

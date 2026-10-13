@@ -16,7 +16,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
             foreach (var beam in beams)
             {
                 beam.Cover = cover;
-                //start
                 beam.SectionStart.RebarTop1.Diameters = [.. diamterNames];
                 beam.SectionStart.RebarTop1.NameChangeAction = _DiameterNameActionChange;
 
@@ -41,7 +40,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
                 beam.SectionStart.RebarBot3.Diameters = [.. diamterNames];
                 beam.SectionStart.RebarBot3.NameChangeAction = _DiameterNameActionChange;
 
-                //mid
                 beam.SectionMid.RebarTop1.Diameters = [.. diamterNames];
                 beam.SectionMid.RebarTop1.NameChangeAction = _DiameterNameActionChange;
 
@@ -66,7 +64,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
                 beam.SectionMid.RebarBot3.Diameters = [.. diamterNames];
                 beam.SectionMid.RebarBot3.NameChangeAction = _DiameterNameActionChange;
 
-                //end
                 beam.SectionEnd.RebarTop1.Diameters = [.. diamterNames];
                 beam.SectionEnd.RebarTop1.NameChangeAction = _DiameterNameActionChange;
 
@@ -97,10 +94,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
         {
         }
 
-        /// <summary>
-        /// Đọc cài đặt dầm (StressZone, E0) từ SettingBeam.json – giống SettingColumnAction.GetSettingRebarColumnModel.
-        /// Lỗi đọc file → trả về giá trị mặc định.
-        /// </summary>
         public static SettingBeamModel GetSettingBeamModel()
         {
             try
@@ -133,23 +126,12 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
                 .ToList();
             return diameters;
         }
-        /// <summary>
-        /// Kiểm tra xem 2 dầm liên tiếp có chênh cao độ mặt trên (top face) không.
-        /// </summary>
-        /// <param name="beam1">Dầm thứ nhất.</param>
-        /// <param name="beam2">Dầm thứ hai.</param>
-        /// <param name="differenceMm">Độ chênh lệch cao độ tính bằng mm.</param>
-        /// <param name="beam1IsHigher">true nếu dầm 1 cao hơn dầm 2.</param>
-        /// <returns>true nếu có chênh cao độ (> 1 mm), false nếu bằng nhau.</returns>
         public static bool IsDifferentTopElevation(
             BeamRebarModel beam1,
             BeamRebarModel beam2,
             out double differenceMm,
             out bool beam1IsHigher)
         {
-            // Cao độ mặt top = tâm chiếu lên VTZ (hướng đứng) + nửa chiều cao tiết diện
-            // Height = kích thước theo VTZ (mm) → /304.8 để ra feet (đơn vị của Center)
-            // Dùng chung VTZ của beam1 để 2 dầm so sánh trên cùng 1 trục
             const double mmPerFoot = 304.8;
             var vtz = beam1.VTZ;
             var top1Ft = beam1.Center.DotProduct(vtz)
@@ -165,21 +147,12 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
             return differenceMm > toleranceMm;
         }
 
-        /// <summary>
-        /// Kiểm tra xem 2 dầm liên tiếp có chênh cao độ mặt dưới (bot face) không.
-        /// </summary>
-        /// <param name="beam1">Dầm thứ nhất.</param>
-        /// <param name="beam2">Dầm thứ hai.</param>
-        /// <param name="differenceMm">Độ chênh lệch cao độ tính bằng mm.</param>
-        /// <param name="beam1IsHigher">true nếu đáy dầm 1 cao hơn đáy dầm 2.</param>
-        /// <returns>true nếu có chênh cao độ (> 1 mm), false nếu bằng nhau.</returns>
         public static bool IsDifferentBotElevation(
             BeamRebarModel beam1,
             BeamRebarModel beam2,
             out double differenceMm,
             out bool beam1IsHigher)
         {
-            // Cao độ mặt bot = tâm chiếu lên VTZ (hướng đứng) – nửa chiều cao tiết diện
             const double mmPerFoot = 304.8;
             var vtz = beam1.VTZ;
             var bot1Ft = beam1.Center.DotProduct(vtz)
@@ -195,12 +168,10 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
             return differenceMm > toleranceMm;
         }
 
-        // ── Lớp thép & lưới chia (dùng chung cho mô hình Revit và canvas) ────────
 
         public static bool IsTopLayer(BeamRebarLayerType layer) =>
             layer == BeamRebarLayerType.Top1 || layer == BeamRebarLayerType.Top2 || layer == BeamRebarLayerType.Top3;
 
-        /// <summary>0 = lớp 1, 1 = lớp 2, 2 = lớp 3.</summary>
         public static int LayerOrder(BeamRebarLayerType layer) => layer switch
         {
             BeamRebarLayerType.Top1 or BeamRebarLayerType.Bot1 => 0,
@@ -218,7 +189,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
             _ => sec.RebarBot3,
         };
 
-        /// <summary>Số thanh của lớp (RebarModel.Spacing = qty). Top1/Bot1 tối thiểu 2 thanh.</summary>
         public static int GetLayerQty(BeamRebarSectionModel sec, BeamRebarLayerType layer)
         {
             if (sec == null) return 0;
@@ -228,7 +198,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
             return Math.Max(0, qty);
         }
 
-        /// <summary>GridQty = số thanh lớn nhất của mọi lớp, mọi mặt cắt, mọi nhịp (tối thiểu 2).</summary>
         public static int GetGridQty(IEnumerable<BeamRebarModel> beams)
         {
             var qtys = new List<int> { 2 };
@@ -245,11 +214,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
             return qtys.Max();
         }
 
-        /// <summary>
-        /// Chia vị trí thép giống ColumnRebarMainAction.SolvePositionInstallRebar:
-        /// khoảng chia = bề rộng / (gridQty − 1); lấy đối xứng từ 2 góc vào, lẻ thì thêm thanh giữa.
-        /// Trả về Index (1 → gridQty) → offset theo VTY (âm = phía Left) trong khoảng [-usableHalfW, +usableHalfW].
-        /// </summary>
         public static Dictionary<int, double> SolveGridPositions(int qty, int gridQty, double usableHalfW)
         {
             var result = new Dictionary<int, double>();
@@ -267,7 +231,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
                 result[i + 1] = start + i * spacing;
             if (qtyDu == 1)
             {
-                // thanh giữa nằm đúng điểm chia của lưới (lưới chẵn thì lệch tâm 1 nửa bước)
                 var mid = 1 + gridQty / 2;
                 result[mid] = start + (mid - 1) * spacing;
             }
@@ -277,14 +240,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
             return result.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value);
         }
 
-        /// <summary>
-        /// Tính hệ tọa độ local CHUNG cho một nhóm dầm cùng phương.
-        /// Lấy phương theo dầm đầu tiên rồi chuẩn hóa chiều VTX (ưu tiên +X, rồi +Y thế giới)
-        /// → không phụ thuộc thứ tự chọn hay dầm bị vẽ ngược chiều.
-        ///   VTZ = trục Z global (XYZ.BasisZ) – hướng đứng
-        ///   VTX = BasisX của dầm chiếu lên mặt phẳng ngang (dọc trục dầm, nằm ngang)
-        ///   VTY = VTZ × VTX (hướng ngang tiết diện, tương đương BasisY)
-        /// </summary>
         public static void GetBeamsLocalCoordinate(
             IList<FamilyInstance> beams,
             out XYZ vtx,
@@ -296,35 +251,27 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
 
             const double eps = 1e-6;
 
-            // VTZ = trục Z global
             vtz = XYZ.BasisZ;
 
-            // VTX = BasisX chiếu lên mặt phẳng ngang
             var bx = beams[0].GetTransform().BasisX;
             vtx = new XYZ(bx.X, bx.Y, 0);
             if (vtx.GetLength() < eps)
                 throw new InvalidOperationException($"Dầm [{beams[0].Id}] có trục thẳng đứng, không hỗ trợ.");
             vtx = vtx.Normalize();
 
-            // Chuẩn hóa chiều VTX
             var flip = Math.Abs(vtx.X) > eps ? vtx.X < 0 : vtx.Y < 0;
             if (flip) vtx = -vtx;
 
-            // VTY theo quy tắc tay phải (X × Y = Z → Y = Z × X, tương đương BasisY)
             vty = vtz.CrossProduct(vtx).Normalize();
         }
 
-        /// <summary>
-        /// Đọc kích thước hình học của dầm từ solid vertices,
-        /// theo đúng cách của ColumnConcreteAction.GetDistanceColumn.
-        /// </summary>
         public static void GetBeamDimensions(
             FamilyInstance beam,
             XYZ vtx, XYZ vty, XYZ vtz,
             out XYZ center,
-            out double width,    // mm – theo VTY (bề rộng ngang tiết diện)
-            out double height,   // mm – theo VTZ (chiều cao đứng tiết diện)
-            out double length)   // mm – theo VTX (chiều dài dầm)
+            out double width,
+            out double height,
+            out double length)
         {
             center = null;
             width = 0;
@@ -339,11 +286,10 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
 
                 center = ps.GetCenter();
 
-                var planeCross = Plane.CreateByNormalAndOrigin(vtx, center); // mặt phẳng vuông góc dầm
+                var planeCross = Plane.CreateByNormalAndOrigin(vtx, center);
                 var planeTop = Plane.CreateByNormalAndOrigin(vty, center);
                 var planeSide = Plane.CreateByNormalAndOrigin(vtz, center);
 
-                // Chiều dài: chiếu điểm lên mặt phẳng ngang → project theo VTX
                 var psAlongX = ps
                     .Select(p => p.RayIntersectPlane(planeTop.Normal, planeTop))
                     .Select(p => p.RayIntersectPlane(planeSide.Normal, planeSide))
@@ -351,7 +297,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
                     .OrderBy(p => p.DotProduct(vtx))
                     .ToList();
 
-                // Chiều cao / rộng: chiếu lên mặt cắt vuông góc trục dầm
                 var psSection = ps
                     .Select(p => p.RayIntersectPlane(planeCross.Normal, planeCross))
                     .ToList();
@@ -388,17 +333,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
             }
         }
 
-        /// <summary>
-        /// Lấy 4 mặt bao của dầm (Left / Top / Right / Bot), tương tự
-        /// ColumnConcreteAction.GetFaceColumn.
-        /// Quy ước trục (giống GetBeamDimensions và các hàm tạo thép):
-        ///   VTX = dọc trục dầm, VTY = hướng ngang, VTZ = hướng đứng ↑ (Z global).
-        ///   beam.Width  = kích thước theo VTY (bề rộng tiết diện)
-        ///   beam.Height = kích thước theo VTZ (chiều cao tiết diện)
-        /// Pb1/Pb2 = 2 điểm của mặt tại đầu dầm (Start, -VTX),
-        /// Pt1/Pt2 = 2 điểm tương ứng tại cuối dầm (End, +VTX).
-        /// Mặt Left nằm phía -VTY, Right phía +VTY (khớp với pTopLeft trong CreateStirrup).
-        /// </summary>
         public static void GetBeamFaces(
             BeamRebarModel beam,
             out BeamFaceModel fLeft,
@@ -418,14 +352,13 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
                 var vtx = beam.VTX;
                 var vty = beam.VTY;
                 var vtz = beam.VTZ;
-                var halfL = beam.Length.FromMillimeters() / 2; // VTX
-                var halfW = beam.Width.FromMillimeters() / 2;  // VTY (ngang)
-                var halfH = beam.Height.FromMillimeters() / 2; // VTZ (đứng)
+                var halfL = beam.Length.FromMillimeters() / 2;
+                var halfW = beam.Width.FromMillimeters() / 2;
+                var halfH = beam.Height.FromMillimeters() / 2;
 
                 var cStart = beam.Center - vtx * halfL;
                 var cEnd = beam.Center + vtx * halfL;
 
-                // Tiết diện (nhìn theo +VTX): p1 = dưới-trái, p2 = dưới-phải, p3 = trên-phải, p4 = trên-trái
                 XYZ P(XYZ c, double sy, double sz) => c + vty * (sy * halfW) + vtz * (sz * halfH);
 
                 var p1b = P(cStart, -1, -1);
@@ -488,10 +421,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
             }
         }
 
-        /// <summary>
-        /// Đọc các thông số thép từ Revit shared parameter của dầm.
-        /// Nếu không tìm thấy hoặc giá trị không hợp lệ sẽ trả về default.
-        /// </summary>
         public static void GetRebarSetting(
             FamilyInstance beam,
             out RebarModel stirrupStart,
@@ -501,7 +430,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
             out RebarModel bot1, out RebarModel bot2, out RebarModel bot3,
             out RebarModel sideBar)
         {
-            // Giá trị mặc định
             stirrupStart = new RebarModel { Name = "D10", Diameter = 10, Spacing = 150 };
             stirrupMid = new RebarModel { Name = "D10", Diameter = 10, Spacing = 200 };
             stirrupEnd = new RebarModel { Name = "D10", Diameter = 10, Spacing = 150 };
@@ -514,7 +442,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
             sideBar = new RebarModel { Name = "D10", Diameter = 10, Spacing = 1 };
             try
             {
-                // ── Đai ──────────────────────────────────────────────────────
                 var pStDia = beam.LookupParameter(BeamRebarParameterName.LS_ST_Diameter);
                 var pStSpacStart = beam.LookupParameter(BeamRebarParameterName.LS_ST_Spacing_Start);
                 var pStSpacMid = beam.LookupParameter(BeamRebarParameterName.LS_ST_Spacing_Mid);
@@ -529,26 +456,21 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
                 stirrupMid = new RebarModel { Name = stDia, Diameter = ParseDiameter(stDia), Spacing = stSpacMid };
                 stirrupEnd = new RebarModel { Name = stDia, Diameter = ParseDiameter(stDia), Spacing = stSpacEnd };
 
-                // ── Thép trên ────────────────────────────────────────────────
                 top1 = ReadRebarModel(beam, BeamRebarParameterName.LS_TOP1_Diameter, BeamRebarParameterName.LS_TOP1_Count) ?? top1;
                 top2 = ReadRebarModel(beam, BeamRebarParameterName.LS_TOP2_Diameter, BeamRebarParameterName.LS_TOP2_Count) ?? top2;
                 top3 = ReadRebarModel(beam, BeamRebarParameterName.LS_TOP3_Diameter, BeamRebarParameterName.LS_TOP3_Count) ?? top3;
 
-                // ── Thép dưới ────────────────────────────────────────────────
                 bot1 = ReadRebarModel(beam, BeamRebarParameterName.LS_BOT1_Diameter, BeamRebarParameterName.LS_BOT1_Count) ?? bot1;
                 bot2 = ReadRebarModel(beam, BeamRebarParameterName.LS_BOT2_Diameter, BeamRebarParameterName.LS_BOT2_Count) ?? bot2;
                 bot3 = ReadRebarModel(beam, BeamRebarParameterName.LS_BOT3_Diameter, BeamRebarParameterName.LS_BOT3_Count) ?? bot3;
 
-                // ── Thép hông ─────────────────────────────────────────────────
                 sideBar = ReadRebarModel(beam, BeamRebarParameterName.LS_SIDEBAR_Diameter, BeamRebarParameterName.LS_SIDEBAR_Count) ?? sideBar;
             }
             catch (Exception)
             {
-                // Giữ nguyên giá trị mặc định nếu đọc parameter thất bại
             }
         }
 
-        /// <summary>Đọc 1 nhóm thép (đường kính + số lượng) từ parameter.</summary>
         public static RebarModel ReadRebarModel(
             FamilyInstance beam, string diameterParamName, string countParamName)
         {
@@ -564,7 +486,7 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
                 {
                     Name = diaStr,
                     Diameter = ParseDiameter(diaStr),
-                    Spacing = count, // RebarModel.Spacing tái dụng lưu số lượng (qty)
+                    Spacing = count,
                 };
             }
             catch
@@ -573,7 +495,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
             }
         }
 
-        /// <summary>Tách số từ tên đường kính. VD: "D16" → 16.</summary>
         public static int ParseDiameter(string name)
         {
             if (string.IsNullOrWhiteSpace(name)) return 0;
@@ -581,52 +502,42 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
             return int.TryParse(digits, out var d) ? d : 0;
         }
 
-        /// <summary>
-        /// Tìm đối tượng gối ở đầu hoặc cuối dầm: cột, tường hoặc dầm chính (khi dựng dầm phụ).
-        /// Thickness = khoảng cách theo VTX từ mặt đầu/cuối dầm đến mép xa của gối (điểm tia ra khỏi gối).
-        /// </summary>
         public static BeamBearingModel GetBeamBearing(
             Document document,
             BeamRebarModel beam,
             BeamBearingType bearingType)
         {
             const double mmPerFoot = 304.8;
-            const double searchToleranceMm = 500; // mở rộng vùng tìm kiếm
+            const double searchToleranceMm = 500;
 
             try
             {
-                var vtx = beam.VTX;  // hướng trục dầm
+                var vtx = beam.VTX;
                 var vty = beam.VTY;
                 var vtz = beam.VTZ;
 
-                // Điểm đầu và cuối dầm (cạnh giữa tiết diện)
                 var halfLen = beam.Length / mmPerFoot / 2.0;
-                var pStart = beam.Center - vtx * halfLen;  // điểm đầu dầm
-                var pEnd = beam.Center + vtx * halfLen;  // điểm cuối dầm
+                var pStart = beam.Center - vtx * halfLen;
+                var pEnd = beam.Center + vtx * halfLen;
 
-                // Điểm neo và hướng chiếu theo loại gối
                 var anchorPt = bearingType == BeamBearingType.Start ? pStart : pEnd;
-                var outwardDir = bearingType == BeamBearingType.Start ? -vtx : vtx; // hướng ra ngoài khỏi dầm
+                var outwardDir = bearingType == BeamBearingType.Start ? -vtx : vtx;
 
-                // Mặt phẳng tại mặt đầu/cuối dầm (pháp tuyến = VTX)
                 var endFacePlane = Plane.CreateByNormalAndOrigin(vtx, anchorPt);
 
-                // Độ mở rộng tìm kiếm theo phương ngang và dọc
                 double toleranceFt = searchToleranceMm / mmPerFoot;
-                double halfW = beam.Width / mmPerFoot / 2.0 + toleranceFt;  // VTY (ngang)
-                double halfH = beam.Height / mmPerFoot / 2.0 + toleranceFt; // VTZ (đứng)
+                double halfW = beam.Width / mmPerFoot / 2.0 + toleranceFt;
+                double halfH = beam.Height / mmPerFoot / 2.0 + toleranceFt;
 
-                // BoundingBox tìm kiếm: quét searchToleranceMm ra ngoài khỏi mặt đầu/cuối
                 var bbMin = anchorPt
                     - vty * halfW
                     - vtz * halfH
-                    - outwardDir * toleranceFt;  // có thể lấp vào trong dầm 1 chút
+                    - outwardDir * toleranceFt;
                 var bbMax = anchorPt
                     + vty * halfW
                     + vtz * halfH
                     + outwardDir * toleranceFt;
 
-                // Normalize bb (min < max từng trục)
                 var minPt = new XYZ(
                     Math.Min(bbMin.X, bbMax.X),
                     Math.Min(bbMin.Y, bbMax.Y),
@@ -639,11 +550,10 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
                 var outline = new Outline(minPt, maxPt);
                 var bbFilter = new BoundingBoxIntersectsFilter(outline);
 
-                // Lấy các element có thể là gối dầm: cột, tường, dầm chính (dầm khác phương)
                 var candidates = new FilteredElementCollector(document)
                     .WhereElementIsNotElementType()
                     .WherePasses(bbFilter)
-                    .Where(e => e.UniqueId != beam.Id) // bỏ qua chính dầm đang xét
+                    .Where(e => e.UniqueId != beam.Id)
                     .Where(e =>
                         e is FamilyInstance fi
                             ? fi.Category.BuiltInCategory is
@@ -652,15 +562,12 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
                                 BuiltInCategory.OST_StructuralFraming
                             : e.Category?.BuiltInCategory is
                                 BuiltInCategory.OST_Walls)
-                    .Where(e => !_isParallelFraming(e, vtx)) // dầm cùng phương (nhịp kế, dầm song song) không phải gối
+                    .Where(e => !_isParallelFraming(e, vtx))
                     .ToList();
 
                 if (!candidates.Any()) return null;
 
-                // Bắn tia từ mặt đầu/cuối dầm theo hướng ra ngoài (tại tâm, gần mặt trên, gần mặt dưới tiết diện)
-                // → gối là đối tượng tia gặp đầu tiên; Thickness = từ mặt dầm đến điểm tia ra khỏi gối.
-                // Cách này đúng cho cả dầm chính đặt xiên (dầm phụ gác lên dầm chính).
-                var insideFt = 50.0 / mmPerFoot;                         // bắt đầu lùi vào trong dầm 50mm
+                var insideFt = 50.0 / mmPerFoot;
                 var rayLenFt = insideFt + toleranceFt + 5000.0 / mmPerFoot;
                 var offsetZ = Math.Max(0, beam.Height / 2.0 - 50.0) / mmPerFoot;
                 var rayOrigins = new[] { anchorPt, anchorPt + vtz * offsetZ, anchorPt - vtz * offsetZ };
@@ -681,7 +588,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
                         var solids = candidate.GetSolid();
                         if (solids == null || !solids.Any()) continue;
 
-                        // (entry, exit) theo outwardDir, tính từ mặt đầu/cuối dầm
                         var hits = new List<(double entry, double exit)>();
                         foreach (var origin in rayOrigins)
                         {
@@ -702,8 +608,8 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
                                     var d1 = (seg.GetEndPoint(1) - origin).DotProduct(outwardDir);
                                     var entry = Math.Min(d0, d1);
                                     var exit = Math.Max(d0, d1);
-                                    if (exit <= 1.0 / mmPerFoot) continue;   // nằm hoàn toàn trong dầm
-                                    if (entry > toleranceFt) continue;       // cách mặt dầm quá xa
+                                    if (exit <= 1.0 / mmPerFoot) continue;
+                                    if (entry > toleranceFt) continue;
                                     hits.Add((Math.Max(0, entry), exit));
                                 }
                             }
@@ -715,7 +621,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
                             .Where(h => h.entry - minEntry <= sameEntryFt)
                             .Max(h => h.exit);
 
-                        // ưu tiên cột / tường hơn dầm khi cùng khoảng cách
                         var isBeamSupport = candidate is FamilyInstance fiC
                             && fiC.Category.BuiltInCategory == BuiltInCategory.OST_StructuralFraming;
                         var priority = isBeamSupport ? 1 : 0;
@@ -734,7 +639,7 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
                             IsBeam = isBeamSupport,
                         };
                     }
-                    catch { /* bỏ qua nếu solid không lấy được */ }
+                    catch {  }
                 }
 
                 return best;
@@ -745,7 +650,6 @@ namespace LSTool.Tools.Beams.BeamRebar.Utils
             }
         }
 
-        /// <summary>Dầm (StructuralFraming) cùng phương với trục dầm đang xét → không coi là gối.</summary>
         private static bool _isParallelFraming(Element e, XYZ vtx)
         {
             if (e is not FamilyInstance fi) return false;

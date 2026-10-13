@@ -22,7 +22,7 @@
             <StackPanel Margin="0,12,12,0">
                 <TextBlock Text="E0"/>
                 <fluent:TextBox DataContext="{Binding SettingBeamModel}" Text="{Binding E0, UpdateSourceTrigger=LostFocus}" Margin="0,4,0,12"/>
-                <TextBlock Text="LC"/>
+                <TextBlock Text="LB"/>
                 <fluent:TextBox DataContext="{Binding SettingBeamModel}" Text="{Binding StressZone, UpdateSourceTrigger=LostFocus}" Margin="0,4,0,0"/>
             </StackPanel>
             <Image Grid.Column="1" Source="/LSTool;component/MVVM/imgs/RebarBeamSetting.png" Stretch="Uniform" Margin="6"/>

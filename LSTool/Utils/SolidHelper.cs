@@ -134,14 +134,12 @@
             var polygonsCount = polygons.Count;
             if (polygonsCount > 2)
             {
-                //create list curveloop
                 var curveLoop = new CurveLoop();
                 for (int i = 0; i < polygonsCount; i++)
                 {
                     var j = i == 0 ? polygonsCount - 1 : i - 1;
                     curveLoop.Append(Line.CreateBound(polygons[j], polygons[i]));
                 }
-                //create solid
                 result = GeometryCreationUtilities.CreateExtrusionGeometry(new List<CurveLoop>() { curveLoop }, normal, thicknessMm.FromMillimeters());
             }
             return result;
@@ -152,7 +150,6 @@
             var polygonsCount = polygons.Count;
             if (polygonsCount > 2)
             {
-                //create list curveloop
                 var curveLoop = new CurveLoop();
                 for (int i = 0; i < polygonsCount; i++)
                 {
@@ -169,7 +166,6 @@
                         curveLoop.Append(Line.CreateBound(p1, p2));
                     }
                 }
-                //create solid
                 result = GeometryCreationUtilities.CreateExtrusionGeometry(new List<CurveLoop>() { curveLoop }, XYZ.BasisZ, heightMm.FromMillimeters());
             }
             return result;

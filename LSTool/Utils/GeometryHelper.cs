@@ -118,7 +118,6 @@ namespace LSTool.Utils
             {
                 result = p;
             }
-            //ddang sai
             return result;
         }
 

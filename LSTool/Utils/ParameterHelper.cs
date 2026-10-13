@@ -273,16 +273,12 @@ namespace LSTool.Utils
                             if (parameters.Any(x => x.Name == definition.Name))
                                 continue;
                             var externalDefinition_With = definition as ExternalDefinition;
-                            //parameter binding 
                             InstanceBinding newIB = app.Create.NewInstanceBinding(categorySet);
-                            //parameter group to text
                             var dforgeid = new ForgeTypeId();
-                            //document.ParameterBindings.Insert(externalDefinition_With, newIB, dforgeid);
                             document.ParameterBindings.Insert(externalDefinition_With, newIB);
                         }
                         catch (Exception)
                         {
-                            //IO.ShowWarning(ex.Message);
                         }
                     }
                 }

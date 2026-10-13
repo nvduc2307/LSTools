@@ -26,7 +26,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
         private ConcreteCoverModel _concreteCoverModel;
         private ManageConcreteCoverAction _manageConcreteCoverAction;
 
-        // setting & bảng tra cho thép chủ
         private SettingBeamModel _settingBeamModel;
         private List<RebarAnchorageLengthModel> _rebarAnchorageLengthModels;
         private List<RebarAnchorageHookMainBarModel> _rebarAnchorageHookMainBarModels;
@@ -35,7 +34,7 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             _uidocument = uidocument;
             _document = _uidocument.Document;
             _manageConcreteCoverAction = new ManageConcreteCoverAction(_document);
-            _concreteCoverModel = _manageConcreteCoverAction.GetBeamCover();   // cover dầm trong setting
+            _concreteCoverModel = _manageConcreteCoverAction.GetBeamCover();
             _beamConcreteAction = new BeamConcreteAction(_uidocument, _concreteCoverModel?.CoverValue ?? 0);
             _settingBeamModel = BeamRebarUtils.GetSettingBeamModel();
             _rebarAnchorageLengthModels = new ManageRebarAnchorageLengthAction(_document).GetRebarAnchorageLengths();
@@ -59,7 +58,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             _diamterNames = new List<string>();
             _view = new BeamRebarView() { DataContext = _viewModel };
 
-            // hook sau khi window content render xong → canvas đã có kích thước thực
             _view.ContentRendered += (s, e) =>
             {
                 _canvasAction = new BeamCanvasSectionPreViewAction(
@@ -69,7 +67,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                 _canvasAction.DrawSection(_viewModel.BeamRebarModel, _viewModel.BeamRebarModels);
             };
 
-            // vẽ lại khi user đổi dầm trong ComboBox
             _viewModel.BeamRebarModelChangeAction = () =>
             {
                 _canvasAction?.DrawSection(_viewModel.BeamRebarModel, _viewModel.BeamRebarModels);

@@ -5,10 +5,10 @@ namespace LSTool.MVVM.model.Structures
     public class RebarAnchorageHookMainBarModel
     {
         public int Id { get; set; }
-        public int Diameter { get; set; } // diameter
-        public double A {  get; set; } // anchorage from concrete
-        public double R {  get; set; } // bending radius
-        public double B {  get; set; } // hook for angle 90
-        public double C {  get; set; } // hook for angle 180
+        public int Diameter { get; set; }
+        public double A {  get; set; }
+        public double R {  get; set; }
+        public double B {  get; set; }
+        public double C {  get; set; }
     }
 }

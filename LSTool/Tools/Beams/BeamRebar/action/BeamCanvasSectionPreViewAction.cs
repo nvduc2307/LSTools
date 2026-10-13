@@ -11,49 +11,40 @@ using ws = System.Windows.Shapes;
 
 namespace LSTool.Tools.Beams.BeamRebar.action
 {
-    /// <summary>
-    /// Vẽ sơ đồ mặt cắt ngang tiết diện dầm lên 3 Canvas (đầu dầm, giữa dầm, cuối dầm).
-    /// Tham khảo CanvasSectionPreViewAction của cột.
-    /// </summary>
     public class BeamCanvasSectionPreViewAction
     {
-        // ── canvases ───────────────────────────────────────────────────────────
         private readonly Canvas _canvasStart;
         private readonly Canvas _canvasMid;
         private readonly Canvas _canvasEnd;
 
-        // ── state ──────────────────────────────────────────────────────────────
-        /// <summary>Model dầm đang được hiển thị — dùng để redraw khi rebar thay đổi.</summary>
         private BeamRebarModel _currentModel;
-        /// <summary>Danh sách tất cả các dầm trong phiên làm việc — dùng để tính scale thống nhất.</summary>
         private List<BeamRebarModel> _allModels;
 
-        /// <summary>Số vị trí trên lưới chia thép (số thanh lớn nhất) – giống lúc mô hình.</summary>
         private int _gridQty = 2;
-        /// <summary>Các thanh đang được pick: (Index, HostId = layer + 10 * section).</summary>
         private readonly List<(int Id, int Host)> _picked = new List<(int, int)>();
-        /// <summary>Vòng tròn thép của canvas đang vẽ (để vẽ đai phụ).</summary>
         private List<InstanceInCanvasCircel> _curCircles = new List<InstanceInCanvasCircel>();
         private wd.Point _curCenter;
 
-        // ── layout constants ───────────────────────────────────────────────────
-        /// <summary>Tỉ lệ phần trăm canvas dùng để vẽ tiết diện.</summary>
+        private static readonly OptionStyleInstanceInCanvas BeamRebarDot = new OptionStyleInstanceInCanvas(
+            StyleThicknessInCanvas.Thickness_1, StyleDashInCanvas.Style_Solid,
+            StyleColorInCanvas.Color_Red, StyleColorInCanvas.Color_Red);
+        private static readonly OptionStyleInstanceInCanvas BeamRebarLine = new OptionStyleInstanceInCanvas(
+            StyleThicknessInCanvas.Thickness_2, StyleDashInCanvas.Style_Solid,
+            StyleColorInCanvas.Color_Red, null);
+
         private const double Ratio = 0.9;
-        /// <summary>Giới hạn kích thước ký hiệu; đường kính thực được đổi theo scale mặt cắt.</summary>
         private double _pixelsPerMm;
         private double _maxRebarDiameterInCanvas;
-        /// <summary>Khoảng cách giữa 2 lớp thép (px).</summary>
-        private const double LayerGap = 2.0;
-        /// <summary>Lề chừa cho text kích thước / thông tin (px).</summary>
+        private const double LayerGap = 4.0;
+        private const double BeamDotMinDiameter = 12.0;
+        private const double BeamDotMaxDiameter = 20.0;
         private const int SideLeftCode = 6;
         private const int SideRightCode = 7;
-        /// <summary>BeamTieModel.Layer của đai ngang nối 2 thanh sidebar (Index = hàng).</summary>
         public const int SideTieLayer = 6;
-        private const double PadSide = 24.0;   // trái/phải: "h = 700" (text xoay đứng)
-        private const double PadTop = 26.0;    // trên: "b = 300"
-        private const double PadBottom = 44.0; // dưới: 2 dòng thông tin thép
+        private const double PadSide = 24.0;
+        private const double PadTop = 26.0;
+        private const double PadBottom = 44.0;
 
-        // ──────────────────────────────────────────────────────────────────────
         public BeamCanvasSectionPreViewAction(Canvas canvasStart, Canvas canvasMid, Canvas canvasEnd)
         {
             _canvasStart = canvasStart;
@@ -63,21 +54,12 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                 canvas.SizeChanged += (sender, args) => Redraw();
         }
 
-        // ── Public API ─────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Cập nhật danh sách tất cả các dầm đang thao tác để xác định scale tham chiếu thống nhất.
-        /// </summary>
         public void SetAllModels(IEnumerable<BeamRebarModel> models)
         {
             _allModels = models?.Where(x => x != null && x.Width > 0 && x.Height > 0).ToList();
         }
 
-        /// <summary>
-        /// Vẽ lại cả 3 mặt cắt từ model dầm được chọn.
-        /// Gọi sau khi canvas đã hoàn tất layout (ActualWidth/Height != 0).
-        /// Tự động subscribe PropertyChanged của các RebarModel để cập nhật canvas khi qty/diameter thay đổi.
-        /// </summary>
         public void DrawSection(BeamRebarModel model, IEnumerable<BeamRebarModel> allModels = null)
         {
             if (model == null) return;
@@ -86,7 +68,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                 SetAllModels(allModels);
             }
 
-            // unsubscribe model cũ trước để tránh memory leak / double-draw
             UnsubscribeRebarChanges(_currentModel);
             if (!ReferenceEquals(_currentModel, model)) _picked.Clear();
             _currentModel = model;
@@ -95,7 +76,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             Redraw();
         }
 
-        // ── Subscribe / Unsubscribe rebar PropertyChanged ──────────────────────
 
         private void SubscribeRebarChanges(BeamRebarModel model)
         {
@@ -111,10 +91,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                 rebar.PropertyChanged -= OnRebarPropertyChanged;
         }
 
-        /// <summary>
-        /// Lấy toàn bộ RebarModel từ 3 section (bỏ qua null).
-        /// Dùng Distinct theo reference để tránh subscribe 2 lần cho Top1/Bot1 shared.
-        /// </summary>
         private static IEnumerable<RebarModel> GetAllRebars(BeamRebarModel model)
         {
             var seen = new HashSet<RebarModel>(ReferenceEqualityComparer.Instance);
@@ -136,12 +112,10 @@ namespace LSTool.Tools.Beams.BeamRebar.action
 
         private void OnRebarPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            // redraw khi Spacing (qty), Diameter hoặc tên đường kính thay đổi
             if (e.PropertyName is nameof(RebarModel.Spacing) or nameof(RebarModel.Diameter) or nameof(RebarModel.Name))
                 Redraw();
         }
 
-        /// <summary>Vẽ lại 3 canvas từ _currentModel.</summary>
         public void Redraw()
         {
             if (_currentModel == null) return;
@@ -152,7 +126,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             DrawOnCanvas(_canvasEnd,   _currentModel, _currentModel.SectionEnd, 2);
         }
 
-        // ── Core draw for one canvas ───────────────────────────────────────────
 
         private void DrawOnCanvas(Canvas canvas, BeamRebarModel beam, BeamRebarSectionModel section, int secIdx)
         {
@@ -164,14 +137,11 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             var ch = canvas.ActualHeight;
             if (cw <= 0 || ch <= 0) return;
 
-            // kích thước tiết diện thực (mm)
-            // GetBeamDimensions: Width đo theo VTY (ngang ←→), Height đo theo VTZ (đứng ↑)
-            var width  = beam.Width;  // VTY = chiều ngang tiết diện → wPx
-            var height = beam.Height; // VTZ = chiều đứng tiết diện  → hPx
+            var width  = beam.Width;
+            var height = beam.Height;
             var cover  = beam.Cover / 2;
             if (width <= 0 || height <= 0) return;
 
-            // Xác định kích thước tham chiếu lớn nhất giữa tất cả các dầm để thống nhất scale (ưu tiên hình to hơn)
             var validModels = _allModels?.Where(x => x != null && x.Width > 0 && x.Height > 0).ToList();
             var refWidth  = (validModels != null && validModels.Any()) ? Math.Max(width, validModels.Max(x => x.Width)) : width;
             var refHeight = (validModels != null && validModels.Any()) ? Math.Max(height, validModels.Max(x => x.Height)) : height;
@@ -179,72 +149,58 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             if (refWidth <= 0) refWidth = width;
             if (refHeight <= 0) refHeight = height;
 
-            // vùng vẽ tiết diện: chừa lề cho text kích thước & thông tin thép
             var areaW = Math.Max(10, cw - 2 * PadSide);
             var areaH = Math.Max(10, ch - PadTop - PadBottom);
             var center = new wd.Point(cw / 2, PadTop + areaH / 2);
 
-            // tính scale thống nhất: vừa vặn hình lớn nhất trong vùng vẽ theo Ratio, các hình nhỏ hơn dùng chung scale
             var scale = Ratio * Math.Min(areaW / MmToPx(refWidth), areaH / MmToPx(refHeight));
 
             var wPx = MmToPx(width)  * scale;
             var hPx = MmToPx(height) * scale;
 
-            // ── 1. bê tông ──────────────────────────────────────────────────
             DrawConcrete(canvas, center, wPx, hPx);
 
-            // ── 2. đai ──────────────────────────────────────────────────────
             var coverPx      = MmToPx(cover) * scale;
             DrawStirrup(canvas, center, wPx, hPx, coverPx);
 
-            // ── kích thước & thông tin cốt thép (giống tool cột) ─────────────
             DrawDimensionsAndInfo(canvas, center, wPx, hPx, width, height, section);
 
             if (section == null) return;
 
-            // biên trong của đai (tính từ tâm canvas, px)
-            // cộng thêm: nửa bề dày nét đai + khoảng hở để thép không chồng lên đường đai
-            var stirrupHalfThickness = OptionStyleInstanceInCanvas.OPTION_REBAR_LINE.Thickness / 2;
-            const double rebarGap = 1.5;  // px khoảng thở giữa đai và thép
+            var stirrupHalfThickness = BeamRebarLine.Thickness / 2;
+            const double rebarGap = 1.5;
             var stirrupOffset = stirrupHalfThickness + rebarGap;
             var innerHalfW = Math.Max(0, wPx / 2 - coverPx - stirrupOffset);
             var innerHalfH = Math.Max(0, hPx / 2 - coverPx - stirrupOffset);
 
             _pixelsPerMm = MmToPx(1) * scale;
-            // Dành ít nhất 25% bước lưới làm khoảng hở giữa các chấm, kể cả lưới dày.
             var horizontalLimit = RebarSectionPreviewStyle.GetDiameterLimit(2 * innerHalfW, _gridQty);
             var layerCount = 2 + new[] { section.RebarTop2, section.RebarTop3,
                 section.RebarBot2, section.RebarBot3 }.Count(rb => rb != null && rb.Spacing > 0);
             var verticalLimit = (2 * innerHalfH - (layerCount - 1) * LayerGap) / layerCount;
-            _maxRebarDiameterInCanvas = Math.Min(RebarSectionPreviewStyle.MaximumDiameter,
+            _maxRebarDiameterInCanvas = Math.Min(BeamDotMaxDiameter,
                 Math.Min(horizontalLimit, verticalLimit));
             if (_maxRebarDiameterInCanvas <= 0) return;
 
 
             _curCenter = center;
             const int S = 10;
-            // ── 3. thép Top (1→2→3 từ mép trên xuống) ───────────────────────
-            double topRowY  = center.Y - innerHalfH;  // mép trên trong đai
+            double topRowY  = center.Y - innerHalfH;
             topRowY = DrawRebarRow(canvas, center, innerHalfW, topRowY, section.RebarTop1, true, BeamRebarLayerType.Top1, secIdx * S);
             topRowY = DrawRebarRow(canvas, center, innerHalfW, topRowY, section.RebarTop2, true, BeamRebarLayerType.Top2, secIdx * S);
                       DrawRebarRow(canvas, center, innerHalfW, topRowY, section.RebarTop3, true, BeamRebarLayerType.Top3, secIdx * S);
 
-            // ── 4. thép Bot (1→2→3 từ mép dưới lên) ────────────────────────
-            double botRowY  = center.Y + innerHalfH;  // mép dưới trong đai
+            double botRowY  = center.Y + innerHalfH;
             botRowY = DrawRebarRow(canvas, center, innerHalfW, botRowY, section.RebarBot1, false, BeamRebarLayerType.Bot1, secIdx * S);
             botRowY = DrawRebarRow(canvas, center, innerHalfW, botRowY, section.RebarBot2, false, BeamRebarLayerType.Bot2, secIdx * S);
                       DrawRebarRow(canvas, center, innerHalfW, botRowY, section.RebarBot3, false, BeamRebarLayerType.Bot3, secIdx * S);
 
-            // ── 5. SideBar ────────────────────────────────────────────────────
             DrawSideBars(canvas, center, innerHalfW, innerHalfH, section.SideBar, secIdx * S);
 
-            // ── 6. đai phụ (vẽ sau cùng để có đủ thép chủ + sidebar) ─────────
             DrawTies(canvas, beam, secIdx);
         }
 
-        // ── Draw helpers ───────────────────────────────────────────────────────
 
-        /// <summary>Vẽ hình chữ nhật bê tông (có fill).</summary>
         private static void DrawConcrete(Canvas canvas, wd.Point center, double wPx, double hPx)
         {
             var pts = new List<wd.Point>
@@ -260,7 +216,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                 pts).DrawInCanvas();
         }
 
-        /// <summary>Vẽ đai chính (rectangle bo góc) bên trong bê tông.</summary>
         private static void DrawStirrup(Canvas canvas, wd.Point center,
             double wPx, double hPx, double coverPx)
         {
@@ -268,8 +223,8 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             var inH = hPx - 2 * coverPx;
             if (inW <= 0 || inH <= 0) return;
 
-            var cornerR = Math.Min(RebarSectionPreviewStyle.MaximumDiameter, Math.Min(inW, inH) / 4);
-            var opts    = OptionStyleInstanceInCanvas.OPTION_REBAR_LINE;
+            var cornerR = Math.Min(BeamDotMaxDiameter / 2, Math.Min(inW, inH) / 4);
+            var opts    = BeamRebarLine;
             var rect = new System.Windows.Shapes.Rectangle
             {
                 Width           = inW,
@@ -286,11 +241,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             canvas.Children.Add(rect);
         }
 
-        /// <summary>
-        /// Vẽ 1 hàng thép theo lưới chia (giống lúc mô hình: thanh đầu/cuối ở góc, đối xứng).
-        /// <paramref name="rowY"/>: mép ngoài (top nếu goingDown, bottom nếu !goingDown).
-        /// Trả về Y kề tiếp cho hàng thép kế.
-        /// </summary>
         private double DrawRebarRow(
             Canvas canvas, wd.Point center, double innerHalfW,
             double rowY, MVVM.Models.RebarModel rebar, bool goingDown,
@@ -313,11 +263,10 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             {
                 var cx = center.X + kv.Value * usableHalf;
                 var isOuter = kv.Key == minIdx || kv.Key == maxIdx;
-                // Top1/Bot1: chỉ thanh bên trong; Top2/3, Bot2/3: chỉ 2 thanh ngoài cùng (lớp >= 2 thanh)
                 var pickable = isFirstLayer ? !isOuter : (isOuter && qty >= 2);
 
                 var c = new InstanceInCanvasCircel(
-                    canvas, OptionStyleInstanceInCanvas.OPTION_REBAR,
+                    canvas, BeamRebarDot,
                     new wd.Point(cx, centerY), d)
                 {
                     Id = kv.Key,
@@ -342,7 +291,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                 : centerY - d / 2 - LayerGap;
         }
 
-        // ── Pick & đai phụ ─────────────────────────────────────────────────────
 
         private void _RebarClickAction(InstanceInCanvasCircel circel)
         {
@@ -351,7 +299,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             Redraw();
         }
 
-        /// <summary>Chuột phải vào thanh thép: xóa các đai phụ đi qua thanh đó.</summary>
         private void _RClickAction(InstanceInCanvasCircel circel)
         {
             if (_currentModel?.Ties == null) return;
@@ -369,10 +316,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             return t.Layer == (int)layer;
         }
 
-        /// <summary>
-        /// Tạo đai phụ từ các thanh đang pick trên canvas. Hình dạng áp dụng cho cả 3 mặt cắt của dầm.
-        /// Trả về true nếu tạo được.
-        /// </summary>
         public bool CreateTies(BeamTieType type)
         {
             if (_currentModel == null) return false;
@@ -403,7 +346,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                     var layer = items[0].Layer;
                     if ((int)layer >= SideLeftCode)
                     {
-                        // đai ngang qua thép sidebar: thanh trái + thanh phải cùng hàng (pick 1 thanh cũng được)
                         if (items.Any(x => (int)x.Layer < SideLeftCode) || items.Any(x => x.Id != items[0].Id)
                             || items.Count > 2 || (items.Count == 2 && items[0].Layer == items[1].Layer))
                             throw new Exception("Đai phụ ngang sidebar: pick thanh trái và/hoặc phải của cùng 1 hàng.");
@@ -452,7 +394,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                     var top = _curCircles.FirstOrDefault(c => c.HostId % 10 == (int)BeamRebarLayerType.Top1 && c.Id == t.Index);
                     var bot = _curCircles.FirstOrDefault(c => c.HostId % 10 == (int)BeamRebarLayerType.Bot1 && c.Id == t.Index);
                     if (top == null || bot == null) continue;
-                    // phía ngoài = phía mép gần nhất (giữa thì bên phải)
                     var midX = (top.Point.X + bot.Point.X) / 2;
                     var outside = new wd.Vector(midX >= _curCenter.X ? 1 : -1, 0);
                     DrawTwoPointTie(canvas, top, bot, outside);
@@ -464,20 +405,18 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                         var l = _curCircles.FirstOrDefault(c => c.HostId % 10 == SideLeftCode && c.Id == t.Index);
                         var r = _curCircles.FirstOrDefault(c => c.HostId % 10 == SideRightCode && c.Id == t.Index);
                         if (l != null && r != null)
-                            DrawTwoPointTie(canvas, l, r, new wd.Vector(0, -1)); // đai đi phía trên (+VTZ)
+                            DrawTwoPointTie(canvas, l, r, new wd.Vector(0, -1));
                         continue;
                     }
                     var layer = (BeamRebarLayerType)t.Layer;
                     var cs = _curCircles.Where(c => c.HostId % 10 == t.Layer).OrderBy(c => c.Id).ToList();
                     if (cs.Count < 2) continue;
-                    // đai ngang đi phía trong (về tâm dầm), móc quay ra ngoài
                     var inward = new wd.Vector(0, BeamRebarUtils.IsTopLayer(layer) ? 1 : -1);
                     DrawTwoPointTie(canvas, cs.First(), cs.Last(), inward);
                 }
             }
         }
 
-        /// <summary>Vẽ đai 2 điểm có 2 móc (giống DrawTwoPointTieInCanvas của cột).</summary>
         private static void DrawTwoPointTie(Canvas canvas, InstanceInCanvasCircel first,
             InstanceInCanvasCircel second, wd.Vector sideDirection)
         {
@@ -489,7 +428,7 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             var normal = new wd.Vector(-dir.Y, dir.X);
             if (normal * sideDirection < 0) normal = -normal;
 
-            var options = OptionStyleInstanceInCanvas.OPTION_REBAR_LINE;
+            var options = BeamRebarLine;
             var diameter = Math.Max(first.Diameter, second.Diameter);
             var hookRadius = (diameter + options.Thickness) / 2 + options.Thickness;
             var hookLength = diameter;
@@ -521,7 +460,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             });
         }
 
-        /// <summary>Vẽ thép sidebar: 2 cột bên trái/phải, chia đều chiều cao.</summary>
         private void DrawSideBars(
             Canvas canvas, wd.Point center,
             double innerHalfW, double innerHalfH,
@@ -534,19 +472,17 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             var leftX  = center.X - innerHalfW + d / 2;
             var rightX = center.X + innerHalfW - d / 2;
 
-            // chia đều giữa vùng trong (tránh sát top/bot)
             var usableH = 2 * innerHalfH - 2 * d;
             var spacing  = qty > 1 ? usableH / (qty + 1) : usableH / 2;
 
             for (int i = 0; i < qty; i++)
             {
                 var cy = center.Y - innerHalfH + d + (i + 1) * spacing;
-                var row = qty - i; // hàng đếm từ dưới lên (giống lúc dựng)
-                // HostId % 10: 6 = sidebar trái, 7 = sidebar phải; Id = hàng
+                var row = qty - i;
                 foreach (var (x, layerCode) in new[] { (leftX, SideLeftCode), (rightX, SideRightCode) })
                 {
                     var c = new InstanceInCanvasCircel(
-                        canvas, OptionStyleInstanceInCanvas.OPTION_REBAR,
+                        canvas, BeamRebarDot,
                         new wd.Point(x, cy), d)
                     {
                         Id = row,
@@ -565,27 +501,21 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             }
         }
 
-        /// <summary>Giữ chấm dễ nhìn nhưng không vượt khoảng trống trên mặt cắt.</summary>
         private double GetPreviewDiameter(RebarModel rebar)
         {
-            return RebarSectionPreviewStyle.GetDiameter(rebar?.Diameter ?? 0,
-                _pixelsPerMm, _maxRebarDiameterInCanvas);
+            var d = Math.Max(BeamDotMinDiameter, Math.Min(BeamDotMaxDiameter, (rebar?.Diameter ?? 0) * _pixelsPerMm));
+            return Math.Max(0, Math.Min(_maxRebarDiameterInCanvas, d));
         }
 
-        /// <summary>Vẽ 1 vòng tròn thép.</summary>
         private static void DrawRebarCircle(Canvas canvas, wd.Point center, double diameter)
         {
             new InstanceInCanvasCircel(
                 canvas,
-                OptionStyleInstanceInCanvas.OPTION_REBAR,
+                BeamRebarDot,
                 center,
                 diameter).DrawInCanvas();
         }
 
-        /// <summary>
-        /// Vẽ kích thước mặt cắt b x h và thông tin cốt thép (tham khảo ColumnCanvasSectionPreViewAction.DrawDimensionsAndInfo).
-        /// b: phía trên tiết diện, h: bên trái tiết diện, thông tin thép: bên dưới.
-        /// </summary>
         private static void DrawDimensionsAndInfo(
             Canvas canvas, wd.Point center,
             double wPx, double hPx,
@@ -595,7 +525,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             var textBrush = new wm.SolidColorBrush(wm.Color.FromRgb(60, 60, 60));
             var infoBrush = new wm.SolidColorBrush(wm.Color.FromRgb(40, 80, 150));
 
-            // Kích thước chiều rộng b (trên đỉnh dầm)
             var textWidth = new TextBlock
             {
                 Text = $"b = {width:0}",
@@ -608,7 +537,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             Canvas.SetTop(textWidth, center.Y - hPx / 2 - 20);
             canvas.Children.Add(textWidth);
 
-            // Kích thước chiều cao h (bên trái dầm, xoay đứng đọc từ dưới lên)
             var textHeight = new TextBlock
             {
                 Text = $"h = {height:0}",
@@ -624,7 +552,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
 
             if (section == null) return;
 
-            // Thông tin cốt thép bên dưới (2 dòng)
             var top = FormatLayers(section.RebarTop1, section.RebarTop2, section.RebarTop3);
             var bot = FormatLayers(section.RebarBot1, section.RebarBot2, section.RebarBot3);
             var st = section.Stirrup;
@@ -646,7 +573,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             canvas.Children.Add(infoText);
         }
 
-        /// <summary>"3D16 + 2D18" từ các lớp có số lượng &gt; 0.</summary>
         private static string FormatLayers(params MVVM.Models.RebarModel[] layers)
         {
             var parts = layers
@@ -656,9 +582,7 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             return parts.Any() ? string.Join(" + ", parts) : "-";
         }
 
-        // ── Unit conversion ────────────────────────────────────────────────────
 
-        /// <summary>mm → pixel (4 px/mm, nhất quán với CanvasSectionPreViewAction gốc).</summary>
         private static double MmToPx(double mm) => mm * 4.0;
     }
 

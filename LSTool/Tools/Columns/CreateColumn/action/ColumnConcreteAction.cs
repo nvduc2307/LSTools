@@ -30,9 +30,7 @@ namespace LSTool.Tools.Columns.CreateColumn.action
 
         public List<FamilyInstance> SelectColumns()
         {
-            //selete cols
             var elements = _uidocument.Selection.PickElements(_document, null, _columnSelectedFilter);
-            //valid cols
             var columns = ValidateColumns(elements);
             if (!columns.Any()) return columns;
             return columns;
@@ -146,7 +144,6 @@ namespace LSTool.Tools.Columns.CreateColumn.action
                 }
             }
 
-            // Sắp xếp các cột theo cao độ Z tăng dần (cột dưới ở trên đầu danh sách)
             results = results
                 .Where(x => x.Center != null)
                 .OrderBy(x => x.Center.DotProduct(XYZ.BasisZ))

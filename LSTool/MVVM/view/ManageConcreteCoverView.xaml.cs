@@ -14,9 +14,6 @@ using System.Windows.Shapes;
 
 namespace LSTool.MVVM.view
 {
-    /// <summary>
-    /// Interaction logic for ManageConcreteCoverView.xaml
-    /// </summary>
     public partial class ManageConcreteCoverView : Window
     {
         public ManageConcreteCoverView()

@@ -3,7 +3,6 @@ using LSTool.Utils;
 
 namespace LSTool.Tools.Beams.BeamRebar.action
 {
-    /// <summary>Save / Save As / Remove / Load setting thép dầm (giống tool cột).</summary>
     public partial class BeamRebarAction
     {
         private BeamRebarSettingAction _settingAction = new BeamRebarSettingAction();
@@ -28,6 +27,7 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                 Name = name,
             };
             BeamRebarSettingAction.Capture(_viewModel.BeamRebarModel, newSetting);
+            _CaptureAnchor(newSetting);
             var list = existing.ToList();
             list.Add(newSetting);
             _settingAction.SaveSettings(list);
@@ -44,6 +44,7 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                 return;
             }
             BeamRebarSettingAction.Capture(_viewModel.BeamRebarModel, setting);
+            _CaptureAnchor(setting);
             var list = _viewModel.BeamRebarSettings ?? new List<BeamRebarSettingModel>();
             var idx = list.FindIndex(x => x.Id == setting.Id);
             if (idx >= 0) list[idx] = setting;
@@ -72,7 +73,27 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             var beam = _viewModel.BeamRebarModel;
             if (setting == null || beam == null) return;
             BeamRebarSettingAction.Apply(setting, beam);
+            _viewModel.AnchorStartTopOffset = setting.AnchorStartTopOffset;
+            _viewModel.AnchorStartTopHook = setting.AnchorStartTopHook;
+            _viewModel.AnchorStartBotOffset = setting.AnchorStartBotOffset;
+            _viewModel.AnchorStartBotHook = setting.AnchorStartBotHook;
+            _viewModel.AnchorEndTopOffset = setting.AnchorEndTopOffset;
+            _viewModel.AnchorEndTopHook = setting.AnchorEndTopHook;
+            _viewModel.AnchorEndBotOffset = setting.AnchorEndBotOffset;
+            _viewModel.AnchorEndBotHook = setting.AnchorEndBotHook;
             _canvasAction?.Redraw();
+        }
+
+        private void _CaptureAnchor(BeamRebarSettingModel setting)
+        {
+            setting.AnchorStartTopOffset = _viewModel.AnchorStartTopOffset;
+            setting.AnchorStartTopHook = _viewModel.AnchorStartTopHook;
+            setting.AnchorStartBotOffset = _viewModel.AnchorStartBotOffset;
+            setting.AnchorStartBotHook = _viewModel.AnchorStartBotHook;
+            setting.AnchorEndTopOffset = _viewModel.AnchorEndTopOffset;
+            setting.AnchorEndTopHook = _viewModel.AnchorEndTopHook;
+            setting.AnchorEndBotOffset = _viewModel.AnchorEndBotOffset;
+            setting.AnchorEndBotHook = _viewModel.AnchorEndBotHook;
         }
     }
 }

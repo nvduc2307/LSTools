@@ -8,7 +8,6 @@ using System.IO;
 
 namespace LSTool.Tools.Generals.SettingRebarBeam.action
 {
-    /// <summary>Cài đặt chung cho dầm (E0, StressZone) – lưu vào SettingBeam.json, giống SettingColumnAction của cột.</summary>
     public class SettingBeamAction
     {
         private Document _document;
@@ -53,7 +52,6 @@ namespace LSTool.Tools.Generals.SettingRebarBeam.action
             _view.Close();
         }
 
-        /// <summary>Đọc SettingBeam.json (tự copy từ file mẫu nếu chưa có).</summary>
         public SettingBeamModel GetSettingBeamModel() => BeamRebarUtils.GetSettingBeamModel();
 
         public void Execute()

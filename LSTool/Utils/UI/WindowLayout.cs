@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
 namespace LSTool.Utils.UI;
-/// <summary>Fits compact dialogs to the current monitor in device-independent units.</summary>
 public static class WindowLayout
 {
     public static readonly DependencyProperty EnabledProperty = DependencyProperty.RegisterAttached(
@@ -38,7 +37,7 @@ public static class WindowLayout
         var source = (HwndSource)PresentationSource.FromVisual(window);
         source?.AddHook((IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled) =>
         {
-            if (message == 0x02E0) // Let WPF apply WM_DPICHANGED before measuring in DIPs.
+            if (message == 0x02E0)
                 window.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => FitToMonitor(window, false)));
             return IntPtr.Zero;
         });

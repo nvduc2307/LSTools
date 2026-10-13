@@ -5,11 +5,6 @@ using LSTool.Utils;
 
 namespace LSTool.Tools.Beams.BeamRebar.action
 {
-    /// <summary>
-    /// Thép hông (SideBar): dầm cao &gt;= 700 mm mới có. SideBar.Spacing = số thanh mỗi bên.
-    /// Mỗi bên 1 Rebar Set chia đều theo phương đứng giữa mép dưới lớp thép trên và mép trên lớp thép dưới,
-    /// chạy suốt nhịp, neo vào gối min(15d, chiều dày gối − cover); đầu tự do lùi vào 1 lớp bảo vệ.
-    /// </summary>
     public partial class BeamRebarAction
     {
         private const double SideBarMinHeightMm = 700;
@@ -56,7 +51,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             var host = _document.GetElement(beam.Id);
             if (n == 1)
             {
-                // 1 thanh mỗi bên → gộp 2 thanh trái/phải thành 1 Rebar Set (phương rải VTY)
                 var offL = beam.VTY * (-halfYFt) + beam.VTZ * z0;
                 var curvesLR = new List<XYZ> { pStart + offL, pEnd + offL }.PointsToCurves();
                 var setLR = RebarHelper.CreateRebarFixedNumberSet(
@@ -70,7 +64,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             {
                 var off = beam.VTY * (side * halfYFt) + beam.VTZ * z0;
                 var curves = new List<XYZ> { pStart + off, pEnd + off }.PointsToCurves();
-                // phương rải = VTZ, thanh đầu ở dưới cùng, rải lên trên
                 var set = RebarHelper.CreateRebarFixedNumberSet(
                     _document, curves, sb.Name, beam.VTZ, rebarBarTypes, host,
                     n, arrayLength, out string error);
@@ -79,11 +72,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             }
         }
 
-        /// <summary>
-        /// Thông số bố trí thép hông: n = số thanh mỗi bên, halfYFt = offset ngang (VTY) của thanh,
-        /// z0 = cao độ (VTZ, ft) của thanh dưới cùng, spacing = khoảng cách đứng giữa các thanh (ft).
-        /// Trả về false khi dầm thấp &lt; 700, không có thép hông hoặc không đủ chỗ (warn != null).
-        /// </summary>
         private bool _sideBarLayout(
             BeamRebarModel beam, out int n, out double dMm, out double halfYFt,
             out double z0, out double spacing, out string warn)
@@ -102,7 +90,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             halfYFt = (beam.Width / 2 - coverMm - dStMm - dMm / 2).FromMillimeters();
             if (halfYFt <= 0) return false;
 
-            // mép dưới của lớp thép trên / mép trên của lớp thép dưới (xét cả 3 mặt cắt)
             var zTop = (beam.Height / 2 - coverMm - dStMm).FromMillimeters();
             var zBot = -zTop;
             foreach (var s in new[] { beam.SectionStart, beam.SectionMid, beam.SectionEnd })
@@ -130,7 +117,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             return true;
         }
 
-        /// <summary>Đầu thép hông: có gối → neo min(15d, dày gối − cover); đầu tự do → lùi vào cover.</summary>
         private static XYZ _sideBarEnd(BeamRebarModel beam, BeamBearingModel bearing, XYZ face, XYZ outward, double dMm)
         {
             var coverFt = beam.Cover.FromMillimeters();

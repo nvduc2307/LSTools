@@ -71,7 +71,6 @@ namespace LSTool.Licensing
                     }
                     catch
                     {
-                        // The old state remains usable if migration cannot write.
                     }
                 }
 
@@ -157,7 +156,6 @@ namespace LSTool.Licensing
             }
             catch
             {
-                // A later validation will retry the silent activation.
             }
         }
     }

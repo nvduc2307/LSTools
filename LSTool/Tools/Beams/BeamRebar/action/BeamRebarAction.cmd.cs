@@ -1,3 +1,5 @@
+using LSTool.Utils;
+
 namespace LSTool.Tools.Beams.BeamRebar.action
 {
     public partial class BeamRebarAction
@@ -10,20 +12,13 @@ namespace LSTool.Tools.Beams.BeamRebar.action
         private void _OkCommand()
         {
 
-            //create rebar stirrup
 
-            //create rebar top 1
-            //create rebar top 2
-            //create rebar top 3
 
-            //create rebar bot 1
-            //create rebar bot 2
-            //create rebar bot 3
 
-            //create rebar side
             _mainBarWarnings.Clear();
             using (var ts = new Transaction(_document, "new transaction"))
             {
+                ts.SkipAllWarnings();
                 ts.Start();
                 CreateStirrup();
 

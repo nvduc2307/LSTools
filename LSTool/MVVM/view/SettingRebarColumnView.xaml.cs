@@ -14,9 +14,6 @@ using System.Windows.Shapes;
 
 namespace LSTool.MVVM.view
 {
-    /// <summary>
-    /// Interaction logic for SettingRebarColumnView.xaml
-    /// </summary>
     public partial class SettingRebarColumnView : Window
     {
         public SettingRebarColumnView()

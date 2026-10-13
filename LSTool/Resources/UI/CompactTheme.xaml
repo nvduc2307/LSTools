@@ -4,7 +4,6 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib"
                     xmlns:fluent="http://schemas.lepo.co/wpfui/2022/xaml"
                     xmlns:ui="clr-namespace:LSTool.Utils.UI">
-    <!-- Scope Fluent resources to each tool window; Revit owns Application.Current. -->
     <ResourceDictionary.MergedDictionaries>
         <fluent:ThemesDictionary Theme="Light"/>
         <fluent:ControlsDictionary/>
@@ -49,7 +48,6 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
-    <!-- Keep library templates; only density, colours and interaction states differ. -->
     <Style TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="MinHeight" Value="24"/>
@@ -100,7 +98,6 @@
         <Setter Property="PressedBackground" Value="#F1F5F9"/>
         <Setter Property="PressedForeground" Value="{StaticResource Ink}"/>
         <Setter Property="PressedBorderBrush" Value="{StaticResource Blue}"/>
-        <!-- No extra focus frame or geometry/opacity changes on mouse press. -->
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Style.Triggers>
             <Trigger Property="IsKeyboardFocused" Value="True">

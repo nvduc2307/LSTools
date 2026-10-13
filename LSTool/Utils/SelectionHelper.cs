@@ -4,15 +4,6 @@ namespace LSTool.Utils
 {
     public static class SelectionHelper
     {
-        /// <summary>
-        /// Picks a single element from the document with optional category and custom filter.
-        /// </summary>
-        /// <param name="sel">The selection object.</param>
-        /// <param name="doc">The Revit document.</param>
-        /// <param name="bic">Optional built-in category filter.</param>
-        /// <param name="elementFilter">Optional custom element filter.</param>
-        /// <param name="statusPrompt">Prompt text shown during selection.</param>
-        /// <returns>The picked element or null if not selected.</returns>
         public static Element PickElement(
             this Selection sel,
             Document doc,
@@ -47,14 +38,6 @@ namespace LSTool.Utils
             return references.Select(x => doc.GetElement(x)).ToList();
         }
 
-        /// <summary>
-        /// Picks a reference to a single element with optional category and custom filter.
-        /// </summary>
-        /// <param name="sel">The selection object.</param>
-        /// <param name="bic">Optional built-in category filter.</param>
-        /// <param name="elementFilter">Optional custom element filter.</param>
-        /// <param name="statusPrompt">Prompt text shown during selection.</param>
-        /// <returns>The reference to the picked element.</returns>
         public static Reference PickElementReference(
             this Selection sel,
             BuiltInCategory? bic = null,
@@ -69,14 +52,6 @@ namespace LSTool.Utils
                 statusPrompt);
         }
 
-        /// <summary>
-        /// Picks a reference to an element that matches one of the given categories and optional custom filter.
-        /// </summary>
-        /// <param name="sel">The selection object.</param>
-        /// <param name="categories">List of built-in categories to filter.</param>
-        /// <param name="elementFilter">Optional custom element filter.</param>
-        /// <param name="statusPrompt">Prompt text shown during selection.</param>
-        /// <returns>The reference to the picked element.</returns>
         public static Reference PickElementReferenceFilters(
             this Selection sel,
             List<BuiltInCategory?> categories = null,
@@ -95,14 +70,6 @@ namespace LSTool.Utils
             return sel.PickObject(ObjectType.Element, new ElementSelectionFilter(filter), statusPrompt);
         }
 
-        /// <summary>
-        /// Selects multiple elements within a rectangular area using optional category and custom filter.
-        /// </summary>
-        /// <param name="sel">The selection object.</param>
-        /// <param name="bic">Optional built-in category filter.</param>
-        /// <param name="elementFilter">Optional custom element filter.</param>
-        /// <param name="statusPrompt">Prompt text shown during selection.</param>
-        /// <returns>List of selected elements.</returns>
         public static IList<Element> SelectElementByRectangle(
             this Selection sel,
             BuiltInCategory? bic = null,
@@ -114,12 +81,6 @@ namespace LSTool.Utils
             return sel.PickElementsByRectangle(new ElementSelectionFilter(combinedFilter), statusPrompt);
         }
 
-        /// <summary>
-        /// Creates a combined element filter based on category and custom predicate.
-        /// </summary>
-        /// <param name="bic">Optional built-in category.</param>
-        /// <param name="elementFilter">Optional custom filter predicate.</param>
-        /// <returns>Combined filter function.</returns>
         private static Func<Element, bool> CreateElementFilter(BuiltInCategory? bic, Func<Element, bool> elementFilter)
         {
             return element =>
@@ -135,17 +96,10 @@ namespace LSTool.Utils
         }
     }
 
-    /// <summary>
-    /// Custom ISelectionFilter implementation using a predicate for filtering elements.
-    /// </summary>
     internal class ElementSelectionFilter : ISelectionFilter
     {
         private readonly Func<Element, bool> _elementPredicate;
 
-        /// <summary>
-        /// Initializes the filter with a custom predicate.
-        /// </summary>
-        /// <param name="elementPredicate">Predicate to filter elements.</param>
         public ElementSelectionFilter(Func<Element, bool> elementPredicate)
         {
             _elementPredicate = elementPredicate ?? (e => true);

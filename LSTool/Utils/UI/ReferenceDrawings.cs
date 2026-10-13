@@ -10,7 +10,6 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 namespace LSTool.Utils.UI;
-/// <summary>Assembly-owned vector drawings for the compact UI and Revit ribbon.</summary>
 public static class ReferenceDrawings
 {
     private static readonly Brush Ink = new SolidColorBrush(Color.FromRgb(23, 32, 51));

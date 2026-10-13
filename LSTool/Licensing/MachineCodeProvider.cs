@@ -7,7 +7,6 @@ namespace LSTool.Licensing
 {
     public static class MachineCodeProvider
     {
-        // Keep the existing salt so installed machines retain their device ID.
         private const string ProductSalt = "SDRTools.DeviceHash.v1";
 
         public static string GetMachineCode()

@@ -42,14 +42,12 @@ namespace LSTool.AutoCad.Action.Actions
             _view.Close();
         }
 
-        /// <summary>Danh sách kèm tên hiển thị của cấp độ bền bê tông và loại thép (thay cho Id).</summary>
         private List<RebarAnchorageLengthModel> GetRebarAnchorageLengthsWithNames()
         {
             var items = GetRebarAnchorageLengths();
             var ratingNames = GetConcreteStrengthRatingNames();
             foreach (var item in items)
             {
-                // ConcreteStrengthRatingId chạy từ 0 → tương ứng phần tử thứ Id trong DataConcreteStrengthRating.json
                 item.ConcreteStrengthRatingName = item.ConcreteStrengthRatingId >= 0
                     && item.ConcreteStrengthRatingId < ratingNames.Count
                         ? ratingNames[item.ConcreteStrengthRatingId]

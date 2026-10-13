@@ -14,9 +14,6 @@ using System.Windows.Shapes;
 
 namespace LSTool.MVVM.view
 {
-    /// <summary>
-    /// Interaction logic for ManageRebarAnchorageHookStirrupView.xaml
-    /// </summary>
     public partial class ManageRebarAnchorageHookStirrupView : Window
     {
         public ManageRebarAnchorageHookStirrupView()

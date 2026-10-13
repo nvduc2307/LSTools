@@ -25,6 +25,23 @@ namespace LSTool.Tools.Beams.BeamRebar.viewModel
         private BeamRebarSettingModel _beamRebarSetting;
         [ObservableProperty]
         private string _beamSettingName;
+
+        [ObservableProperty]
+        private double _anchorStartTopOffset = 50;
+        [ObservableProperty]
+        private double _anchorStartTopHook = 500;
+        [ObservableProperty]
+        private double _anchorStartBotOffset = 50;
+        [ObservableProperty]
+        private double _anchorStartBotHook = 500;
+        [ObservableProperty]
+        private double _anchorEndTopOffset = 50;
+        [ObservableProperty]
+        private double _anchorEndTopHook = 500;
+        [ObservableProperty]
+        private double _anchorEndBotOffset = 50;
+        [ObservableProperty]
+        private double _anchorEndBotHook = 500;
         public RelayCommand SaveAsCommand { get; set; }
         public RelayCommand SaveCommand { get; set; }
         public RelayCommand DeleteCommand { get; set; }

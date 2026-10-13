@@ -226,6 +226,46 @@ namespace LSTool.Utils
 #endif
         }
 
+        public static RebarShape EnsureStraightTieShape(
+            Document document, int hookAngleDeg,
+            RebarHookOrientation orientStart, RebarHookOrientation orientEnd, out string error)
+        {
+            error = null;
+            try
+            {
+                var name = $"LSTool Tie {hookAngleDeg} {orientStart}-{orientEnd}";
+                var existing = new FilteredElementCollector(document)
+                    .OfClass(typeof(RebarShape)).Cast<RebarShape>()
+                    .FirstOrDefault(x => x.Name == name);
+                if (existing != null) return existing;
+
+                var paramIds = RebarShapeParameters.GetAllRebarShapeParameters(document);
+                ElementId paramId = null;
+                foreach (var id in paramIds)
+                {
+                    var el = document.GetElement(id);
+                    if (el?.Name == "A") { paramId = id; break; }
+                    paramId ??= id;
+                }
+                if (paramId == null) { error = "project không có Rebar Shape parameter"; return null; }
+
+                var def = new RebarShapeDefinitionBySegments(document, 1);
+                def.AddParameter(paramId, 300.0.FromMillimeters());
+                def.AddConstraintToSegment(0, paramId, 1.0, 0.0, 1, false, false);
+                def.SetSegmentFixedDirection(0, 1.0, 0.0);
+                var shape = RebarShape.Create(
+                    document, def, null, RebarStyle.StirrupTie, StirrupTieAttachmentType.InteriorFace,
+                    hookAngleDeg, orientStart, hookAngleDeg, orientEnd, 0);
+                shape.Name = name;
+                return shape;
+            }
+            catch (Exception ex)
+            {
+                error = ex.Message;
+                return null;
+            }
+        }
+
         public static void SetRebarHookLength(Document document, Rebar rebar, double hookLengthMm)
         {
             if (rebar == null || hookLengthMm <= 0) return;
@@ -282,10 +322,6 @@ namespace LSTool.Utils
             }
         }
 
-        /// <summary>
-        /// Tao 1 dai stirrup roi dung SetLayoutAsMaximumSpacing de Revit chia deu thanh RebarSet.
-        /// Moi zone (Start/Mid/End) goi 1 lan -> tao 3 RebarSet cho 1 nhip dam.
-        /// </summary>
         public static void CreateRebarStirrupTieSet(
             Document document,
             List<Curve> shape,
@@ -331,11 +367,6 @@ namespace LSTool.Utils
 #endif
         }
 
-        /// <summary>
-        /// Tạo đai phụ (StirrupTie) có hook + hướng hook + chiều dài hook rồi dùng SetLayoutAsMaximumSpacing
-        /// để Revit chia đều thành RebarSet theo hướng normal (giống CreateRebarStirrupTieSet nhưng đủ tuỳ chọn như CreateRebarStirrupTie).
-        /// Trả về null nếu tạo lỗi (thanh đã tạo dở được xoá).
-        /// </summary>
         public static Rebar CreateRebarStirrupTieSetEx(
             Document document,
             List<Curve> shape,
@@ -350,16 +381,43 @@ namespace LSTool.Utils
             double spacingMm,
             double zoneLengthMm,
             double hookLengthMm,
-            out string error)
+            out string error,
+            RebarShape forceShape = null)
         {
             error = null;
             Rebar rebar = null;
             try
             {
                 if (spacingMm <= 0 || zoneLengthMm <= 0) { error = "spacing / zone length <= 0"; return null; }
-                rebar = CreateRebarStirrupTie(
-                    document, shape, rebarName, normal, hookStart, hookEnd,
-                    rebarBarTypes, host, hookOrientStart, hookOrientEnd, hookLengthMm);
+                if (forceShape != null)
+                {
+                    var barType = rebarBarTypes.FirstOrDefault(x => x.Name == rebarName)
+                        ?? rebarBarTypes.FirstOrDefault(x => x.Name.Contains(rebarName))
+                        ?? rebarBarTypes.FirstOrDefault();
+                    if (barType == null || shape == null || !shape.Any()) { error = "bar type / shape null"; return null; }
+#if REVIT2025 || REVIT2024 || REVIT2023 || REVIT2022 || REVIT2021
+                    rebar = Rebar.CreateFromCurvesAndShape(
+                        document, forceShape, barType, hookStart, hookEnd, host, normal, shape,
+                        hookOrientStart, hookOrientEnd);
+#else
+                    var terminations = new BarTerminationsData(document);
+                    if (hookStart != null) terminations.HookTypeIdAtStart = hookStart.Id;
+                    if (hookEnd != null) terminations.HookTypeIdAtEnd = hookEnd.Id;
+                    terminations.TerminationOrientationAtStart = hookOrientStart == RebarHookOrientation.Right
+                        ? RebarTerminationOrientation.Right : RebarTerminationOrientation.Left;
+                    terminations.TerminationOrientationAtEnd = hookOrientEnd == RebarHookOrientation.Right
+                        ? RebarTerminationOrientation.Right : RebarTerminationOrientation.Left;
+                    rebar = Rebar.CreateFromCurvesAndShape(document, forceShape, barType, host, normal, shape, terminations);
+#endif
+                    SetSolidRebar3DView(rebar, document.ActiveView);
+                    if (rebar != null && hookLengthMm > 0) SetRebarHookLength(document, rebar, hookLengthMm);
+                }
+                else
+                {
+                    rebar = CreateRebarStirrupTie(
+                        document, shape, rebarName, normal, hookStart, hookEnd,
+                        rebarBarTypes, host, hookOrientStart, hookOrientEnd, hookLengthMm);
+                }
                 if (rebar == null) { error = "Rebar.CreateFromCurves trả về null"; return null; }
                 rebar.GetShapeDrivenAccessor().SetLayoutAsMaximumSpacing(
                     spacingMm.FromMillimeters(),
@@ -380,12 +438,6 @@ namespace LSTool.Utils
             }
         }
 
-        /// <summary>
-        /// Tạo Rebar Set (Standard, không hook) layout Fixed Number:
-        /// shape = thanh đầu tiên (phía âm của normal), normal = phương rải (vuông góc mặt phẳng thanh),
-        /// qty thanh rải về phía +normal trên chiều dài arrayLengthFt (bao gồm thanh đầu và thanh cuối).
-        /// Trả về null nếu tạo lỗi (để caller fallback sang thanh lẻ).
-        /// </summary>
         public static Rebar CreateRebarFixedNumberSet(
             Document document,
             List<Curve> shape,
@@ -429,12 +481,10 @@ namespace LSTool.Utils
                     var accessor = rebar.GetShapeDrivenAccessor();
                     try
                     {
-                        // barsOnNormalSide = true, includeFirstBar = true, includeLastBar = true
                         accessor.SetLayoutAsFixedNumber(qty, arrayLengthFt, true, true, true);
                     }
                     catch (Exception)
                     {
-                        // dự phòng: layout theo khoảng cách thay vì chiều dài mảng
                         accessor.SetLayoutAsNumberWithSpacing(qty, arrayLengthFt / (qty - 1), true, true, true);
                     }
                 }
@@ -444,7 +494,6 @@ namespace LSTool.Utils
             catch (Exception ex)
             {
                 error = ex.Message;
-                // xoá thanh đã tạo dở để caller fallback sang thanh lẻ mà không bị trùng
                 try
                 {
                     if (rebar != null && rebar.IsValidObject)
@@ -455,13 +504,6 @@ namespace LSTool.Utils
             }
         }
 
-        /// <summary>
-        /// Tạo 1 rebar Standard (không hook) rồi dùng SetLayoutAsFixedNumber
-        /// để Revit phân bổ thành RebarSet theo hướng normal.
-        /// shape    = shape của thanh đầu tiên (leftmost/bottommost).
-        /// normal   = hướng phân bổ (normal cho top/bot bars phân bổ theo chiều ngang).
-        /// qty      = số thanh; spacingFt = khoảng cách tâm–tâm giữa các thanh (feet).
-        /// </summary>
         public static void CreateRebarStandardSet(
             Document document,
             List<Curve> shape,

@@ -1,6 +1,5 @@
 ﻿namespace LSTool.Tools.Beams.BeamRebar.models
 {
-    /// <summary>Một setting thép dầm đã lưu (Save / Save As) – gồm cấu hình 3 mặt cắt.</summary>
     public class BeamRebarSettingModel
     {
         public int Id { get; set; }
@@ -8,9 +7,16 @@
         public BeamRebarSectionSettingModel SectionStart { get; set; } = new BeamRebarSectionSettingModel();
         public BeamRebarSectionSettingModel SectionMid { get; set; } = new BeamRebarSectionSettingModel();
         public BeamRebarSectionSettingModel SectionEnd { get; set; } = new BeamRebarSectionSettingModel();
+        public double AnchorStartTopOffset { get; set; } = 50;
+        public double AnchorStartTopHook { get; set; } = 500;
+        public double AnchorStartBotOffset { get; set; } = 50;
+        public double AnchorStartBotHook { get; set; } = 500;
+        public double AnchorEndTopOffset { get; set; } = 50;
+        public double AnchorEndTopHook { get; set; } = 500;
+        public double AnchorEndBotOffset { get; set; } = 50;
+        public double AnchorEndBotHook { get; set; } = 500;
     }
 
-    /// <summary>Cấu hình thép của 1 mặt cắt: tên đường kính + số lượng (Stirrup / SideBar: Spacing).</summary>
     public class BeamRebarSectionSettingModel
     {
         public BeamRebarItemSettingModel RebarTop1 { get; set; } = new BeamRebarItemSettingModel();

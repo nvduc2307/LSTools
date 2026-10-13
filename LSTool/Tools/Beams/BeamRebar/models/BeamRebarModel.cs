@@ -15,11 +15,8 @@ namespace LSTool.Tools.Beams.BeamRebar.models
         public BeamFaceModel FaceBot { get; set; }
         public BeamFaceModel FaceLeft { get; set; }
 
-        /// <summary>Số vị trí trên lưới chia thép chủ (chung cho cả dãy dầm).</summary>
         public int GridQty { get; set; }
-        /// <summary>Vị trí các thanh thép chủ đã dựng (dùng cho đai móc phụ).</summary>
         public List<BeamRebarPositionModel> RebarMainPositions { get; set; } = new List<BeamRebarPositionModel>();
-        /// <summary>Đai phụ (đứng / ngang) – hình dạng chung cho 3 mặt cắt của dầm.</summary>
         public List<BeamTieModel> Ties { get; set; } = new List<BeamTieModel>();
     }
 }

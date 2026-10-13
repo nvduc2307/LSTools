@@ -42,7 +42,6 @@ namespace LSTool.AutoCad.Action.Actions
             _view.Close();
         }
 
-        /// <summary>Danh sách kèm tên hiển thị của cấp độ bền bê tông và loại thép (thay cho Id).</summary>
         private List<RebarLapLengthModel> GetRebarLapLengthsWithNames()
         {
             var items = GetRebarLapLengths();

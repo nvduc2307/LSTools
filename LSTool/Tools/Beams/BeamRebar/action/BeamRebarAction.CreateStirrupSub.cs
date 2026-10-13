@@ -9,19 +9,15 @@ using LSTool.Utils;
 
 namespace LSTool.Tools.Beams.BeamRebar.action
 {
-    /// <summary>
-    /// Đai phụ của dầm (đứng / ngang), tham khảo ColumnRebarStirrupAction._InstallSub (2 điểm).
-    /// Hình dạng (BeamTieModel) dùng chung cho 3 mặt cắt; spacing / vùng bố trí theo từng mặt cắt.
-    /// </summary>
     public partial class BeamRebarAction
     {
+        private RebarHookType _tieHook135;
+        private RebarHookType _tieHook180;
         private BeamTiePositionSchema _beamTieSchema;
         private BeamTiePositionSchema BeamTieSchema =>
             _beamTieSchema ??= new BeamTiePositionSchema(BeamTiePositionSchema.GUID, BeamTiePositionSchema.NAME);
 
-        // ── Lưu / đọc ──────────────────────────────────────────────────────────
 
-        /// <summary>Đọc đai phụ đã lưu trong từng dầm.</summary>
         private void LoadBeamTies(IEnumerable<BeamRebarModel> beams)
         {
             foreach (var beam in beams)
@@ -38,7 +34,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             }
         }
 
-        /// <summary>Ghi đai phụ vào từng dầm (luôn ghi, kể cả rỗng để xóa được đai đã bỏ). Gọi trong Transaction.</summary>
         private void SaveBeamTies()
         {
             var beams = _viewModel.BeamRebarModels;
@@ -51,7 +46,6 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             }
         }
 
-        // ── Dựng đai phụ ───────────────────────────────────────────────────────
 
         private void CreateStirrupSub()
         {
@@ -70,31 +64,46 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                 .WhereElementIsElementType()
                 .OfClass(typeof(RebarHookType))
                 .Cast<RebarHookType>()
+                .Where(x=>x.Style == RebarStyle.StirrupTie)
                 .ToList();
             var hook135 = hookTypes.FirstOrDefault(x => Math.Abs(x.HookAngle.ToDegrees() - 135) <= 1)
                 ?? hookTypes.FirstOrDefault(x => x.Name.Contains("135"))
                 ?? hookTypes.FirstOrDefault();
             if (hook135 == null)
             {
-                _mainBarWarnings.Add("Đai phụ: không tìm thấy Hook Type.");
+                _mainBarWarnings.Add("Đai phụ: không tìm thấy Hook Type 135.");
                 return;
             }
-
+            _tieHook135 = hook135;
+            var hook180 = hookTypes.FirstOrDefault(x => _hookAngleDeg(x) is > 179 and < 181)
+                ?? hookTypes.FirstOrDefault(x => x.Name.Contains("180"));
+            if (hook180 == null)
+            {
+                _mainBarWarnings.Add("Đai phụ: không tìm thấy Hook Type 180.");
+                return;
+            }
+            _tieHook180 = hook180;
             var gridQty = BeamRebarUtils.GetGridQty(beams);
             foreach (var beam in beams)
             {
                 if (beam.Ties == null) continue;
                 foreach (var tie in beam.Ties)
                 {
-                    try { _installTie(beam, tie, gridQty, rebarBarTypes, hook135); }
+                    try { _installTie(beam, tie, gridQty, rebarBarTypes, _tieHook180); }
                     catch (Exception ex) { _mainBarWarnings.Add($"Đai phụ: {ex.Message}"); }
                 }
             }
         }
 
+        private static double _hookAngleDeg(RebarHookType hook)
+        {
+            var a = Convert.ToDouble(hook.HookAngle);
+            return a > Math.PI + 0.01 ? a : a * 180 / Math.PI;
+        }
+
         private void _installTie(
             BeamRebarModel beam, BeamTieModel tie, int gridQty,
-            List<RebarBarType> rebarBarTypes, RebarHookType hook135)
+            List<RebarBarType> rebarBarTypes, RebarHookType hook)
         {
             var vtx = beam.VTX;
             var vty = beam.VTY;
@@ -127,11 +136,10 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                 var dSt = _ParseDiameterMm(st.Name);
                 if (dSt <= 0) continue;
 
-                // tâm dầm tại mặt phẳng đầu vùng
                 var origin = beam.Center + vtx * (s.Pt - beam.Center).DotProduct(vtx);
 
                 XYZ p0, p1;
-                XYZ sideDir;     // phía đai đi qua (đường thẳng của đai nằm phía này)
+                XYZ sideDir;
                 double dMainMm;
                 if (tie.Type == (int)BeamTieType.Vertical)
                 {
@@ -143,20 +151,18 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                     }
                     p0 = top; p1 = bot;
                     dMainMm = (dTop + dBot) / 2;
-                    // phía ngoài = phía mép gần nhất (giữa thì +VTY)
                     var y = (top - origin).DotProduct(vty);
                     sideDir = y >= -1e-6 ? vty : -vty;
                 }
                 else if (tie.Layer == BeamCanvasSectionPreViewAction.SideTieLayer)
                 {
-                    // đai ngang qua thép sidebar (dầm cao >= 700): nối thanh trái - phải cùng hàng
                     if (!_sideBarLayout(beam, out var sn, out var sd, out var sHalfY, out var sz0, out var sSp, out _)
                         || tie.Index < 1 || tie.Index > sn) continue;
                     var zRow = sz0 + (tie.Index - 1) * sSp;
                     p0 = origin - vty * sHalfY + vtz * zRow;
                     p1 = origin + vty * sHalfY + vtz * zRow;
                     dMainMm = sd;
-                    sideDir = vtz;   // đai đi phía trên (+VTZ), khớp canvas
+                    sideDir = vtz;
                 }
                 else
                 {
@@ -170,21 +176,18 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                         || !_barPoint(beam, sec, layer, gridQty, last, origin, out p1, out var d1))
                         continue;
                     dMainMm = (d0 + d1) / 2;
-                    // đai ngang đi phía trong (về tâm dầm)
                     sideDir = _isTopLayer(layer) ? -vtz : vtz;
                 }
                 if (p0.DistanceTo(p1) < 1e-6) continue;
 
-                // đảo thứ tự để vt × VTX cùng phía sideDir (đường đai nằm phía sideDir)
                 if ((p1 - p0).Normalize().CrossProduct(vtx).Normalize().DotProduct(sideDir) < 0)
                     (p0, p1) = (p1, p0);
 
                 var ps = new List<XYZ> { p0, p1 };
                 var dMainFt = dMainMm.FromMillimeters();
                 var dStFt = dSt.FromMillimeters();
-                var hookLengthMm = Math.Max(dSt * 10, 100);
+                var hookLengthMm = _hookAngleDeg(hook) is > 179 and < 181 ? 0 : Math.Max(dSt * 10, 100);
 
-                // ── copy từ ColumnRebarStirrupAction._InstallSub (qty == 2) ──
                 var vt = (ps[1] - ps[0]).Normalize();
                 var nor = vt.CrossProduct(vtx).Normalize();
                 var extend2Pt = dStFt + dMainFt / 2;
@@ -199,16 +202,78 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                 baseShape.Reverse();
 
                 var curves = baseShape.PointsToCurves();
-                var rebar = RebarHelper.CreateRebarStirrupTieSetEx(
-                    _document, curves, st.Name, vtx, hook135, hook135,
-                    orientStart, orientEnd, rebarBarTypes, host,
-                    st.Spacing, s.Len.ToMillimeters(), hookLengthMm, out var error);
+                var flip = new Func<RebarHookOrientation, RebarHookOrientation>(o =>
+                    o == RebarHookOrientation.Left ? RebarHookOrientation.Right : RebarHookOrientation.Left);
+                var orients = new[]
+                {
+                    (orientStart, orientEnd), (flip(orientStart), flip(orientEnd)),
+                    (orientStart, flip(orientEnd)), (flip(orientStart), orientEnd),
+                }.Distinct().ToList();
+                var is180 = !ReferenceEquals(hook, _tieHook135) && _hookAngleDeg(hook) is > 179 and < 181;
+                Rebar rebar = null;
+                string error = null;
+                if (is180)
+                {
+                    var barType = rebarBarTypes.FirstOrDefault(x => x.Name == st.Name)
+                        ?? rebarBarTypes.FirstOrDefault(x => x.Name.Contains(st.Name))
+                        ?? rebarBarTypes.FirstOrDefault();
+                    var shapeErr = string.Empty;
+                    var diag = new System.Text.StringBuilder();
+                    foreach (var (oS, oE) in orients)
+                        if (RebarHelper.EnsureStraightTieShape(_document, 180, oS, oE, out var e) == null) shapeErr = e;
+                    var shapes = new FilteredElementCollector(_document)
+                        .OfClass(typeof(RebarShape)).Cast<RebarShape>()
+                        .Where(x => x.RebarStyle == RebarStyle.StirrupTie).ToList();
+                    diag.Append($"hook={hook.Name}/{_hookAngleDeg(hook):0}°, barType={barType?.Name}, shapes đai={shapes.Count}");
+                    foreach (var (oS, oE) in orients)
+                    {
+                        var matched = 0;
+                        foreach (var shp in shapes)
+                        {
+                            var match = false;
+                            try { match = Rebar.RebarShapeMatchesCurvesAndHooks(shp, barType, vtx, curves, hook, hook, oS, oE); }
+                            catch (Exception ex) { if (shp.Name.StartsWith("LSTool")) diag.Append($"; match lỗi {shp.Name}: {ex.Message}"); }
+                            if (!match) continue;
+                            matched++;
+                            rebar = RebarHelper.CreateRebarStirrupTieSetEx(
+                                _document, curves, st.Name, vtx, hook, hook,
+                                oS, oE, rebarBarTypes, host,
+                                st.Spacing, s.Len.ToMillimeters(), hookLengthMm, out error, shp);
+                            if (rebar != null) break;
+                            diag.Append($"; tạo với {shp.Name} lỗi: {error}");
+                        }
+                        diag.Append($"; {oS}-{oE}: khớp {matched}");
+                        if (rebar != null) break;
+                    }
+                    if (rebar == null)
+                        error = "không có Rebar Shape nào khớp hook 180°" + (shapeErr.Length > 0 ? $" (tạo shape: {shapeErr})" : "") + $" [{diag}]";
+                }
+                else
+                {
+                    foreach (var (oS, oE) in orients)
+                    {
+                        rebar = RebarHelper.CreateRebarStirrupTieSetEx(
+                            _document, curves, st.Name, vtx, hook, hook,
+                            oS, oE, rebarBarTypes, host,
+                            st.Spacing, s.Len.ToMillimeters(), hookLengthMm, out error);
+                        if (rebar != null) break;
+                    }
+                }
+                if (rebar == null && is180)
+                {
+                    rebar = RebarHelper.CreateRebarStirrupTieSetEx(
+                        _document, curves, st.Name, vtx, _tieHook135, _tieHook135,
+                        orientStart, orientEnd, rebarBarTypes, host,
+                        st.Spacing, s.Len.ToMillimeters(), Math.Max(dSt * 10, 100), out var err135);
+                    if (rebar != null)
+                        _mainBarWarnings.Add($"Đai phụ ({(BeamTieType)tie.Type}) mặt cắt {s.Name}: {error}, đã dùng hook 135°.");
+                    else error = $"{error}; hook 135°: {err135}";
+                }
                 if (rebar == null)
                     _mainBarWarnings.Add($"Đai phụ ({(BeamTieType)tie.Type}) mặt cắt {s.Name}: tạo lỗi ({error}).");
             }
         }
 
-        /// <summary>Điểm tâm thanh (lớp, Index lưới) trên mặt phẳng mặt cắt đi qua <paramref name="origin"/>.</summary>
         private bool _barPoint(
             BeamRebarModel beam, BeamRebarSectionModel sec, BeamRebarLayerType layer,
             int gridQty, int index, XYZ origin, out XYZ point, out double dMm)
