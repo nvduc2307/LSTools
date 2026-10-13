@@ -183,4 +183,7 @@
       <Folder Include="Tools\Generals\SettingRebarColumn\viewModel\" />
       <Folder Include="Tools\Generals\SettingRebarColumn\view\" />
     </ItemGroup>
+  <Target Name="PostBuild" AfterTargets="Build">
+    <Exec Command="xcopy &quot;$(TargetDir)publish\Revit $(RevitVersion) $(Configuration) addin\*&quot; &quot;$(ProjectDir)..\..\InnoSetup\Content\$(RevitVersion)\&quot; /E /H /C /I /K /Y" />
+  </Target>
 </Project>
