@@ -73,27 +73,27 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             var beam = _viewModel.BeamRebarModel;
             if (setting == null || beam == null) return;
             BeamRebarSettingAction.Apply(setting, beam);
-            _viewModel.AnchorStartTopOffset = setting.AnchorStartTopOffset;
-            _viewModel.AnchorStartTopHook = setting.AnchorStartTopHook;
-            _viewModel.AnchorStartBotOffset = setting.AnchorStartBotOffset;
-            _viewModel.AnchorStartBotHook = setting.AnchorStartBotHook;
-            _viewModel.AnchorEndTopOffset = setting.AnchorEndTopOffset;
-            _viewModel.AnchorEndTopHook = setting.AnchorEndTopHook;
-            _viewModel.AnchorEndBotOffset = setting.AnchorEndBotOffset;
-            _viewModel.AnchorEndBotHook = setting.AnchorEndBotHook;
+            _viewModel.AnchorStartTopL1 = setting.AnchorStartTopL1;
+            _viewModel.AnchorStartTopL3 = setting.AnchorStartTopL3;
+            _viewModel.AnchorStartBotL2 = setting.AnchorStartBotL2;
+            _viewModel.AnchorStartBotL3 = setting.AnchorStartBotL3;
+            _viewModel.AnchorEndTopL1 = setting.AnchorEndTopL1;
+            _viewModel.AnchorEndTopL3 = setting.AnchorEndTopL3;
+            _viewModel.AnchorEndBotL2 = setting.AnchorEndBotL2;
+            _viewModel.AnchorEndBotL3 = setting.AnchorEndBotL3;
             _canvasAction?.Redraw();
         }
 
         private void _CaptureAnchor(BeamRebarSettingModel setting)
         {
-            setting.AnchorStartTopOffset = _viewModel.AnchorStartTopOffset;
-            setting.AnchorStartTopHook = _viewModel.AnchorStartTopHook;
-            setting.AnchorStartBotOffset = _viewModel.AnchorStartBotOffset;
-            setting.AnchorStartBotHook = _viewModel.AnchorStartBotHook;
-            setting.AnchorEndTopOffset = _viewModel.AnchorEndTopOffset;
-            setting.AnchorEndTopHook = _viewModel.AnchorEndTopHook;
-            setting.AnchorEndBotOffset = _viewModel.AnchorEndBotOffset;
-            setting.AnchorEndBotHook = _viewModel.AnchorEndBotHook;
+            setting.AnchorStartTopL1 = _viewModel.AnchorStartTopL1;
+            setting.AnchorStartTopL3 = _viewModel.AnchorStartTopL3;
+            setting.AnchorStartBotL2 = _viewModel.AnchorStartBotL2;
+            setting.AnchorStartBotL3 = _viewModel.AnchorStartBotL3;
+            setting.AnchorEndTopL1 = _viewModel.AnchorEndTopL1;
+            setting.AnchorEndTopL3 = _viewModel.AnchorEndTopL3;
+            setting.AnchorEndBotL2 = _viewModel.AnchorEndBotL2;
+            setting.AnchorEndBotL3 = _viewModel.AnchorEndBotL3;
         }
     }
 }

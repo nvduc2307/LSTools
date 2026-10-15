@@ -5,23 +5,31 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/LSTool;component/Resources/UI/CompactTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-            <Canvas x:Key="AnchorDrawing" x:Shared="False" Width="330" Height="280">
-                <Polygon Points="80,50 320,50 320,150 190,150 190,240 80,240" Fill="#DADBE0" Stroke="#222222" StrokeThickness="1"/>
-                <Line X1="190" Y1="50" X2="190" Y2="150" Stroke="#222222" StrokeThickness="1"/>
-                <Line X1="80" Y1="26" X2="80" Y2="62" Stroke="#E58BA6" StrokeThickness="1" StrokeDashArray="3,2"/>
-                <Line X1="92" Y1="26" X2="92" Y2="62" Stroke="#E58BA6" StrokeThickness="1" StrokeDashArray="3,2"/>
-                <Line X1="80" Y1="32" X2="92" Y2="32" Stroke="#222222" StrokeThickness="1.5" StrokeStartLineCap="Triangle" StrokeEndLineCap="Triangle"/>
-                <Line X1="46" Y1="62" X2="92" Y2="62" Stroke="#E58BA6" StrokeThickness="1" StrokeDashArray="3,2"/>
-                <Line X1="46" Y1="138" X2="92" Y2="138" Stroke="#E58BA6" StrokeThickness="1" StrokeDashArray="3,2"/>
-                <Line X1="56" Y1="62" X2="56" Y2="138" Stroke="#222222" StrokeThickness="1.5" StrokeStartLineCap="Triangle" StrokeEndLineCap="Triangle"/>
-                <Line X1="80" Y1="150" X2="80" Y2="262" Stroke="#E58BA6" StrokeThickness="1" StrokeDashArray="3,2"/>
-                <Line X1="130" Y1="138" X2="130" Y2="262" Stroke="#E58BA6" StrokeThickness="1" StrokeDashArray="3,2"/>
-                <Line X1="80" Y1="256" X2="130" Y2="256" Stroke="#222222" StrokeThickness="1.5" StrokeStartLineCap="Triangle" StrokeEndLineCap="Triangle"/>
-                <Line X1="130" Y1="88" X2="152" Y2="88" Stroke="#E58BA6" StrokeThickness="1" StrokeDashArray="3,2"/>
-                <Line X1="130" Y1="138" X2="152" Y2="138" Stroke="#E58BA6" StrokeThickness="1" StrokeDashArray="3,2"/>
-                <Line X1="146" Y1="88" X2="146" Y2="138" Stroke="#222222" StrokeThickness="1.5" StrokeStartLineCap="Triangle" StrokeEndLineCap="Triangle"/>
-                <Polyline Points="320,62 92,62 92,138" Stroke="#E01B1B" StrokeThickness="3" StrokeLineJoin="Round" Fill="Transparent"/>
-                <Polyline Points="320,138 130,138 130,88" Stroke="#E01B1B" StrokeThickness="3" StrokeLineJoin="Round" Fill="Transparent"/>
+            <Canvas x:Key="AnchorDrawing" x:Shared="False" Width="320" Height="250">
+                <Rectangle Width="320" Height="250" Fill="#FFFFFF"/>
+                <Polyline Points="63.9,8.1 108.5,8.1 114,1.9 121,14.3 126,8.1 163.1,8.1" Stroke="#7A7F87" StrokeThickness="1"/>
+                <Polyline Points="63.9,236.9 108.5,236.9 114,230.7 121,243 126,236.9 163.1,236.9" Stroke="#7A7F87" StrokeThickness="1"/>
+                <Line X1="75.6" Y1="8.1" X2="75.6" Y2="236.9" Stroke="#2E9E2E" StrokeThickness="1"/>
+                <Polyline Points="151.9,8.1 151.9,85.6 307.5,85.6" Stroke="#2E9E2E" StrokeThickness="1"/>
+                <Polyline Points="151.9,236.9 151.9,160.6 307.5,160.6" Stroke="#2E9E2E" StrokeThickness="1"/>
+                <Polyline Points="308,73 308,121 302,124 314,128 308,132 308,173" Stroke="#7A7F87" StrokeThickness="1"/>
+                <Path Data="M307.5,101.1 H98 Q86.8,101.1 86.8,112 V150.7" Stroke="#D01818" StrokeThickness="1" Fill="Transparent"/>
+                <Path Data="M307.5,145.1 H110 Q99.2,145.1 99.2,134 V115.3" Stroke="#D01818" StrokeThickness="1" Fill="Transparent"/>
+                <Path Data="M151.9,81.2 H16 Q4.3,81.2 4.3,93 V150.7" Stroke="#222222" StrokeThickness="1" Fill="Transparent"/>
+                <Path Data="M151.9,176.1 H71 Q60.1,176.1 60.1,165 V114.1" Stroke="#222222" StrokeThickness="1" Fill="Transparent"/>
+                <Line X1="32.9" Y1="98.6" X2="32.9" Y2="150.7" Stroke="#222222" StrokeThickness="1"/>
+                <Line X1="148" Y1="85" X2="156" Y2="77" Stroke="#222222" StrokeThickness="1.2"/>
+                <Line X1="148" Y1="180" X2="156" Y2="172" Stroke="#222222" StrokeThickness="1.2"/>
+                <Line X1="0.5" Y1="154.5" X2="8.5" Y2="146.5" Stroke="#222222" StrokeThickness="1.2"/>
+                <Line X1="28.9" Y1="102.6" X2="36.9" Y2="94.6" Stroke="#222222" StrokeThickness="1.2"/>
+                <Line X1="28.9" Y1="154.7" X2="36.9" Y2="146.7" Stroke="#222222" StrokeThickness="1.2"/>
+                <Line X1="56" Y1="118" X2="64" Y2="110" Stroke="#222222" StrokeThickness="1.2"/>
+                <Line X1="60.1" Y1="114.1" X2="99.2" Y2="114.1" Stroke="#D01818" StrokeThickness="0.7" StrokeDashArray="2,2"/>
+                <Line X1="32.9" Y1="98.6" X2="98" Y2="98.6" Stroke="#D01818" StrokeThickness="0.7" StrokeDashArray="2,2"/>
+                <Line X1="4.3" Y1="150.7" X2="86.8" Y2="150.7" Stroke="#D01818" StrokeThickness="0.7" StrokeDashArray="2,2"/>
+                <TextBlock Canvas.Left="50" Canvas.Top="49" Foreground="#222222" FontSize="15" Text="L1"/>
+                <TextBlock Canvas.Left="12" Canvas.Top="118" Foreground="#222222" FontSize="15" Text="L3" RenderTransformOrigin="0.5,0.5"><TextBlock.RenderTransform><RotateTransform Angle="-90"/></TextBlock.RenderTransform></TextBlock>
+                <TextBlock Canvas.Left="42" Canvas.Top="118" Foreground="#222222" FontSize="15" Text="L2" RenderTransformOrigin="0.5,0.5"><TextBlock.RenderTransform><RotateTransform Angle="-90"/></TextBlock.RenderTransform></TextBlock>
             </Canvas>
         </ResourceDictionary>
     </Window.Resources>
@@ -72,7 +80,7 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <Border Style="{StaticResource PanelHeader}">
-                            <TextBlock Text="START" FontWeight="SemiBold"/>
+                            <TextBlock Text="ANCHORAGE (applies to both beam ends)" FontWeight="SemiBold"/>
                         </Border>
                         <Grid Grid.Row="1">
                             <Grid>
@@ -310,55 +318,46 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Text="Offset: distance from the support outer face to the hook leg. Hook: hook leg length. Top bars hook down, bottom bars hook up. All values in mm." TextWrapping="Wrap" Margin="4,0,4,8"/>
                     <Grid Grid.Row="1">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition/>
+                            <ColumnDefinition Width="280"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Border Style="{StaticResource Panel}" Margin="0,0,6,0">
                             <DockPanel>
-                                <Border DockPanel.Dock="Top" Style="{StaticResource PanelHeader}"><TextBlock Text="START" FontWeight="SemiBold"/></Border>
-                                <Viewbox Margin="8">
-                                    <Grid Width="330" Height="280">
-                                        <ContentControl Content="{StaticResource AnchorDrawing}"/>
-                                        <Canvas>
-                                            <fluent:TextBox Canvas.Left="98" Canvas.Top="8" Width="50" Text="{Binding AnchorStartTopOffset, UpdateSourceTrigger=LostFocus}"/>
-                                            <TextBlock Canvas.Left="152" Canvas.Top="13" Text="mm"/>
-                                            <fluent:TextBox Canvas.Left="2" Canvas.Top="86" Width="50" Text="{Binding AnchorStartTopHook, UpdateSourceTrigger=LostFocus}"/>
-                                            <TextBlock Canvas.Left="16" Canvas.Top="114" Text="mm"/>
-                                            <fluent:TextBox Canvas.Left="140" Canvas.Top="242" Width="50" Text="{Binding AnchorStartBotOffset, UpdateSourceTrigger=LostFocus}"/>
-                                            <TextBlock Canvas.Left="194" Canvas.Top="247" Text="mm"/>
-                                            <fluent:TextBox Canvas.Left="158" Canvas.Top="88" Width="50" Text="{Binding AnchorStartBotHook, UpdateSourceTrigger=LostFocus}"/>
-                                            <TextBlock Canvas.Left="212" Canvas.Top="93" Text="mm"/>
-                                        </Canvas>
-                                    </Grid>
-                                </Viewbox>
+                                <Border DockPanel.Dock="Top" Style="{StaticResource PanelHeader}"><TextBlock Text="ANCHORAGE" FontWeight="SemiBold"/></Border>
+                                <Grid Margin="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="L1" VerticalAlignment="Center" Margin="0,4,8,4"/>
+                                <fluent:TextBox Grid.Row="0" Grid.Column="1" Width="70" Margin="0,4,6,4" ToolTip="L1: total anchorage of the top bars" Text="{Binding AnchorStartTopL1, UpdateSourceTrigger=LostFocus}"/>
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="x d" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="L3" VerticalAlignment="Center" Margin="0,4,8,4"/>
+                                <fluent:TextBox Grid.Row="2" Grid.Column="1" Width="70" Margin="0,4,6,4" ToolTip="L3: minimum hook length (top and bottom bars, both ends)" Text="{Binding AnchorStartTopL3, UpdateSourceTrigger=LostFocus}"/>
+                                <TextBlock Grid.Row="2" Grid.Column="2" Text="x d" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="L2" VerticalAlignment="Center" Margin="0,4,8,4"/>
+                                <fluent:TextBox Grid.Row="1" Grid.Column="1" Width="70" Margin="0,4,6,4" ToolTip="L2: total anchorage of bottom bars" Text="{Binding AnchorStartBotL2, UpdateSourceTrigger=LostFocus}"/>
+                                <TextBlock Grid.Row="1" Grid.Column="2" Text="x d" VerticalAlignment="Center"/>
+                                </Grid>
                             </DockPanel>
                         </Border>
                         <Border Grid.Column="1" Style="{StaticResource Panel}" Margin="6,0,0,0">
-                            <DockPanel>
-                                <Border DockPanel.Dock="Top" Style="{StaticResource PanelHeader}"><TextBlock Text="END" FontWeight="SemiBold"/></Border>
-                                <Viewbox Margin="8">
-                                    <Grid Width="330" Height="280">
-                                        <ContentControl Content="{StaticResource AnchorDrawing}" RenderTransformOrigin="0.5,0.5">
-                                            <ContentControl.RenderTransform>
-                                                <ScaleTransform ScaleX="-1"/>
-                                            </ContentControl.RenderTransform>
-                                        </ContentControl>
-                                        <Canvas>
-                                            <fluent:TextBox Canvas.Left="182" Canvas.Top="8" Width="50" Text="{Binding AnchorEndTopOffset, UpdateSourceTrigger=LostFocus}"/>
-                                            <TextBlock Canvas.Left="156" Canvas.Top="13" Text="mm"/>
-                                            <fluent:TextBox Canvas.Left="278" Canvas.Top="86" Width="50" Text="{Binding AnchorEndTopHook, UpdateSourceTrigger=LostFocus}"/>
-                                            <TextBlock Canvas.Left="292" Canvas.Top="114" Text="mm"/>
-                                            <fluent:TextBox Canvas.Left="140" Canvas.Top="242" Width="50" Text="{Binding AnchorEndBotOffset, UpdateSourceTrigger=LostFocus}"/>
-                                            <TextBlock Canvas.Left="116" Canvas.Top="247" Text="mm"/>
-                                            <fluent:TextBox Canvas.Left="122" Canvas.Top="88" Width="50" Text="{Binding AnchorEndBotHook, UpdateSourceTrigger=LostFocus}"/>
-                                            <TextBlock Canvas.Left="96" Canvas.Top="93" Text="mm"/>
-                                        </Canvas>
-                                    </Grid>
-                                </Viewbox>
-                            </DockPanel>
+                            <Viewbox Margin="8">
+                                <ContentControl Content="{StaticResource AnchorDrawing}"/>
+                            </Viewbox>
                         </Border>
                     </Grid>
                 </Grid>

@@ -7,14 +7,14 @@
         public BeamRebarSectionSettingModel SectionStart { get; set; } = new BeamRebarSectionSettingModel();
         public BeamRebarSectionSettingModel SectionMid { get; set; } = new BeamRebarSectionSettingModel();
         public BeamRebarSectionSettingModel SectionEnd { get; set; } = new BeamRebarSectionSettingModel();
-        public double AnchorStartTopOffset { get; set; } = 50;
-        public double AnchorStartTopHook { get; set; } = 500;
-        public double AnchorStartBotOffset { get; set; } = 50;
-        public double AnchorStartBotHook { get; set; } = 500;
-        public double AnchorEndTopOffset { get; set; } = 50;
-        public double AnchorEndTopHook { get; set; } = 500;
-        public double AnchorEndBotOffset { get; set; } = 50;
-        public double AnchorEndBotHook { get; set; } = 500;
+        public double AnchorStartTopL1 { get; set; } = 40;
+        public double AnchorStartTopL3 { get; set; } = 10;
+        public double AnchorStartBotL2 { get; set; } = 30;
+        public double AnchorStartBotL3 { get; set; } = 10;
+        public double AnchorEndTopL1 { get; set; } = 40;
+        public double AnchorEndTopL3 { get; set; } = 10;
+        public double AnchorEndBotL2 { get; set; } = 30;
+        public double AnchorEndBotL3 { get; set; } = 10;
     }
 
     public class BeamRebarSectionSettingModel

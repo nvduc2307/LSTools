@@ -452,23 +452,21 @@ namespace LSTool.Tools.Beams.BeamRebar.action
             var coverFt = beam.Cover.FromMillimeters();
             var hookDir = isTop ? -beam.VTZ : beam.VTZ;
 
-            var anchorModel = _rebarAnchorageLengthModels?.FirstOrDefault();
-            var laFt = anchorModel != null ? (anchorModel.Ldt * dMm).FromMillimeters() : 30.0 * dFt;
+            // L1 (top) / L2 (bottom): total anchorage length, L3: min hook length. Both are multiples of d.
+            var totalFactor = isStart
+                ? (isTop ? _viewModel.AnchorStartTopL1 : _viewModel.AnchorStartBotL2)
+                : (isTop ? _viewModel.AnchorEndTopL1 : _viewModel.AnchorEndBotL2);
+            var minHookFactor = isStart
+                ? (isTop ? _viewModel.AnchorStartTopL3 : _viewModel.AnchorStartBotL3)
+                : (isTop ? _viewModel.AnchorEndTopL3 : _viewModel.AnchorEndBotL3);
+            var totalFt = Math.Max(totalFactor, 0) * dFt;
+            var minHookFt = Math.Max(minHookFactor, LSTool.Tools.Beams.BeamRebar.viewModel.BeamRebarVM.MinAnchorHookFactor) * dFt;
 
-            var offsetMm = isStart
-                ? (isTop ? _viewModel.AnchorStartTopOffset : _viewModel.AnchorStartBotOffset)
-                : (isTop ? _viewModel.AnchorEndTopOffset : _viewModel.AnchorEndBotOffset);
-            var hookMm = isStart
-                ? (isTop ? _viewModel.AnchorStartTopHook : _viewModel.AnchorStartBotHook)
-                : (isTop ? _viewModel.AnchorEndTopHook : _viewModel.AnchorEndBotHook);
-            var hookModel = _rebarAnchorageHookMainBarModels?
-                .OrderBy(x => Math.Abs(x.Diameter - (int)Math.Round(dMm)))
-                .FirstOrDefault();
-            var hookFt = hookMm > 0 ? hookMm.FromMillimeters()
-                : hookModel != null && hookModel.B > 0 ? hookModel.B.FromMillimeters() : 12.0 * dFt;
-            var offsetFt = offsetMm >= 0 ? offsetMm.FromMillimeters() : coverFt;
+            // Bar end stops at the concrete cover from the far face of the support.
+            var offsetFt = coverFt;
 
             var layerPullFt = layerOrder * (Math.Max(LayerClearMinMm, dMm).FromMillimeters() + dFt);
+
 
             var thicknessFt = (bearing?.Thickness ?? 0).FromMillimeters();
             var availFt = thicknessFt - offsetFt - layerPullFt;
@@ -478,18 +476,21 @@ namespace LSTool.Tools.Beams.BeamRebar.action
                 replaceFace = true;
                 var pEnd = pFace - outward * (coverFt + layerPullFt);
                 result.Add(pEnd);
-                result.Add(pEnd + hookDir * hookFt);
+                result.Add(pEnd + hookDir * Math.Max(totalFt, minHookFt));
                 return result;
             }
 
-            if (availFt >= laFt)
+            // Straight part reaches the full anchorage length inside the support: no hook needed.
+            if (availFt >= totalFt)
             {
-                result.Add(pFace + outward * laFt);
+                result.Add(pFace + outward * totalFt);
                 return result;
             }
 
+            // Otherwise run to the far side of the support and hook for the missing length (at least L3).
             var pOut = pFace + outward * availFt;
             result.Add(pOut);
+            var hookFt = Math.Max(totalFt - availFt, minHookFt);
             result.Add(pOut + hookDir * hookFt);
             return result;
         }

@@ -1,4 +1,4 @@
-﻿using LSTool.Tools.Beams.BeamRebar.models;
+using LSTool.Tools.Beams.BeamRebar.models;
 
 namespace LSTool.Tools.Beams.BeamRebar.viewModel
 {
@@ -26,22 +26,32 @@ namespace LSTool.Tools.Beams.BeamRebar.viewModel
         [ObservableProperty]
         private string _beamSettingName;
 
+        // L1 / L2 (total anchorage) and L3 (min hook): multiples of the bar diameter (xd).
         [ObservableProperty]
-        private double _anchorStartTopOffset = 50;
+        private double _anchorStartTopL1 = 40;
         [ObservableProperty]
-        private double _anchorStartTopHook = 500;
+        private double _anchorStartTopL3 = 10;
         [ObservableProperty]
-        private double _anchorStartBotOffset = 50;
+        private double _anchorStartBotL2 = 30;
         [ObservableProperty]
-        private double _anchorStartBotHook = 500;
+        private double _anchorStartBotL3 = 10;
         [ObservableProperty]
-        private double _anchorEndTopOffset = 50;
+        private double _anchorEndTopL1 = 40;
         [ObservableProperty]
-        private double _anchorEndTopHook = 500;
+        private double _anchorEndTopL3 = 10;
         [ObservableProperty]
-        private double _anchorEndBotOffset = 50;
+        private double _anchorEndBotL2 = 30;
         [ObservableProperty]
-        private double _anchorEndBotHook = 500;
+        private double _anchorEndBotL3 = 10;
+        public const double MinAnchorHookFactor = 10;
+
+        partial void OnAnchorStartTopL1Changed(double value) => AnchorEndTopL1 = value;
+        partial void OnAnchorStartBotL2Changed(double value) => AnchorEndBotL2 = value;
+        partial void OnAnchorStartTopL3Changed(double value) { if (value < MinAnchorHookFactor) { AnchorStartTopL3 = MinAnchorHookFactor; return; } AnchorEndTopL3 = value; AnchorStartBotL3 = value; }
+        partial void OnAnchorStartBotL3Changed(double value) { if (value < MinAnchorHookFactor) { AnchorStartBotL3 = MinAnchorHookFactor; return; } AnchorEndBotL3 = value; AnchorStartTopL3 = value; }
+        partial void OnAnchorEndTopL3Changed(double value) { if (value < MinAnchorHookFactor) AnchorEndTopL3 = MinAnchorHookFactor; }
+        partial void OnAnchorEndBotL3Changed(double value) { if (value < MinAnchorHookFactor) AnchorEndBotL3 = MinAnchorHookFactor; }
+
         public RelayCommand SaveAsCommand { get; set; }
         public RelayCommand SaveCommand { get; set; }
         public RelayCommand DeleteCommand { get; set; }
